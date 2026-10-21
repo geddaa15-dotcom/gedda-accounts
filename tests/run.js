@@ -283,7 +283,7 @@ const T0 = Date.now();
     /* أدوات الشكل (الخط والتبويبات والأرقام): متعرّفة هنا فوق علشان أقسام قبل قسم الشكل تستخدمها */
     const fs5 = X => X.evaluate(() => {
       const tok = ['--f1', '--f2', '--f3', '--f4', '--f5'].map(v => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(v)));
-      const ICON = '#bSearch,#bNewParty,.dnav button,.dpk button,.dph button,.chk,.qkm .btn,#lkPad .pk,.qa2 .qb i,.fabn';
+      const ICON = '#bSearch,#bNewParty,.dnav button,.dpk button,.dph button,.chk,.qkm .btn,#lkPad .pk,#suPad .pk,.qa2 .qb i,.fabn';
       const bad = new Set();
       for (const el of document.querySelectorAll('body *')) {
         if (el.closest('#render,svg') || el.closest(ICON)) continue;
@@ -331,6 +331,21 @@ const T0 = Date.now();
       const held = await val(); await T.mouse.up(); await T.settle(300);
       eq('لوحة الأرقام: ⌫ دوسة عادية بتمسح رقم، ومطوّلة بتمسح كله ورا بعض', [tap, held, await val()], ['123', '', '']);
       await T.close();
+    }
+    {   // أول مرة على الموبايل: شاشة "اعمل كلمة سر" فيها نفس لوحة الأرقام
+      const ctx = await browser.newContext({viewport: {width: 390, height: 844}});
+      const T = await ctx.newPage();
+      await T.addInitScript(() => { const mm = window.matchMedia.bind(window); window.matchMedia = q => /pointer:\s*coarse/.test(q) ? {matches: true, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}} : mm(q); });
+      await T.goto(base + 'accounts.html?nobio'); await T.waitForSelector('#suPad .pk');
+      const key = k => T.click(`#suPad [data-k="${k}"]`), v = () => T.evaluate(() => [$('#suP').value, $('#suP2').value]);
+      for (const k of '1234') await key(k);
+      await key('nx'); const short = await T.textContent('#suErr');
+      for (const k of '56') await key(k); await key('⌫'); await key('6');
+      await key('nx'); for (const k of '123456') await key(k);
+      const typed = await v();
+      await key('nx'); await T.waitForSelector('#lock:not(.on)', {timeout: 15000}).catch(() => {});
+      eq('أول مرة على الموبايل: لوحة الأرقام بتكتب في الخانتين و"ابدأ" بيفتح', [!!short, typed, await T.evaluate(() => !$('#lock').classList.contains('on'))], [true, ['123456', '123456'], true]);
+      await ctx.close();
     }
     await unlock(A);
 

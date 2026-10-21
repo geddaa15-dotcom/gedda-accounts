@@ -814,12 +814,14 @@ details.adv{margin:4px 0 8px}details.adv>summary{font-weight:700;color:var(--sub
 #lock #lkP,#lock #suP,#lock #suP2{font-size:var(--f4)!important;letter-spacing:.25em;min-height:50px}
 #lock .btn{margin-top:4px}
 @media (pointer:coarse){.ldgw .ldg{zoom:var(--lz,1)}}
-#lkPad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0;direction:ltr}
-#lkPad .pk{font:inherit;font-size:24px;font-weight:700;min-height:54px;border-radius:12px;border:1px solid var(--line);background:#fff;color:inherit;-webkit-tap-highlight-color:transparent}
-#lkPad .pk{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
-#lkPad .pk:active{background:var(--gold)}
-html[data-theme=dark] #lkPad .pk{background:var(--bg);border-color:var(--field)}
+#lkPad,#suPad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0;direction:ltr}
+#lkPad .pk,#suPad .pk{font:inherit;font-size:24px;font-weight:700;min-height:54px;border-radius:12px;border:1px solid var(--line);background:#fff;color:inherit;-webkit-tap-highlight-color:transparent}
+#lkPad .pk,#suPad .pk{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+#lkPad .pk:active,#suPad .pk:active{background:var(--gold)}
+html[data-theme=dark] #lkPad .pk,html[data-theme=dark] #suPad .pk{background:var(--bg);border-color:var(--field)}
 #lock .lnk{margin-top:10px;font-size:var(--f2)}
+#suPad [data-k=nx]{font-size:var(--f3)}
+#lock .inp.cur{border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 25%,transparent)}
 html[data-theme=dark] #lock .inp{background:var(--bg);border-color:var(--field);color:var(--ink)}
 html[data-theme=dark] #lock label{color:var(--sub)}
 @media (max-width:640px){#toast{bottom:calc(150px + env(safe-area-inset-bottom))}}
@@ -2103,6 +2105,25 @@ function renderSetup() {
     unlocked();
     toast('تمام. لو عندك بيانات على Google Sheet، اربطه من الإعدادات وهتنزل لوحدها.', 6000);
   };
+  /* على الموبايل: نفس لوحة الأرقام بتاعة شاشة القفل. بتكتب في الخانة اللي عليها الدور، و"التالي" بينقل للتأكيد وبعدين بيبدأ */
+  if (matchMedia('(pointer:coarse)').matches) {
+    const f1 = $('#suP'), f2 = $('#suP2');
+    let cur = f1;
+    const mark = () => { [f1, f2].forEach(i => i.classList.toggle('cur', i === cur)); pad.querySelector('[data-k="nx"]').textContent = cur === f1 ? 'التالي' : 'ابدأ'; };
+    [f1, f2].forEach(i => { i.setAttribute('inputmode', 'none'); i.readOnly = true; i.onclick = () => { cur = i; mark(); }; });
+    const pad = document.createElement('div'); pad.id = 'suPad';
+    pad.innerHTML = ['1','2','3','4','5','6','7','8','9','⌫','0','nx'].map(k => `<button type="button" class="pk" data-k="${k}">${k}</button>`).join('');
+    f2.closest('.fld').after(pad); $('#suGo').style.display = 'none';
+    pad.oncontextmenu = e => e.preventDefault();
+    pad.onclick = e => { const b = e.target.closest('.pk'); if (!b) return; const k = b.dataset.k; $('#suErr').textContent = '';
+      if (k === '⌫') cur.value = cur.value.slice(0, -1);
+      else if (k === 'nx') { if (cur === f1) { if (f1.value.length < 6) return $('#suErr').textContent = 'كلمة السر لازم تبقى 6 أرقام على الأقل'; cur = f2; mark(); } else $('#suGo').click(); }
+      else cur.value += k; };
+    mark();
+    const abc = document.createElement('button'); abc.type = 'button'; abc.className = 'lnk'; abc.id = 'suAbc'; abc.textContent = 'عاوز حروف في كلمة السر؟ افتح لوحة الحروف';
+    abc.onclick = () => { pad.remove(); abc.remove(); $('#suGo').style.display = ''; [f1, f2].forEach(i => { i.readOnly = false; i.inputMode = 'text'; i.removeAttribute('pattern'); i.classList.remove('cur'); i.onclick = null; }); setTimeout(() => cur.focus(), 50); };
+    $('#suGo').after(abc);
+  }
 }
 async function forgotFlow() {
   let meta = null; try { meta = await idbGet('meta'); } catch (e) {}

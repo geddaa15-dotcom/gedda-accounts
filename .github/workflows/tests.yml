@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -36,4 +38,8 @@ jobs:
           git tag -f safe
           git push -f origin refs/tags/safe
           M="safe-$(date -u +%Y-%m)"
-          if ! git ls-remote --exit-code --tags origin "refs/tags/$M" >/dev/null; then git tag "$M" && git push origin "refs/tags/$M"; fi
+          # لو علامة الشهر على نسخة مش في تاريخ main (التاريخ اتمسح واتعاد) بتتنقل لآخر نسخة سليمة
+          if git ls-remote --exit-code --tags origin "refs/tags/$M" >/dev/null; then
+            git fetch -q -f origin "refs/tags/$M:refs/tags/$M"
+            git merge-base --is-ancestor "$M" HEAD 2>/dev/null || { git tag -f "$M" && git push -f origin "refs/tags/$M"; }
+          else git tag "$M" && git push origin "refs/tags/$M"; fi

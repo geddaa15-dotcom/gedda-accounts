@@ -1,0 +1,39 @@
+# جرس إنذار: بعد كل رفع على main بيشغّل كل الاختبارات لوحده. لو حاجة فشلت GitHub بيبعت إيميل وبيبان ✖ أحمر جنب التعديل.
+# مبيوقفش النشر ومبيغيرش أي حاجة في البرنامج، هو بس بيبلّغ.
+name: الاختبارات
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write   # علشان يعلّم "النسخة السليمة" (tag) بس
+concurrency:
+  group: tests
+  cancel-in-progress: true
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: الحسابات
+        run: node tests/run.js
+      - name: السرعة (حسابات كبيرة على معالج بطيء)
+        if: always()
+        run: node tests/speed.js
+      # النسخة السليمة: كل تعديل على main الاختبارات كلها نجحت عليه بيتعلّم safe (بيتحرك لآخر نسخة سليمة)،
+      # وأول نسخة سليمة في كل شهر بتتعلّم safe-سنة-شهر وبتفضل ثابتة. الرجوع ليها مكتوب في CLAUDE.md.
+      - name: علّم النسخة السليمة
+        if: success() && github.ref == 'refs/heads/main'
+        run: |
+          git tag -f safe
+          git push -f origin refs/tags/safe
+          M="safe-$(date -u +%Y-%m)"
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$M" >/dev/null; then git tag "$M" && git push origin "refs/tags/$M"; fi

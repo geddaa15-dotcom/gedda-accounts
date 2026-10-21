@@ -1,0 +1,62 @@
+// محاكاة بسيطة لـ Google Apps Script علشان نختبر كود الشيت
+const vm = require('vm');
+function makeGas(opts = {}) {
+  const sheets = {};
+  /* عدّاد القراية من الشيت (كام مرة getValues وكام خانة) علشان نقيس السحب أخف ولا لأ */
+  const reads = {calls: 0, cells: 0};
+  const mkSheet = name => {
+    const rows = [];
+    const sh = {
+      name, rows,
+      getLastRow: () => rows.length,
+      appendRow: r => { rows.push(r.slice()); },
+      setFrozenRows: () => {},
+      getRange: (r, c, nr, nc) => ({
+        getValues: () => { reads.calls++; reads.cells += (nr || 1) * (nc || 1); const o = []; for (let i = 0; i < (nr || 1); i++) { const row = rows[r - 1 + i] || []; const x = []; for (let j = 0; j < (nc || 1); j++) x.push(row[c - 1 + j] ?? ''); o.push(x); } return o; },
+        /* زي جوجل بالظبط: خانة فيها أكتر من 50 ألف حرف = الكتابة كلها بترفض */
+        setValues: v => { if (v.some(row => row.some(x => String(x).length > 50000))) throw new Error('Exception: Your input contains more than the maximum of 50000 characters in a single cell.'); v.forEach((row, i) => { const t = rows[r - 1 + i] = rows[r - 1 + i] || []; row.forEach((val, j) => t[c - 1 + j] = val); }); },
+        setValue: val => { const t = rows[r - 1] = rows[r - 1] || []; t[c - 1] = val; }
+      }),
+      getDataRange: () => sh.getRange(1, 1, rows.length, Math.max(0, ...rows.map(x => x.length)))
+    };
+    return sh;
+  };
+  const ss = {getId: () => 'ss1', getUrl: () => 'https://docs.google.com/spreadsheets/d/ss1/edit', getSheetByName: n => sheets[n] || null, insertSheet: n => (sheets[n] = mkSheet(n))};
+  const props = {}, triggers = [], folders = [], tg = {calls: [], updates: []};
+  const ctx = {
+    SpreadsheetApp: {getActiveSpreadsheet: () => ss},
+    LockService: {getScriptLock: () => ({waitLock() {}, tryLock() { return true; }, releaseLock() {}})},
+    PropertiesService: {getScriptProperties: () => ({getProperty: k => props[k] ?? null, setProperty: (k, v) => { props[k] = String(v); }, deleteProperty: k => { delete props[k]; }})},
+    ...(opts.noDrive ? {} : {
+    ScriptApp: {getProjectTriggers: () => triggers.map(h => ({getHandlerFunction: () => h})), newTrigger: h => { const b = {timeBased: () => b, everyDays: () => b, atHour: () => b, create: () => { triggers.push(h); }}; return b; }},
+    DriveApp: {
+      getFoldersByName: n => { const f = folders.filter(x => x.name === n); return {hasNext: () => f.length > 0, next: () => f.shift()}; },
+      createFolder: n => { const f = {name: n, files: [], getFiles() { const l = f.files.filter(x => !x.trashed); return {hasNext: () => l.length > 0, next: () => l.shift()}; }}; folders.push(f); return f; },
+      getFileById: () => ({makeCopy: (name, folder) => { const t = Date.now() + folder.files.length; folder.files.push({name, trashed: false, getDateCreated: () => new Date(t), setTrashed(v) { this.trashed = v; }}); }})
+    },
+    Session: {getScriptTimeZone: () => 'Africa/Cairo'},
+    }),
+    ContentService: {MimeType: {JSON: 'json'}, createTextOutput: t => ({t, setMimeType() { return this; }})},
+    Utilities: {sleep() {}, formatDate: d => d.toISOString().slice(0, 10), newBlob: (data, type, name) => ({data: String(data), type, name})},
+    MailApp: {sendEmail() {}},
+    /* طلبات برّه الشيت: بنسجلها بس (tg.updates) */
+    UrlFetchApp: {fetch: (url, o) => {
+      tg.calls.push({url, body: o && o.payload ? (typeof o.payload === 'string' ? JSON.parse(o.payload) : o.payload) : null});   // sendDocument بيبعت object (ملف)
+      /* وسيط إشعارات الأيفون (functions/push.js): tg.relay(body) بيرد زيه، والافتراضي "وصل" (201) لكل جهاز */
+      if (/\/push$/.test(String(url))) { const b = JSON.parse(o.payload), r = tg.relay ? tg.relay(b) : {code: 200, body: {ok: true, st: b.subs.map(() => 201)}}; return {getContentText: () => typeof r.body === 'string' ? r.body : JSON.stringify(r.body), getResponseCode: () => r.code}; }
+      const m = String(url).split('/').pop();
+      const tok = (String(url).match(/bot([^/]+)\//) || [])[1] || '';
+      const body = !/^\d{5,}:[\w-]{20,}$/.test(tok) || (tg.valid && !tg.valid.includes(tok)) ? {ok: false, error_code: 401, description: 'Unauthorized'} : m === 'getMe' ? {ok: true, result: {username: 'test_souq_bot'}} : m === 'getUpdates' ? {ok: true, result: tg.updates} : {ok: true, result: {}};
+      return {getContentText: () => JSON.stringify(body), getResponseCode: () => 200};
+    }},
+    console, JSON, Date, Math
+  };
+  vm.createContext(ctx);
+  return {
+    sheets, ctx, triggers, folders, props, tg, reads,
+    load(src) { vm.runInContext(src, ctx); },
+    post(body) { return ctx.doPost({postData: {contents: body}}).t; },
+    get() { return ctx.doGet({parameter: {}}).t; }
+  };
+}
+module.exports = {makeGas};

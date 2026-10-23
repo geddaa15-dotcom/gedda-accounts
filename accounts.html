@@ -432,6 +432,21 @@ nav svg{width:26px;height:26px}
 .pg .tot .sum{width:380px;margin-top:0;align-self:auto;display:flex}
 .pg .tot .sum .f{margin-top:0;flex:1;font-size:16px;padding:6px 14px}
 .pg .tot+.note{margin-top:8px}
+.pg.rcv td{padding:7px 6px}.pg.rcv td.n{font-size:18px}
+.pg .sig{margin-top:26px;flex:none}
+.pg .sig p{font-size:15px;font-weight:600;color:#444;margin:0 0 26px}
+.pg .sig .rsg{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:28px}
+.pg .sig .rsg span{display:block;font-size:16px;font-weight:800;margin-bottom:34px}
+.pg .sig .rsg i{display:block;border-bottom:2px dotted #333}
+.pg.plain{color:#111}
+.pg.plain .rhd{text-align:center;border-bottom:2px solid #111;padding:10px 0 12px;margin-bottom:16px;flex:none}
+.pg.plain .rhd h3{margin:0 0 4px;font-size:30px;font-weight:800}
+.pg.plain .rhd div{font-size:16px;font-weight:700}
+.pg.plain .cust{background:#fff;border:1px solid #999;border-right:6px solid #111}
+.pg.plain th{background:#EEE;border:1px solid #999;border-bottom:2px solid #111}
+.pg.plain td{border-color:#999}.pg.plain tr:nth-child(even) td{background:#F6F6F6}
+.pg.plain .mini{border-color:#111}
+.pg.plain .ft{background:#fff;border-top:1px solid #999;justify-content:center;color:#555}
 .pg .gen{flex:none;text-align:center;font-size:12px;font-weight:600;color:#888;padding:2px 0 4px}
 .pg .ft{flex:none;background:#EEF6FB;color:#0F2433;display:flex;justify-content:space-between;align-items:center;padding:0 44px;height:40px;font-size:13.5px;font-weight:600;border-top:3px solid #0B84C6}
 .pg .ft span:first-child{color:#075E8F;font-size:16px;font-weight:700}
@@ -2685,7 +2700,7 @@ function docModal(p, kind, e, opts = {}) {
     <div id="dcWarn"></div>
     <div class="mfoot">
       <div class="dtot"><span>${ret ? 'إجمالي المرتجع' : qt ? 'إجمالي العرض' : 'إجمالي الفاتورة'}<small id="dcDs"></small></span><b id="dcTot">0</b></div>
-      ${!isNew && !qt ? `<div class="msec"><button class="btn red sm" id="dcDel" type="button">${ret ? 'إلغاء المرتجع' : 'إلغاء الفاتورة'}</button></div>` : ''}
+      ${!isNew && !qt ? `<div class="msec">${kind === 'inv' ? '<button class="btn line sm" id="dcRcv" type="button">📦 إذن استلام</button>' : ''}<button class="btn red sm" id="dcDel" type="button">${ret ? 'إلغاء المرتجع' : 'إلغاء الفاتورة'}</button></div>` : ''}
       <div class="mrow"><button class="btn gold" id="dcOk" type="button">${isNew ? (qt ? 'حفظ العرض' : 'حفظ الفاتورة') : 'حفظ التعديل'}</button><button class="btn line" id="dcX" type="button">رجوع</button></div></div>`, true);
   if ($('#fwMk')) $('#fwMk').onclick = () => { e.fwMan = true; touch(e); saveDB(); closeModal(); route(); toast('✔ اتعلّمت إنها متنقلة (من غير ما تتنقل تاني)'); };
   if ($('#fwUn')) $('#fwUn').onclick = () => { delete e.fwMan; touch(e); saveDB(); closeModal(); route(); toast('رجعت "متنقلتش"'); };
@@ -2823,6 +2838,7 @@ function docModal(p, kind, e, opts = {}) {
     saveDB(); closeModal(); route();
   };
   if (!isNew && !qt) $('#dcDel').onclick = () => cancelEntry(e);
+  if ($('#dcRcv')) $('#dcRcv').onclick = () => rcvModal(p, e, () => docModal(p, kind, e));
 }
 
 /* ---------- دفعة استلمتها / دفعتها ---------- */
@@ -3069,10 +3085,63 @@ function invOnlyModal(p, e) {
       <div class="k"><span>إجمالي الفاتورة</span><b>${fmtP(tot)}</b></div></div>
     
     <div class="mfoot"><div class="mrow3"><button class="btn green" id="ivShare" type="button">📲 واتساب</button>
-      <button class="btn gold" id="ivPdf" type="button">📄 معاينة PDF</button><button class="btn line" id="ivBack" type="button">رجوع</button></div></div>`, true);
+      <button class="btn gold" id="ivPdf" type="button">📄 معاينة PDF</button><button class="btn line" id="ivBack" type="button">رجوع</button></div>
+      ${e.kind === 'inv' ? '<button class="btn line" id="ivRcv" type="button" style="margin-top:8px">📦 إذن استلام (البنود والعدد بس)</button>' : ''}</div>`, true);
   $('#ivBack').onclick = () => stmtModal(p);
+  if ($('#ivRcv')) $('#ivRcv').onclick = () => rcvModal(p, e, () => invOnlyModal(p, e));
   $('#ivShare').onclick = () => exportStmt(p, s, 'share');
   $('#ivPdf').onclick = () => exportStmt(p, s, 'preview');
+}
+/* ====================== إذن الاستلام (بطلبه 23/10/2026) ======================
+   من الفاتورة: البنود وعددها بس من غير أي أسعار، وتحت مكان إمضاء المستلم. نوعين: باللوجو وبيانات الشركة، أو "سادة" من غير أي حاجة تخص الشركة */
+function rcvModal(p, e, back) {
+  let plain = false;
+  try { plain = localStorage.getItem('gd_rcvPlain') === '1'; } catch (x) {}
+  modal(`<h3>📦 إذن استلام<small class="mnm">${esc(p.name)}</small></h3>
+    <div class="seg s2" id="rcvKind"><button type="button" data-v="0" class="${plain ? '' : 'on'}">باللوجو</button><button type="button" data-v="1" class="${plain ? 'on' : ''}">سادة من غير لوجو</button></div>
+    <div class="qmeta"><span>تاريخ الفاتورة: <b>${dispDate(e.date)}</b></span><span>عدد البنود: <b>${(e.lines || []).length}</b></span></div>
+    <p class="hint">البنود وعددها بس من غير أسعار، وتحت مكان إمضاء المستلم.</p>
+    <div class="mfoot"><div class="mrow3"><button class="btn green" id="rcShare" type="button">📲 واتساب</button>
+      <button class="btn gold" id="rcPdf" type="button">📄 معاينة PDF</button><button class="btn line" id="rcBack" type="button">رجوع</button></div></div>`, true);
+  $$('#rcvKind button').forEach(b => b.onclick = () => { plain = b.dataset.v === '1'; $$('#rcvKind button').forEach(x => x.classList.toggle('on', x === b)); try { localStorage.setItem('gd_rcvPlain', plain ? '1' : '0'); } catch (x) {} });
+  $('#rcBack').onclick = back || closeModal;
+  const run = how => exportStmt(p, {rcv: e, plain}, how);
+  $('#rcShare').onclick = () => run('share');
+  $('#rcPdf').onclick = () => run('preview');
+}
+function buildRcvPages(p, e, plain) {
+  const box = $('#render'); box.innerHTML = '';
+  const c = db.cfg, web = coWeb(), lines = (e.lines || []).filter(l => l.name || +l.qty);
+  const shell = first => {
+    const pg = document.createElement('div'); pg.className = 'pg rcv' + (plain ? ' plain' : '');
+    pg.innerHTML = (plain ? '' : '<div class="strip"></div>') + '<div class="in">' + (first
+      ? plain
+        ? `<div class="rhd"><h3>إذن استلام</h3><div>التاريخ: <span>${dispDate(e.date)}</span></div></div>`
+        : `<div class="hd"><img src="icons/logo-pdf.jpg" alt=""><div class="co"><b>جَدة ال.جي</b><span>للصناعات الكهربائية المصرية</span>${web ? `<i class="web" data-url="${esc(webUrl(web))}">🌐 ${esc(web)}</i>` : ''}${c.phone ? `<em>${esc(c.phone)}</em>` : ''}</div>
+          <div class="ti"><h3>إذن استلام</h3><div>التاريخ: <span>${dispDate(e.date)}</span></div><div>عدد البنود: <span>${lines.length}</span></div></div></div>`
+      : `<div class="mini"><b>إذن استلام</b><span>${esc(p.name)} — ${dispDate(e.date)}</span></div>`) +
+      (first ? `<div class="cust"><span>السادة / <b>${esc(p.name)}</b></span></div>` : '') +
+      `</div>` + (plain ? '<div class="ft"><span></span><span class="pn"></span></div>' : `<div class="ft"><span>جَدة ال.جي للصناعات الكهربائية المصرية</span>${web ? `<span class="web" data-url="${esc(webUrl(web))}">${esc(web)}</span>` : ''}<span class="pn"></span></div>`);
+    box.appendChild(pg);
+    return {pg, inn: pg.querySelector('.in')};
+  };
+  const over = (inn, el, m = 16) => el.getBoundingClientRect().bottom > inn.getBoundingClientRect().bottom - m;
+  const mkTable = () => { const t = document.createElement('table'); t.innerHTML = `<colgroup><col style="width:9%"><col style="width:57%"><col style="width:18%"><col style="width:16%"></colgroup>
+    <thead><tr><th>م</th><th>الصنف</th><th>العدد / الكمية</th><th>الوحدة</th></tr></thead><tbody></tbody>`; return t; };
+  let pg = shell(true), tbl = mkTable(); pg.inn.appendChild(tbl);
+  lines.forEach((l, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="q">${i + 1}</td><td class="l">${esc(l.name)}</td><td class="n">${fmtQ(l.qty)}</td><td class="q">${esc(l.unit || '')}</td>`;
+    tbl.tBodies[0].appendChild(tr);
+    if (over(pg.inn, tr) && tbl.tBodies[0].rows.length > 1) { tr.remove(); pg = shell(false); tbl = mkTable(); pg.inn.appendChild(tbl); tbl.tBodies[0].appendChild(tr); }
+  });
+  const sig = document.createElement('div'); sig.className = 'sig';
+  sig.innerHTML = `<p>أقر أنا الموقع أدناه بأنني استلمت الأصناف الموضحة أعلاه بالعدد المذكور وبحالة سليمة.</p>
+    <div class="rsg"><div><span>اسم المستلم</span><i></i></div><div><span>التوقيع</span><i></i></div><div><span>التاريخ</span><i></i></div></div>`;
+  pg.inn.appendChild(sig); if (over(pg.inn, sig, 0)) { sig.remove(); pg = shell(false); pg.inn.appendChild(sig); }
+  const pages = [...box.children];
+  pages.forEach((x, i) => x.querySelector('.pn').textContent = `صفحة ${i + 1} من ${pages.length}`);
+  return pages;
 }
 /* ====================== عروض الأسعار (بطلبه 21/10/2026) ======================
    سجل لوحده (qts): مبيدخلش أي رصيد ولا كشف حساب ولا أرباح. st: w مستني، d اتنفذ (inv = الفاتورة اللي اتعملت منه)، x اتلغى.
@@ -3261,7 +3330,7 @@ function buildStmtPages(p, s) {
   pages.forEach((x, i) => x.querySelector('.pn').textContent = `صفحة ${i + 1} من ${pages.length}`);
   return pages;
 }
-async function makeStmtPdf(p, s) { return s.qt ? pagesToPdf(() => buildStmtPages(p, s), `عرض سعر - ${p.name}`, `عرض سعر ${p.name}`) : s.invOnly ? pagesToPdf(() => buildStmtPages(p, s), `فاتورة - ${p.name}`, `فاتورة ${p.name}`) : pagesToPdf(() => buildStmtPages(p, s), `كشف حساب - ${p.name}`, p.name); }   // الملف باسم الشخص بس
+async function makeStmtPdf(p, s) { if (s.rcv) return pagesToPdf(() => buildRcvPages(p, s.rcv, s.plain), `إذن استلام - ${p.name}`, `إذن استلام ${p.name}`); return s.qt ? pagesToPdf(() => buildStmtPages(p, s), `عرض سعر - ${p.name}`, `عرض سعر ${p.name}`) : s.invOnly ? pagesToPdf(() => buildStmtPages(p, s), `فاتورة - ${p.name}`, `فاتورة ${p.name}`) : pagesToPdf(() => buildStmtPages(p, s), `كشف حساب - ${p.name}`, p.name); }   // الملف باسم الشخص بس
 async function shareFile(res, title) {
   const file = new File([res.blob], res.name, {type: 'application/pdf'});
   const data = {files: [file]};   // الملف بس: من غير رسالة مكتوبة قبله
@@ -3283,12 +3352,12 @@ async function shareFile(res, title) {
   }
 }
 async function exportStmt(p, s, how) {
-  modal(`<p style="text-align:center">جاري تجهيز ${s.qt ? 'عرض السعر' : s.invOnly ? 'الفاتورة' : 'كشف الحساب'}…</p>`);
+  modal(`<p style="text-align:center">جاري تجهيز ${s.rcv ? 'إذن الاستلام' : s.qt ? 'عرض السعر' : s.invOnly ? 'الفاتورة' : 'كشف الحساب'}…</p>`);
   let res;
   try { res = await makeStmtPdf(p, s); }
   catch (e) { closeModal(); console.error(e); toast('حصلت مشكلة في تجهيز الـ PDF، جرّب تاني.'); return; }
   closeModal();
-  const title = `${s.qt ? 'عرض سعر' : s.invOnly ? 'فاتورة' : 'كشف حساب'} ${p.name}`;
+  const title = `${s.rcv ? 'إذن استلام' : s.qt ? 'عرض سعر' : s.invOnly ? 'فاتورة' : 'كشف حساب'} ${p.name}`;
   if (how === 'share') return shareFile(res, title);
   modal(`${res.imgs.map(u => `<img src="${u}" alt="">`).join('')}${res.pages > res.imgs.length ? `<p class="hint">(المعاينة بتعرض أول ${res.imgs.length} صفحات من ${res.pages})</p>` : ''}
     <div class="stack"><button class="btn green" id="pvShare">ابعت واتساب</button><button class="btn gold" id="pvDl">تنزيل PDF</button><button class="btn line" id="pvX">إغلاق</button></div>`, true);

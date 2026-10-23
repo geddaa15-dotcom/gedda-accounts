@@ -158,6 +158,9 @@ const SCREENS = [
   {name: 'pdf-stmt-sup', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`const sp = liveParties().find(p => p.sec === 'sup'); go('p/' + sp.id); const s = stmtData(sp.id, todayISO().slice(0, 8) + '01', todayISO()); buildStmtPages(sp, s); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
   {name: 'pdf-ldg', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`cashView = 'date'; cashMode = 'range'; cashFrom = addDays(todayISO(), -20); cashTo = todayISO(); cashOpenV = false; go('cash'); renderCash(); buildReportPages(ldgReport(ldgItems(cashRange()[0], cashRange()[1]), cashRange()[0], cashRange()[1])); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
   {name: 'pdf-qt', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`const q = IDX.qt.get('q_shot0'); buildStmtPages(qtParty(q), qtStmt(q)); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
+  {name: 'pdf-rcv', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`buildRcvPages(${party}, [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'inv' && !e.del && (e.lines || []).length > 1).pop(), false); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
+  {name: 'pdf-rcv-plain', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`buildRcvPages(${party}, [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'inv' && !e.del && (e.lines || []).length > 1).pop(), true); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
+  {name: 'acc-rcv-m', app: 'acc', vp: MOB, go: accEval(`rcvModal(${party}, [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'inv' && !e.del && (e.lines || []).length > 1).pop())`)},
   {name: 'pdf-rep', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`go('rep'); buildReportPages(buildReport()); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
 ];
 

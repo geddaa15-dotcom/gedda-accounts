@@ -571,6 +571,15 @@ const T0 = Date.now();
     await A.evaluate(() => { window.__sh = null; navigator.canShare = () => true; navigator.share = d => { window.__sh = d; return Promise.resolve(); }; });
     await A.click('#ivShare'); await A.waitForFunction(() => window.__sh, null, {timeout: 90000});
     eq('واتساب الفاتورة: الملف بس واسمه "فاتورة" + اسم الشخص', await A.evaluate(() => [Object.keys(__sh), __sh.files[0].name]), [['files'], 'فاتورة عميل تجربة واحد.pdf']);
+    /* إذن الاستلام: البنود والعدد من غير أسعار ومكان الإمضاء، باللوجو أو سادة من غير أي حاجة تخص الشركة */
+    eq('إذن الاستلام: البنود والعدد بس من غير أسعار، ومكان إمضاء المستلم، والسادة من غير لوجو ولا اسم الشركة', await A.evaluate(() => { const p = liveParties().find(x => x.name === 'عميل تجربة واحد'), l = partyEntries(p.id).filter(e => e.kind === 'inv').pop(), r = [];
+      [false, true].forEach(plain => { const pg = buildRcvPages(p, l, plain)[0], t = pg.textContent;
+        r.push(pg.querySelector('h3').textContent === 'إذن استلام', pg.querySelectorAll('tbody tr').length === l.lines.length, pg.querySelectorAll('thead th').length === 4, !t.includes(fmtP(docTotal(l))) && !l.lines.some(x => +x.price && t.includes(fmtP(x.price))), t.includes('اسم المستلم') && t.includes('التوقيع'),
+          !!pg.querySelector('img') === !plain, t.includes('جَدة') === !plain); });
+      $('#render').innerHTML = ''; return r; }), Array(14).fill(true));
+    await A.click('#fbStmt'); await A.settle(150); await A.click('#smInv'); await A.settle(150); await A.click('#ivRcv'); await A.settle(150); await A.click('#rcvKind [data-v="1"]');
+    await A.evaluate(() => { window.__sh = null; }); await A.click('#rcShare'); await A.waitForFunction(() => window.__sh, null, {timeout: 90000});
+    eq('واتساب إذن الاستلام: الملف اسمه "إذن استلام" + اسم الشخص', await A.evaluate(() => __sh.files[0].name), 'إذن استلام عميل تجربة واحد.pdf');
 
     sec('٧ب) نقل فواتير الحساب الفرعي لحسابه الأساسي ');
     await A.evaluate(() => closeModal());

@@ -1039,9 +1039,9 @@ const T0 = Date.now();
     await A.evaluate(() => { tab = 'mkt'; go('home'); }); await A.settle(200);
     eq('الموبايل: مفيش زرار الليلي فوق، وزرار الحساب الجديد مش نفس ＋ بتاع التسجيل السريع، وسطر "آخر دفعة" تحت الاسم', await A.evaluate(() => [!!$('#bTheme').offsetParent, $('#bNewParty').textContent.includes('＋'), !!$('#bNewParty svg'),
       [...$$('#hList .lpy')].some(x => x.offsetParent && x.textContent.startsWith('آخر دفعة'))]), [false, false, true, true]);
-    eq('الموبايل: خانة البحث على طول فوق القايمة (من غير زرار عدسة)، والزراير (الجرد، حساب جديد) في سطر واحد كبار ومتباعدين', await A.evaluate(() => {
-      const bs = ['#hJrd', '#bNewParty'].map(x => $(x).getBoundingClientRect()), q = $('#hSearch').getBoundingClientRect();
-      return [!!$('#hSearch').offsetParent, !!$('#bSearch').offsetParent, q.bottom <= $('#hList').getBoundingClientRect().top + 1, bs.every(r => Math.abs(r.top - bs[0].top) < 2 && r.height >= 50 && r.width >= 70), bs.slice(1).every((r, i) => Math.abs(r.right - bs[i].left) >= 6 || Math.abs(bs[i].right - r.left) >= 6)]; }), [true, false, true, true, true]);
+    eq('الموبايل: خانة البحث على طول فوق القايمة (من غير زرار عدسة)، والزراير الست (الجرد … حساب جديد) سطرين كل سطر 3، كبار ومتباعدين', await A.evaluate(() => {
+      const bs = ['#hJrd', '#hAct', '#hQt', '#hOrd', '#hPrc', '#bNewParty'].map(x => $(x).getBoundingClientRect()), q = $('#hSearch').getBoundingClientRect(), row = (a, b) => a.every(r => Math.abs(r.top - a[0].top) < 2) && b.every(r => Math.abs(r.top - b[0].top) < 2) && b[0].top > a[0].bottom;
+      return [!!$('#hSearch').offsetParent, !!$('#bSearch').offsetParent, q.bottom <= $('#hList').getBoundingClientRect().top + 1, bs.every(r => r.height >= 50 && r.width >= 70) && row(bs.slice(0, 3), bs.slice(3)), [1, 2, 4, 5].every(i => Math.abs(bs[i].right - bs[i - 1].left) >= 6 && Math.abs(bs[i - 1].right - bs[i].left) >= 6)]; }), [true, false, true, true, true]);
     await A.fill('#hSearch', 'تجربة واحد'); await A.settle(200);
     eq('الكتابة في خانة البحث بتفلتر القايمة على طول', await A.evaluate(() => $$('#hList .pt').length), 1);
     await A.click('#bSearchAll'); await A.settle(400);
@@ -1257,6 +1257,37 @@ const T0 = Date.now();
       await A.evaluate(() => { const now = nowS(), p = liveParties().find(x => x.sec !== 'sup'); [[12345600, 'qa'], [98700, 'qb'], [4500000, 'qc']].forEach(([price, id]) => { const q = {id: 'q_col' + id, kind: 'qt', party: p.id, name: '', no: 0, st: 'w', inv: '', date: todayISO(), till: '', lines: [{name: 'صنف', unit: 'كيلو', qty: 1, price}], disc: 0, note: '', at: now, upd: now, del: false, hist: []}; db.qts.push(q); IDX.qt.set(q.id, q); }); go('qt'); renderQts(); });
       await colOk('الحسابات — عروض الأسعار', A, '#qtL', '.pt .a b');
       await A.evaluate(() => { db.qts.filter(q => q.id.startsWith('q_col')).forEach(q => { q.del = true; touch(q); }); saveDB(); });
+    }
+    {   // الطلبات والتسعير: مبيلمسوش أي رصيد. الطلبية بالكيلو = اللفف × وزن اللفة، ولسه متسلمتش / اتسلمت، والمتأخرة. الخلطة: سعر البيع والعكس
+      const r = await A.evaluate(async () => {
+        closeModal(); const bal = () => JSON.stringify([...allBalances()]), b0 = bal(), n0 = db.entries.length, p = liveParties().find(x => x.sec !== 'sup'), r = [];
+        go('ord'); await new Promise(res => setTimeout(res, 30)); const w0 = liveOrds().filter(o => o.st === 'w').length;
+        $('#orNew').click(); $('#orN').value = p.name;
+        const li = $('#orLines .orl'), set = (k, v) => { const i = li.querySelector(`[data-f=${k}]`); i.value = v; i.dispatchEvent(new Event('input')); };
+        set('name', 'صنف طلبية تجربة'); set('rolls', '40'); set('w', '4.8');
+        r.push(li.querySelector('[data-f=kg]').value === '192' && li.querySelector('[data-f=kg]').readOnly);
+        $('#orAdd').click(); const l2 = $$('#orLines .orl')[1]; l2.querySelector('[data-f=name]').value = 'صنف بالكيلو تجربة'; l2.querySelector('[data-f=name]').dispatchEvent(new Event('input')); l2.querySelector('[data-f=kg]').value = '30'; l2.querySelector('[data-f=kg]').dispatchEvent(new Event('input'));
+        $('#orDue [data-v="' + addDays(todayISO(), 1) + '"]').click(); $('#orOk').click();
+        const o = db.ords[db.ords.length - 1];
+        r.push(!!o && o.party === p.id && o.st === 'w' && o.due === addDays(todayISO(), 1) && o.lines.length === 2 && o.lines[0].kg === 192 && o.lines[1].kg === 30 && o.by === meName(), db.entries.length === n0 && bal() === b0);
+        r.push(location.hash === '#ord' && $$('#p-ord .orc').length === w0 + 1 && $(`#p-ord .orc[data-o="${o.id}"]`).textContent.includes('40 لفة صنف طلبية تجربة · 4.8 ك = 192 ك') && $(`#p-ord .orc[data-o="${o.id}"]`).textContent.includes('التسليم: بكرة'));
+        o.due = addDays(todayISO(), -2); touch(o); saveDB(); renderOrds(); r.push($(`#p-ord .orc[data-o="${o.id}"]`).classList.contains('late') && $(`#p-ord .orc[data-o="${o.id}"]`).textContent.includes('متأخرة يومين'));
+        $(`#p-ord [data-d="${o.id}"]`).click(); r.push(o.st === 'd' && !$(`#p-ord .orc[data-o="${o.id}"]`), actItems(todayISO()).some(x => x.r === o && x.w === 'علّم اتسلمت'));
+        $('#orF [data-v=d]').click(); r.push(!!$(`#p-ord .orc[data-o="${o.id}"]`));
+        renderHome(); r.push(!$('#hOrd') || ($('#hOrd small') ? +$('#hOrd small').textContent : 0) === liveOrds().filter(x => x.st === 'w').length);
+        /* التسعير: 70% × 65 + 30% × 55 = 62، + 6 تشغيل = 68، + 10% ربح = 74.80 */
+        go('prc'); await new Promise(res => setTimeout(res, 30)); if (!liveMixs().length) $('#mxFirst').click(); else $('#mxAdd').click();
+        const m = liveMixs().pop(), inp = (sel, v) => { const i = $(sel); i.value = v; i.dispatchEvent(new Event('input')); i.dispatchEvent(new Event('change')); };
+        inp('#mxR .mxr[data-i="0"] [data-f=name]', 'خامة أ تجربة'); inp('#mxR .mxr[data-i="0"] [data-f=price]', '65'); inp('#mxR .mxr[data-i="1"] [data-f=name]', 'خامة ب تجربة'); inp('#mxR .mxr[data-i="1"] [data-f=price]', '55');
+        inp('#mxR .mxr[data-i="0"] [data-f=pct]', '70'); r.push(m.rows[1].pct === 30 && $('#mxR .mxr[data-i="1"] [data-f=pct]').value === '30');
+        inp('#mxRun', '6'); inp('#mxPro', '10');
+        r.push(Math.round(mixKg(m)) === 6200 && Math.round(mixCost(m)) === 6800 && mixSell(m) === 7480 && $('#mxRes .big').textContent === fmtP(7480), (m.hist || []).length === 1 && m.by === meName());
+        inp('#mxWant', '72.6'); r.push(!!$('#mxUse') && $('#mxRevOut').textContent.includes('50%')); $('#mxUse').click(); r.push(m.rows[0].pct === 50 && mixSell(m) === 7260);
+        inp('#mxWant', '200'); r.push($('#mxRevOut').textContent.includes('مينفعش'));
+        r.push(db.entries.length === n0 && bal() === b0, 'ord' in STORE && 'mix' in STORE);
+        [o, m].forEach(x => { x.del = true; touch(x); }); saveDB(); ordF = 'w'; mixCur = ''; go('home');
+        return r; });
+      eq('الطلبات: الكيلو = اللفف × وزن اللفة، بتتسجل بالاسم من غير رصيد، المتأخرة بالأحمر، "اتسلمت" بتنقلها وتظهر في "اللي اتعمل". التسعير: 70/30 من 65 و55 + 6 + 10% = 74.80، والنسبة التانية بتتظبط لوحدها، والعكس بيقول تخلط بكام', r, Array(17).fill(true));
     }
     {   // النسخ الاحتياطية: الحفظ الأوتوماتيك في فولدر على اللاب، وسطر النسخة اليومية على Drive
       const r = await A.evaluate(async () => {

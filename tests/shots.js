@@ -124,6 +124,9 @@ const ACC = (sfx, vp, extra = {}) => [
   {name: 'acc-qt-' + sfx, go: accGo('qt'), full: true},
   {name: 'acc-drv-' + sfx, go: accEval('backupHelp()')},
   {name: 'acc-af-' + sfx, go: async A => { await accGo('set')(A); await A.evaluate(() => { const c = $('#sAfC'); c.hidden = false; c.classList.remove('shut'); c.scrollIntoView(); }); }},
+  {name: 'acc-ord-' + sfx, go: accEval("ordF = 'w'; go('ord')"), full: true},
+  {name: 'acc-ordn-' + sfx, go: accEval("ordModal(IDX.ord.get('o_shot0'))")},
+  {name: 'acc-prc-' + sfx, go: accEval("mixCur = 'm_shot0'; go('prc')"), full: true},
   {name: 'acc-qtv-' + sfx, go: accEval("qtView(IDX.qt.get('q_shot0'))")},
   {name: 'acc-qted-' + sfx, go: accEval(`docModal(${party}, 'qt', IDX.qt.get('q_shot0'))`)},
   {name: 'acc-jrd-' + sfx, go: accEval(JRDSHOT + "jrDate = ''; jrStock = null; go('jrd')"), full: true},
@@ -190,6 +193,13 @@ function accExtra(iso0, now) {
   [[cu.find(p => p.name.startsWith('مؤسسة تجربة للمقاولات')).id, '', 'w', 3, 14], ['', 'مؤسسة تجربة الجديدة', 'w', 20, 10], [cu[0].id, '', 'd', 9, 14], [cu[4].id, '', 'x', 30, 14]].forEach(([party, name, st, n, tl], i) => {
     const r = {id: 'q_shot' + i, kind: 'qt', party, name, no: i + 1, st, inv: '', date: d(n), till: new Date(now - (n - tl) * 86400000).toISOString().slice(0, 10), lines: [{name: 'خرطوم تجربة 16 مم', unit: 'لفة', qty: 40, price: 52500}, {name: 'وصلة تجربة', unit: 'كرتونة', qty: 6, price: 18500}].slice(0, i % 2 ? 1 : 2), disc: i === 0 ? 50000 : 0, note: i === 0 ? 'التسليم في المصنع' : '', at: now, upd: now, del: false, hist: []};
     db.qts.push(r); IDX.qt.set(r.id, r); });
+  /* طلبات: تلاتة لسه متسلمتش (واحدة متأخرة) وواحدة اتسلمت، وخلطتين تسعير */
+  [[cu[3].id, '', 'w', -2, [{name: 'لفة 16 مم أحمر تجربة', rolls: 100, w: 5, kg: 500}], ''], [cu[1].id, '', 'w', 1, [{name: 'لفة 23 مم أسود تجربة', rolls: 60, w: 7, kg: 420}, {name: 'مواسير تجربة', rolls: 0, w: 0, kg: 30}], 'عاوزها ختم تجربة'],
+   ['', 'ورشة تجربة جديدة', 'w', 4, [{name: 'لفة 16 مم أحمر تجربة', rolls: 40, w: 4.8, kg: 192}], ''], [cu[2].id, '', 'd', -1, [{name: 'لفة 16 مم أحمر تجربة', rolls: 20, w: 5, kg: 100}], '']].forEach(([party, name, st, n, lines, note], i) => {
+    const r = {id: 'o_shot' + i, kind: 'ord', party, name, st, due: d(-n), lines, note, dAt: st === 'd' ? now - 3600000 : 0, at: now - 86400000 * 3, upd: now, del: false, hist: []};
+    db.ords.push(r); IDX.ord.set(r.id, r); });
+  [['خلطة تجربة', [{name: 'خامة أساسية تجربة', price: 6500, pct: 70}, {name: 'خامة أرخص تجربة', price: 5500, pct: 30}], 600, 10], ['خلطة اقتصادي', [{name: 'خامة أساسية تجربة', price: 6500, pct: 40}, {name: 'خامة أرخص تجربة', price: 5500, pct: 60}], 600, 8]].forEach(([name, rows, run, profit], i) => {
+    const r = {id: 'm_shot' + i, kind: 'mix', name, rows, run, profit, at: now + i, upd: now, del: false, hist: []}; db.mixs.push(r); IDX.mix.set(r.id, r); });
   saveDB();
 }
 async function accPage(browser, base, vp, dark) {

@@ -271,6 +271,26 @@ ol.steps li{margin-bottom:6px}
 .qls{border:1px solid var(--line);border-radius:12px;margin:0 0 10px}.qls>div{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--line)}.qls>div:first-child{border-top:0}.qls span{display:flex;flex-direction:column;font-weight:700}.qls small{color:var(--sub);font-weight:500;font-size:var(--f1)}.qls b{direction:ltr;white-space:nowrap}
 .qtp{display:grid;gap:8px;margin:0 0 10px}.qtc{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:right;font:inherit;color:var(--ink);background:var(--gold-l);border:1px dashed var(--gold);border-radius:12px;padding:10px 14px;cursor:pointer}.qtc span{display:flex;flex-direction:column;font-weight:800}.qtc small{color:var(--sub);font-weight:500;font-size:var(--f1)}.qtc b{direction:ltr;white-space:nowrap;font-size:var(--f3)}
 .pt.qtr.late small{color:var(--red)}
+/* الطلبات والتسعير (بطلبه 23/10/2026) */
+#p-ord,#p-prc{max-width:820px}
+.orc{cursor:pointer;border-inline-start:4px solid var(--line)}.orc.late{border-inline-start-color:var(--red)}
+.orh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}.orh b{font-size:var(--f3)}
+.ortag{font-size:var(--f1);font-weight:800;padding:2px 10px;border-radius:12px;background:var(--gold-l);color:var(--gold-d);white-space:nowrap}
+.orli{font-weight:700;font-size:var(--f2);line-height:1.6}.ornote{font-size:var(--f1);color:var(--sub);margin-top:2px}
+.orf{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}.orf .btn{width:auto;padding:0 16px;margin:0;flex:none}
+.ordue{font-size:var(--f1);font-weight:700;color:var(--sub)}.orc.late .ordue{color:var(--red)}
+.orl{border:1px solid var(--line);border-radius:12px;padding:8px;margin-bottom:8px}
+.orn{display:flex;gap:6px;align-items:center}.orn .inp{flex:1}
+.or3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}.or3 label{font-size:var(--f1);color:var(--sub);text-align:center;font-weight:700}.or3 .inp{text-align:center;margin-top:2px}.or3 .inp[readonly]{background:var(--row)}
+.orx{flex:none;width:36px;height:36px;border:0;border-radius:8px;background:none;color:var(--red);font-size:var(--f3);cursor:pointer}
+.mxt{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}.mxt button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:6px 16px;font-weight:800;font-size:var(--f2);cursor:pointer;min-height:40px}.mxt button.on{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
+.mxh,.mxr{display:grid;grid-template-columns:1fr 80px 64px auto;gap:6px;align-items:center}.mxh{font-size:var(--f1);color:var(--sub);font-weight:700;margin-bottom:4px}.mxr{margin-bottom:6px}.mxr .inp[data-f=price],.mxr .pc{text-align:center}.mxr .pc{color:var(--gold-d);font-weight:800}
+.mxbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--row);margin:10px 0 4px}.mxbar i{display:block}.mxbar .c0{background:var(--gold-d)}.mxbar .c1{background:var(--gold)}.mxbar .c2{background:var(--green)}.mxbar .c3{background:var(--sub)}
+.mx2{display:grid;grid-template-columns:1fr 110px;gap:10px;align-items:center;margin:6px 0;font-weight:700}.mx2 .inp{text-align:center}
+.mxres{background:var(--card);border:2px solid var(--gold);border-radius:14px;padding:12px 16px;margin:0 0 12px}.mxres .l{display:flex;justify-content:space-between;font-weight:800;padding:3px 0;color:var(--sub)}.mxres .l b{color:var(--ink)}.mxres .l.k{color:var(--gold-d)}
+.mxres .big{background:var(--gold);color:var(--on-gold);border-radius:10px;text-align:center;font-size:var(--f5);font-weight:800;padding:8px;margin-top:6px}
+.mxrev summary{font-weight:800;color:var(--gold-d);cursor:pointer}.mxans{font-size:var(--f3);margin:8px 0}
+.mxft{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;font-size:var(--f1);color:var(--sub);margin:4px 0 16px}.mxft .lnk{background:none;border:0;color:var(--gold-d);text-decoration:underline;font-weight:700;font-size:var(--f1);cursor:pointer}.mxft .lnk.red{color:var(--red)}
 .qmeta{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:var(--f2);color:var(--sub);margin:0 0 8px}.qmeta b{color:var(--ink)}.qls>div.qt{background:var(--gold-l);border-radius:0 0 12px 12px}.qls>div.qt b{font-size:var(--f4);color:var(--gold-d)}.qls>div.qt small{display:inline;color:var(--gold-d);font-size:var(--f2)}
 .who{font-size:var(--f2);color:var(--sub);background:var(--row);border-radius:10px;padding:6px 10px;margin:6px 0 10px;line-height:1.7}.who b{color:var(--ink)}
 .hist{border-top:1px dashed var(--line);padding:6px 0;font-size:var(--f2)}
@@ -1495,6 +1515,7 @@ body{font-size:var(--f3);line-height:1.6}
   html body main .srow #bSearch,html body main .srow .hcash{background:var(--card);border:1px solid var(--line);color:var(--ink)}
   html body main .srow #bSearch svg,html body main .srow .hcash i-c{color:var(--gold-d)}
   html body main .srow .lb{display:block;font-size:var(--f1);font-weight:700;white-space:nowrap}
+  html body main .srow .hcash,html body main .srow #bNewParty{flex:1 1 calc((100% - 16px) / 3)}   /* 6 زراير: سطرين كل سطر 3 (بعد الطلبات والتسعير) */
   html body main .srow .hcash small{position:absolute;top:4px;inset-inline-start:6px;min-width:18px;height:18px;line-height:18px;border-radius:9px;background:var(--red);color:#fff!important;font-size:var(--f1)!important;padding:0 4px}
   html body main .srow.open #hSearch{display:block;order:-1;flex:1 1 calc(100% - 130px);height:48px;min-height:48px;font-size:var(--f3)}
   html body main .srow.open #bSearchAll{display:flex;order:-1;flex:0 0 120px;width:auto;min-height:48px;height:48px;margin:0!important;padding:4px 6px;font-size:var(--f1);border-radius:10px}
@@ -1631,6 +1652,8 @@ body{font-size:var(--f3);line-height:1.6}
 <section class="page" id="p-jrd"></section>
 <section class="page" id="p-act"></section>
 <section class="page" id="p-qt"></section>
+<section class="page" id="p-ord"></section>
+<section class="page" id="p-prc"></section>
 
 <!-- ============== الإعدادات ============== -->
 <section class="page" id="p-set">
@@ -1726,6 +1749,8 @@ body{font-size:var(--f3);line-height:1.6}
   <button data-go="jrd" class="lap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>الجرد<i class="nb" id="nbJrd"></i></button>
   <button data-go="act" class="lap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>اللي اتعمل</button>
   <button data-go="qt" class="lap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>عروض الأسعار</button>
+  <button data-go="ord" class="lap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>الطلبات</button>
+  <button data-go="prc" class="lap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><path d="M7.5 7.5h.01"/></svg>التسعير</button>
   <button data-go="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>الإعدادات</button>
   <div class="ngrp">أدوات</div>
   <button type="button" class="lap tool" id="nQuick" title="تسجيل سريع: فاتورة أو دفعة أو مصروف (F4)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>تسجيل سريع</button>
@@ -1890,13 +1915,13 @@ async function unseal(key, box) {
 
 function defaults() {
   return {
-    v: 1, parties: [], entries: [], vaults: [], cats: [], txs: [], sets: [], qts: [],
+    v: 1, parties: [], entries: [], vaults: [], cats: [], txs: [], sets: [], qts: [], ords: [], mixs: [],
     cfg: {dev: Array.from(crypto.getRandomValues(new Uint8Array(3)), x => x.toString(36).padStart(2, '0')).join(''), sheetUrl: '', sheetKey: '', sheetOk: false, cursor: 0, lastSync: 0, phone: ''}
   };
 }
 let db = null, cryptoKey = null, saltU8 = null;
 /* كل نوع سجل ومكانه في القاعدة. أي نوع جديد بيتضاف هنا بس، والمزامنة والنسخة الاحتياطية بيشتغلوا عليه لوحدهم */
-const STORE = {party: 'parties', entry: 'entries', vault: 'vaults', cat: 'cats', tx: 'txs', set: 'sets', stk: 'stks', qt: 'qts'};
+const STORE = {party: 'parties', entry: 'entries', vault: 'vaults', cat: 'cats', tx: 'txs', set: 'sets', stk: 'stks', qt: 'qts', ord: 'ords', mix: 'mixs'};
 let IDX = {}, P = new Map(), E = new Map();          // فهارس سريعة بالـ id
 function reindex() { for (const k in STORE) IDX[k] = new Map((db[STORE[k]] = db[STORE[k]] || []).map(r => [r.id, r])); P = IDX.party; E = IDX.entry; }
 
@@ -2239,12 +2264,15 @@ function renderHome() {
   const wide = isWide(), tabs = wide ? [['mkt', 'العملاء'], ['sup', 'الموردين']] : [];
   $('#hTabs').innerHTML = (!wide && tab === 'sup' ? `<div class="supt">🏭 الموردين <small>${cnt('sup')}</small></div>` : tabs.map(([k, n]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${n}<small>${cnt(k)}</small></button>`).join(''))
     ;
-  $('#hTools').innerHTML = !wide && tab !== 'sup' ? '<button class="hcash" id="hJrd" type="button">📦<span class="lb">الجرد</span></button><button class="hcash" id="hAct" type="button">⏰<span class="lb">اللي اتعمل</span></button><button class="hcash" id="hQt" type="button">📝<span class="lb">عروض الأسعار</span></button>' : '';
+  const nOrd = liveOrds().filter(o => o.st === 'w').length;
+  $('#hTools').innerHTML = !wide && tab !== 'sup' ? `<button class="hcash" id="hJrd" type="button">📦<span class="lb">الجرد</span></button><button class="hcash" id="hAct" type="button">⏰<span class="lb">اللي اتعمل</span></button><button class="hcash" id="hQt" type="button">📝<span class="lb">عروض الأسعار</span></button><button class="hcash" id="hOrd" type="button">📋<span class="lb">الطلبات</span>${nOrd ? `<small>${nOrd}</small>` : ''}</button><button class="hcash" id="hPrc" type="button">🏷<span class="lb">التسعير</span></button>` : '';
   $('#hTabs').classList.remove('t3');
   $$('#hTabs button[data-t]').forEach(b => b.onclick = () => { tab = b.dataset.t; renderHome(); });
   if ($('#hJrd')) $('#hJrd').onclick = () => go('jrd');
   if ($('#hAct')) $('#hAct').onclick = () => go('act');
   if ($('#hQt')) $('#hQt').onclick = () => go('qt');
+  if ($('#hOrd')) $('#hOrd').onclick = () => go('ord');
+  if ($('#hPrc')) $('#hPrc').onclick = () => go('prc');
   renderList(bal); qkMark(); runCounters($('#hTots'));
 }
 function qkMark() { const sp = $('main').classList.contains('split'); $$('nav .qk button').forEach(x => x.classList.toggle('on', sp && x.dataset.q === tab)); }
@@ -3236,6 +3264,201 @@ function renderQts() {
   $$('#p-qt [data-q]').forEach(el => el.onclick = () => qtView(IDX.qt.get(el.dataset.q)));
   $('#qtNew').onclick = () => qtNew();
 }
+/* ====================== الطلبات (بطلبه 23/10/2026) ======================
+   سجل لوحده (ords): مبيدخلش أي رصيد ولا كشف حساب. st: w لسه متسلمتش، d اتسلمت. due = ميعاد التسليم.
+   كل صنف: كام لفة (rolls) × وزن اللفة (w) = الكيلو (kg)، أو الكيلو بس. party فاضي = اسم لسه ملوش حساب (name) */
+const OST = {w: 'لسه متسلمتش', d: 'اتسلمت'};
+const liveOrds = () => db.ords.filter(o => !o.del);
+const ordName = o => (qtP(o) || o).name || '';
+const ordLate = o => o.st === 'w' && !!o.due && o.due < todayISO();
+const kgFmt = v => fmtQ(Math.round((+v || 0) * 1000) / 1000);
+const ordLineTxt = l => (+l.rolls ? `${fmtQ(l.rolls)} لفة ${l.name}${+l.w ? ` · ${kgFmt(l.w)} ك` : ''}` : l.name) + (+l.kg ? (+l.rolls && +l.w ? ` = ${kgFmt(l.kg)} ك` : ` · ${kgFmt(l.kg)} ك`) : '');
+const dayWord = iso => { const d = Math.round((Date.parse(iso) - Date.parse(todayISO())) / 864e5); return d === 0 ? 'النهارده' : d === 1 ? 'بكرة' : d === 2 ? 'بعد بكرة' : d === -1 ? 'امبارح' : `${AR_DAYS[new Date(iso + 'T00:00:00').getDay()]} ${dispDate(iso)}`; };
+const daysTxt = n => n === 1 ? 'يوم' : n === 2 ? 'يومين' : n <= 10 ? `${n} أيام` : `${n} يوم`;
+function ordDueTxt(o) {
+  if (!o.due) return '';
+  if (ordLate(o)) { const n = Math.round((Date.parse(todayISO()) - Date.parse(o.due)) / 864e5); return `متأخرة ${daysTxt(n)} (كانت ${dayWord(o.due)})`; }
+  return 'التسليم: ' + dayWord(o.due);
+}
+/* وزن اللفة اللي اتكتب لنفس الصنف آخر مرة (بيتملى لوحده) */
+function ordLastW(name) { const k = norm(name); let w = 0; db.ords.filter(o => !o.del).sort((a, b) => a.at - b.at).forEach(o => o.lines.forEach(l => { if (norm(l.name) === k && +l.w) w = +l.w; })); return w; }
+function ordItemNames() {
+  const m = new Map(); db.ords.filter(o => !o.del).forEach(o => o.lines.forEach(l => m.set(norm(l.name), l.name)));
+  itemBook().forEach((v, k) => { if (!m.has(k)) m.set(k, v.name); });
+  return [...m.values()];
+}
+function ordModal(o) {
+  const isNew = !o, src = o || {lines: [], due: addDays(todayISO(), 1), note: ''};
+  const lines = src.lines.map(l => Object.assign({}, l)); if (!lines.length) lines.push({name: '', rolls: '', w: '', kg: ''});
+  const quick = [['النهارده', 0], ['بكرة', 1], ['بعد بكرة', 2]];
+  modal(`<h3>${isNew ? '📋 طلبية جديدة' : '📋 تعديل الطلبية'}${o ? `<small class="mnm">${esc(ordName(o))}</small>` : ''}</h3>
+    <div class="fld"><label>العميل</label><input class="inp" id="orN" list="orNL" autocomplete="off" placeholder="عميل موجود أو اسم جديد" value="${esc(o ? ordName(o) : '')}"><datalist id="orNL">${liveParties().filter(x => x.sec !== 'sup').map(x => `<option value="${esc(x.name)}">`).join('')}</datalist></div>
+    <div class="fld"><label>الأصناف</label><div id="orLines"></div><datalist id="orIL">${ordItemNames().map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+      <button class="btn line sm" id="orAdd" type="button" style="margin-top:6px">+ صنف كمان</button></div>
+    <div class="fld"><label>عاوزها إمتى؟</label><div class="seg s4" id="orDue">${quick.map(([l, n]) => `<button type="button" data-v="${addDays(todayISO(), n)}">${l}</button>`).join('')}<button type="button" data-v="x">يوم تاني</button></div>
+      <input class="inp" id="orDate" type="date" value="${src.due || ''}" style="margin-top:6px"></div>
+    <div class="fld"><label>ملاحظة (لو فيه)</label><input class="inp" id="orNote" value="${esc(src.note || '')}"></div>
+    ${o ? whoHtml(o) : ''}
+    <div class="mfoot">${o ? '<div class="msec"><button class="btn red sm" id="orDel" type="button">إلغاء الطلبية</button></div>' : ''}
+      <div class="mrow"><button class="btn green" id="orOk" type="button">✔ ${isNew ? 'احفظ الطلبية' : 'حفظ التعديل'}</button><button class="btn line" id="orX" type="button">رجوع</button></div></div>`, true);
+  const box = $('#orLines');
+  const draw = () => {
+    box.innerHTML = lines.map((l, i) => `<div class="orl" data-i="${i}">
+      <div class="orn"><input class="inp" data-f="name" list="orIL" autocomplete="off" placeholder="الصنف (اكتب أي حاجة)" value="${esc(l.name)}">${lines.length > 1 ? `<button class="orx" type="button" aria-label="شيل الصنف">✕</button>` : ''}</div>
+      <div class="or3"><label>كام لفة<input class="inp" data-f="rolls" inputmode="decimal" value="${esc(String(l.rolls || ''))}"></label><label>وزن اللفة<input class="inp" data-f="w" inputmode="decimal" value="${esc(String(l.w || ''))}"></label><label>الكيلو<input class="inp" data-f="kg" inputmode="decimal" value="${esc(String(l.kg || ''))}"${+l.rolls && +l.w ? ' readonly' : ''}></label></div></div>`).join('');
+    $$('#orLines .orl').forEach(row => {
+      const i = +row.dataset.i, l = lines[i], f = k => row.querySelector(`[data-f=${k}]`);
+      const sync = () => { if (+num(l.rolls) && +num(l.w)) { l.kg = Math.round(num(l.rolls) * num(l.w) * 1000) / 1000; f('kg').value = l.kg; f('kg').readOnly = true; } else f('kg').readOnly = false; };
+      f('name').oninput = () => { l.name = f('name').value; };
+      f('name').onchange = () => { if (!f('w').value) { const w = ordLastW(l.name); if (w) { l.w = w; f('w').value = w; sync(); } } };
+      ['rolls', 'w'].forEach(k => f(k).oninput = () => { l[k] = f(k).value; sync(); });
+      f('kg').oninput = () => { l.kg = f('kg').value; };
+      const x = row.querySelector('.orx'); if (x) x.onclick = () => { lines.splice(i, 1); draw(); };
+    });
+  };
+  draw();
+  $('#orAdd').onclick = () => { lines.push({name: '', rolls: '', w: '', kg: ''}); draw(); const n = $$('#orLines [data-f=name]').pop(); if (n) n.focus(); };
+  const qd = quick.map(([, n]) => addDays(todayISO(), n));
+  let other = !!src.due && !qd.includes(src.due);   // "يوم تاني": خانة التاريخ بتظهر
+  const markDue = () => { const k = other ? 'x' : $('#orDate').value; $$('#orDue button').forEach(b => b.classList.toggle('on', b.dataset.v === k)); $('#orDate').style.display = other ? '' : 'none'; };
+  $$('#orDue button').forEach(b => b.onclick = () => { other = b.dataset.v === 'x'; if (!other) $('#orDate').value = b.dataset.v; else if (qd.includes($('#orDate').value)) $('#orDate').value = addDays(todayISO(), 3); markDue(); });
+  $('#orDate').onchange = markDue; markDue();
+  $('#orX').onclick = () => { closeModal(); route(); };
+  if ($('#orDel')) $('#orDel').onclick = async () => { if (!(await confirmBox('تلغي الطلبية دي؟', 'أيوه الغيها', true))) return ordModal(o); o.del = true; touch(o); saveDB(); route(); toast('الطلبية اتلغت'); };
+  $('#orOk').onclick = () => {
+    const n = $('#orN').value.trim().replace(/\s+/g, ' '); if (!n) return toast('اكتب اسم العميل');
+    const L = lines.map(l => ({name: (l.name || '').trim().replace(/\s+/g, ' '), rolls: num(l.rolls) || 0, w: num(l.w) || 0, kg: num(l.kg) || 0})).map(l => Object.assign(l, l.rolls && l.w ? {kg: Math.round(l.rolls * l.w * 1000) / 1000} : {})).filter(l => l.name || l.kg || l.rolls);
+    if (!L.length) return toast('اكتب صنف واحد على الأقل');
+    if (L.some(l => !l.name)) return toast('فيه صنف من غير اسم');
+    if (L.some(l => !l.kg && !l.rolls)) return toast('اكتب الكمية (كام لفة أو الكيلو) لكل صنف');
+    const due = $('#orDate').value; if (!due) return toast('اختار ميعاد التسليم');
+    const p = liveParties().find(x => x.sec !== 'sup' && norm(x.name) === norm(n));
+    const f = {party: p ? p.id : '', name: p ? '' : n, lines: L, due, note: $('#orNote').value.trim()};
+    if (!o) {
+      const now = nowS(); o = Object.assign({id: newId('o_'), kind: 'ord', st: 'w', dAt: 0, at: now, upd: now, del: false, hist: []}, f);
+      db.ords.push(o); IDX.ord.set(o.id, o); toast('اتحفظت الطلبية ✔');
+    } else {
+      if (JSON.stringify([o.party, o.name, o.lines, o.due, o.note || '']) === JSON.stringify([f.party, f.name, f.lines, f.due, f.note])) { closeModal(); return route(); }
+      (o.hist = o.hist || []).push({t: nowS(), by: o.by, party: o.party, name: o.name, lines: o.lines, due: o.due, note: o.note});
+      Object.assign(o, f); touch(o); toast('اتعدّلت الطلبية ✔');
+    }
+    ordF = 'w'; saveDB(); closeModal(); if (location.hash !== '#ord') go('ord'); else route();
+  };
+  if (isNew) setTimeout(() => $('#orN') && $('#orN').focus(), 50);
+}
+function ordSetSt(o, st) { o.st = st; o.dAt = st === 'd' ? nowS() : 0; touch(o); saveDB(); route(); toast(st === 'd' ? '✔ اتعلّمت إنها اتسلمت' : 'رجعت "لسه متسلمتش"'); }
+let ordF = 'w';
+function renderOrds() {
+  const all = liveOrds(), n = k => all.filter(o => o.st === k).length;
+  const L = all.filter(o => o.st === ordF).sort((a, b) => ordF === 'w' ? a.due.localeCompare(b.due) || a.at - b.at : (b.dAt || b.upd) - (a.dAt || a.upd));
+  $('#p-ord').innerHTML = `<div class="sech"><span>📋 الطلبات</span></div>
+    <div class="card"><div class="seg s2" id="orF">${Object.entries(OST).map(([k, v]) => `<button type="button" data-v="${k}" class="${k === ordF ? 'on' : ''}">${v} (${n(k)})</button>`).join('')}</div></div>
+    ${L.length ? `<div id="orL">${L.map(o => { const who = o.cby || o.by; return `<div class="card orc${ordLate(o) ? ' late' : ''}" data-o="${esc(o.id)}">
+      <div class="orh"><b>${esc(ordName(o))}</b>${who ? `<span class="ortag">${esc(who)}</span>` : ''}</div>
+      ${o.lines.map(l => `<div class="orli">${esc(ordLineTxt(l))}</div>`).join('')}
+      ${o.note ? `<div class="ornote">${esc(o.note)}</div>` : ''}
+      <div class="orf">${o.st === 'w' ? `<span class="ordue">${esc(ordDueTxt(o))}</span><button class="btn green sm" data-d="${esc(o.id)}" type="button">✔ اتسلمت</button>`
+        : `<span class="ordue">اتسلمت ${o.dAt ? dayWord(isoOf(o.dAt)) : ''}${o.by ? ' — علّمها ' + esc(o.by) : ''}</span><button class="btn line sm" data-b="${esc(o.id)}" type="button">↺ لسه متسلمتش</button>`}</div></div>`; }).join('')}</div>`
+      : `<div class="card empty">${ordF === 'w' ? 'مفيش طلبات مستنية تتسلم.' : 'لسه مفيش طلبات اتسلمت.'}</div>`}
+    <button class="btn gold" id="orNew" type="button" style="margin-top:12px">+ طلبية جديدة</button>`;
+  $$('#orF button').forEach(b => b.onclick = () => { ordF = b.dataset.v; renderOrds(); });
+  $$('#p-ord .orc').forEach(el => el.onclick = ev => { if (ev.target.closest('button')) return; ordModal(IDX.ord.get(el.dataset.o)); });
+  $$('#p-ord [data-d]').forEach(b => b.onclick = () => ordSetSt(IDX.ord.get(b.dataset.d), 'd'));
+  $$('#p-ord [data-b]').forEach(b => b.onclick = () => ordSetSt(IDX.ord.get(b.dataset.b), 'w'));
+  $('#orNew').onclick = () => ordModal();
+}
+
+/* ====================== التسعير (بطلبه 23/10/2026) ======================
+   سجل لوحده (mixs): خلطة = أصناف بسعر الكيلو (قرش) ونسبة كل واحد، وتشغيل الكيلو (قرش) والربح %.
+   تكلفة الكيلو = مجموع (السعر × النسبة) + التشغيل، وسعر البيع = التكلفة × (1 + الربح). مبيدخلش أي حساب ولا رصيد */
+const liveMixs = () => db.mixs.filter(m => !m.del).sort((a, b) => a.at - b.at);
+const mixKg = m => m.rows.reduce((s, r) => s + (r.price || 0) * (+r.pct || 0) / 100, 0);
+const mixPct = m => Math.round(m.rows.reduce((s, r) => s + (+r.pct || 0), 0) * 100) / 100;
+const mixCost = m => mixKg(m) + (m.run || 0);
+const mixSell = m => Math.round(mixCost(m) * (1 + (+m.profit || 0) / 100));
+const pctFmt = v => fmtQ(Math.round((+v || 0) * 100) / 100);
+/* عاوز تبيع بسعر معين: نسبة الصنف الأول (والتاني الباقي) اللي توصل للسعر ده. صنفين بس */
+function mixFor(m, sell) {
+  if (m.rows.length !== 2) return null;
+  const need = sell / (1 + (+m.profit || 0) / 100) - (m.run || 0), [a, b] = m.rows.map(r => r.price || 0);
+  if (a === b) return null;
+  const x = (need - b) / (a - b) * 100;
+  const k = 1 + (+m.profit || 0) / 100;
+  return x < 0 || x > 100 ? {out: true, lo: (Math.min(a, b) + (m.run || 0)) * k, hi: (Math.max(a, b) + (m.run || 0)) * k} : {a: Math.round(x * 10) / 10, b: Math.round((100 - x) * 10) / 10};
+}
+let mixCur = '', mixEdit = '';
+function mixNew(name) {
+  const now = nowS(), m = {id: newId('m_'), kind: 'mix', name, rows: [{name: '', price: 0, pct: 70}, {name: '', price: 0, pct: 30}], run: 0, profit: 10, at: now, upd: now, del: false, hist: []};
+  db.mixs.push(m); IDX.mix.set(m.id, m); saveDB(); mixCur = m.id; return m;
+}
+/* كل تغيير بيتحفظ لوحده، والنسخة اللي قبل أول تغيير في كل فتحة بتتحفظ في hist */
+function mixTouch(m) {
+  if (mixEdit !== m.id) { (m.hist = m.hist || []).push({t: nowS(), by: m.by, name: m.name, rows: JSON.parse(JSON.stringify(m.rows)), run: m.run, profit: m.profit}); mixEdit = m.id; }
+  touch(m); saveDB();
+}
+function renderPrc() {
+  let L = liveMixs();
+  const pg = $('#p-prc');
+  if (!L.length) { pg.innerHTML = `<div class="sech"><span>🏷 التسعير</span></div><div class="card empty">احسب سعر بيع الكيلو من الخلطة: كل صنف بسعره ونسبته، وتشغيل الكيلو والربح.<br><button class="btn gold" id="mxFirst" type="button" style="margin-top:12px;width:auto;padding:0 22px">+ أول خلطة</button></div>`; $('#mxFirst').onclick = () => { mixNew('خلطة 1'); renderPrc(); }; return; }
+  const m = IDX.mix.get(mixCur) && !IDX.mix.get(mixCur).del ? IDX.mix.get(mixCur) : L[0]; mixCur = m.id;
+  pg.innerHTML = `<div class="sech"><span>🏷 التسعير</span></div>
+    <div class="mxt" id="mxT">${L.map(x => `<button type="button" data-m="${esc(x.id)}" class="${x.id === m.id ? 'on' : ''}">${esc(x.name)}</button>`).join('')}<button type="button" id="mxAdd">+ خلطة</button></div>
+    <div class="card mxc"><div class="mxh"><span>الصنف</span><span>سعر الكيلو</span><span>النسبة %</span><span></span></div>
+      <div id="mxR"></div>
+      <button class="btn line sm" id="mxRow" type="button" style="margin-top:8px">+ صنف</button>
+      <div class="mxbar" id="mxBar"></div><p class="hint" id="mxSay"></p></div>
+    <div class="card mxc"><div class="mx2"><span>تشغيل الكيلو (كهربا وعمالة وصبغة)</span><input class="inp" id="mxRun" inputmode="decimal" value="${m.run ? fmtP(m.run) : ''}" placeholder="0"></div>
+      <div class="mx2"><span>ربحك %</span><input class="inp" id="mxPro" inputmode="decimal" value="${m.profit ? pctFmt(m.profit) : ''}" placeholder="0"></div></div>
+    <div class="mxres" id="mxRes"></div>
+    <details class="card mxrev"><summary>عاوز تبيع بسعر معين؟ اعرف تخلط بكام</summary>
+      ${m.rows.length === 2 ? `<div class="mx2"><span>سعر البيع اللي عاوزه للكيلو</span><input class="inp" id="mxWant" inputmode="decimal" placeholder="0"></div><div id="mxRevOut"></div>` : '<p class="hint">الحسبة دي بتشتغل لما الخلطة يبقى فيها صنفين بس.</p>'}</details>
+    <div class="mxft">${m.cby || m.by ? `<span>آخر تغيير: <b>${esc(m.by || m.cby)}</b> · ${dayWord(isoOf(m.upd))}</span>` : ''}
+      <button class="lnk" id="mxRen" type="button">غيّر اسم الخلطة</button>${L.length > 1 ? '<button class="lnk red" id="mxDel" type="button">امسح الخلطة</button>' : ''}</div>`;
+  const calc = () => {
+    const sum = mixPct(m), ok = Math.abs(sum - 100) < .01, named = m.rows.filter(r => r.name && +r.pct);
+    $('#mxBar').innerHTML = m.rows.map((r, i) => +r.pct > 0 ? `<i class="c${i % 4}" style="width:${Math.min(100, +r.pct)}%"></i>` : '').join('');
+    $('#mxSay').innerHTML = !ok ? `<b style="color:var(--red)">مجموع النسب ${pctFmt(sum)}% ولازم يبقى 100%</b>` : named.length ? `يعني في كل 100 كيلو: ${named.map(r => `${pctFmt(r.pct)} ${esc(r.name)}`).join(' و')}.${m.rows.length === 2 ? ' غيّر نسبة واحد والتاني بيتظبط لوحده.' : ''}` : '';
+    $('#mxRes').innerHTML = `<div class="l"><span>كيلو الخلطة</span><b class="money">${fmtP(Math.round(mixKg(m)))}</b></div><div class="l"><span>+ التشغيل = التكلفة</span><b class="money">${fmtP(Math.round(mixCost(m)))}</b></div>
+      <div class="l k"><span>سعر البيع للكيلو</span></div><div class="big money">${ok ? fmtP(mixSell(m)) : '—'}</div>`;
+    const w = $('#mxWant'); if (w) revOut();
+  };
+  const revOut = () => {
+    const v = toP($('#mxWant').value), r = v ? mixFor(m, v) : null, out = $('#mxRevOut');
+    if (!v || !r) { out.innerHTML = ''; return; }
+    if (r.out) { out.innerHTML = `<p class="hint" style="color:var(--red)">السعر ده مينفعش بالصنفين دول: أقل سعر ${fmtP(Math.round(r.lo))} وأعلى سعر ${fmtP(Math.round(r.hi))}.</p>`; return; }
+    out.innerHTML = `<p class="mxans">اخلط <b>${pctFmt(r.a)}%</b> ${esc(m.rows[0].name || 'الصنف الأول')} و<b>${pctFmt(r.b)}%</b> ${esc(m.rows[1].name || 'التاني')}</p><button class="btn gold sm" id="mxUse" type="button">طبّق النسب دي</button>`;
+    $('#mxUse').onclick = () => { m.rows[0].pct = r.a; m.rows[1].pct = r.b; mixTouch(m); renderPrc(); toast('✔ النسب اتغيرت'); };
+  };
+  const drawRows = () => {
+    $('#mxR').innerHTML = m.rows.map((r, i) => `<div class="mxr" data-i="${i}"><input class="inp" data-f="name" value="${esc(r.name)}" placeholder="اسم الصنف"><input class="inp" data-f="price" inputmode="decimal" value="${r.price ? fmtP(r.price) : ''}" placeholder="0"><input class="inp pc" data-f="pct" inputmode="decimal" value="${+r.pct ? pctFmt(r.pct) : ''}" placeholder="0">${m.rows.length > 2 ? '<button class="orx" type="button" aria-label="شيل الصنف">✕</button>' : '<span></span>'}</div>`).join('');
+    $$('#mxR .mxr').forEach(row => {
+      const i = +row.dataset.i, r = m.rows[i], f = k => row.querySelector(`[data-f=${k}]`);
+      f('name').oninput = () => { r.name = f('name').value.trim(); calc(); };
+      f('price').oninput = () => { r.price = toP(f('price').value); calc(); };
+      f('pct').oninput = () => {
+        r.pct = Math.max(0, Math.min(100, num(f('pct').value) || 0));
+        if (m.rows.length === 2) { const o = m.rows[1 - i]; o.pct = Math.round((100 - r.pct) * 100) / 100; $(`#mxR .mxr[data-i="${1 - i}"] [data-f=pct]`).value = pctFmt(o.pct); }
+        calc();
+      };
+      ['name', 'price', 'pct'].forEach(k => f(k).onchange = () => mixTouch(m));
+      const x = row.querySelector('.orx'); if (x) x.onclick = () => { m.rows.splice(i, 1); mixTouch(m); renderPrc(); };
+    });
+  };
+  drawRows(); calc();
+  $('#mxRun').oninput = () => { m.run = toP($('#mxRun').value); calc(); };
+  $('#mxPro').oninput = () => { m.profit = Math.max(0, num($('#mxPro').value) || 0); calc(); };
+  $('#mxRun').onchange = $('#mxPro').onchange = () => mixTouch(m);
+  if ($('#mxWant')) $('#mxWant').oninput = revOut;
+  $('#mxRow').onclick = () => { m.rows.push({name: '', price: 0, pct: 0}); mixTouch(m); renderPrc(); };
+  $$('#mxT [data-m]').forEach(b => b.onclick = () => { mixCur = b.dataset.m; mixEdit = ''; renderPrc(); });
+  $('#mxAdd').onclick = () => { mixNew('خلطة ' + (liveMixs().length + 1)); mixEdit = ''; renderPrc(); };
+  $('#mxRen').onclick = () => {
+    modal(`<h3>اسم الخلطة</h3><div class="fld"><input class="inp" id="mxNm" value="${esc(m.name)}"></div><div class="g2"><button class="btn gold" id="mxNo" type="button">حفظ</button><button class="btn line" id="mxNx" type="button">رجوع</button></div>`);
+    $('#mxNx').onclick = closeModal;
+    $('#mxNo').onclick = () => { const v = $('#mxNm').value.trim().replace(/\s+/g, ' '); if (!v) return toast('اكتب اسم'); if (v !== m.name) { m.name = v; mixTouch(m); } closeModal(); renderPrc(); };
+  };
+  if ($('#mxDel')) $('#mxDel').onclick = async () => { if (!(await confirmBox(`تمسح "${m.name}"؟`, 'أيوه امسحها', true))) return; m.del = true; touch(m); saveDB(); mixCur = ''; renderPrc(); toast('الخلطة اتمسحت'); };
+}
 /* المبلغ بالحروف (تفقيط) تحت إجمالي الكشف والفاتورة: "فقط ... جنيهاً لا غير" */
 const AR1 = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة', 'عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
 const AR10 = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
@@ -3524,6 +3747,8 @@ function viewOf(kind, r) {
   if (kind === 'vault') return ['', cell(r.name), 'خزنة', 'رصيد افتتاحي', (r.open || 0) / 100, ''];
   if (kind === 'cat') return ['', cell(r.name), r.type === 'exp' ? 'بند مصروف' : 'بند إيراد', '', '', ''];
   if (kind === 'set') return ['', r.id, 'إعداد', cell(JSON.stringify(r.val)), '', ''];
+  if (kind === 'ord') return [r.due || '', cell(ordName(r)), 'طلبية: ' + (OST[r.st] || ''), cell(r.lines.map(ordLineTxt).join(' — ')), '', ''];
+  if (kind === 'mix') return ['', cell(r.name), 'تسعير', cell(r.rows.map(x => x.name + ' ' + pctFmt(x.pct) + '%').join(' — ')), mixSell(r) / 100, ''];
   if (kind === 'stk') return [r.date, 'الجرد', 'جرد', 'المخزون', (r.stock || 0) / 100, ''];
   if (kind === 'tx') return [r.date, cell(r.type === 'tr' ? vName(r.vault) + ' ← ' + vName(r.to) : vName(r.vault)), 'خزنة: ' + TXT[r.type], cell((r.type === 'tr' ? '' : cName(r.cat)) + (r.note ? ' — ' + r.note : '')), r.type === 'inc' ? r.amt / 100 : '', r.type === 'inc' ? '' : r.amt / 100];
   const p = P.get(r.party);
@@ -5115,6 +5340,7 @@ function actItems(day) {
   db.entries.forEach(e => { if (!inD(e.upd)) return; const p = P.get(e.party); out.push({r: e, k: 'e', t: e.upd, by: e.by, w: what(e), d: (KIND[e.kind] || 'حركة') + (p ? ' — ' + p.name : ''), a: e.amt || e.dr || e.cr || docTotal(e) || 0, dt: e.date}); });
   db.txs.forEach(x => { if (!inD(x.upd)) return; out.push({r: x, k: 't', t: x.upd, by: x.by, w: what(x), d: (x.pt ? 'الشركاء: ' + (partName(x.pt) || '') : TXT[x.type] + (x.cat ? ' — ' + cName(x.cat) : '')) + (x.note ? ' — ' + x.note : ''), a: x.amt || 0, dt: x.date}); });
   db.qts.forEach(q => { if (!inD(q.upd)) return; out.push({r: q, k: 'q', t: q.upd, by: q.by, w: q.del ? 'لغى' : inD(q.at || 0) && !(q.hist || []).length && q.st === 'w' ? 'سجّل' : 'عدّل', d: 'عرض سعر — ' + qtName(q) + (q.st !== 'w' ? ` (${QST[q.st]})` : ''), a: docTotal(q), dt: q.date}); });
+  db.ords.forEach(o => { if (!inD(o.upd)) return; out.push({r: o, k: 'o', t: o.upd, by: o.by, w: o.del ? 'لغى' : o.st === 'd' && inD(o.dAt || 0) ? 'علّم اتسلمت' : inD(o.at || 0) && !(o.hist || []).length ? 'سجّل' : 'عدّل', d: 'طلبية — ' + ordName(o), a: 0, dt: ''}); });
   db.parties.forEach(p => { if (!inD(p.upd)) return; out.push({r: p, k: 'p', t: p.upd, by: p.by, w: p.del ? 'لغى' : inD(p.at || 0) ? 'عمل حساب' : 'عدّل حساب', d: p.name + ' (' + (SEC1[p.sec] || '') + ')', a: 0, dt: ''}); });
   return out.sort((a, b) => b.t - a.t);
 }
@@ -5132,6 +5358,7 @@ function renderAct() {
   $$('#p-act .pt[data-i]').forEach(el => el.onclick = () => { const x = L[+el.dataset.i], r = x.r;
     if (x.k === 'p') return r.del ? null : go('p/' + r.id);
     if (x.k === 'q') return r.del ? null : qtView(r);
+    if (x.k === 'o') return r.del ? null : ordModal(r);
     if (x.k === 't') return r.pt ? partnerTxModal(r) : txModal(r.type, r);
     const p = P.get(r.party); if (!p) return; r.del ? cancelledModal(r) : openEntry(p, r); });
 }
@@ -5923,7 +6150,7 @@ function route() {
   const h = decodeURIComponent(location.hash.slice(1));
   let pg = 'home';
   try { localStorage.setItem('gd_lastpg', /^(cash|part|rep|set)$/.test(h) ? h : 'home'); } catch (e) {}
-  if (h === 'set' || h === 'cash' || h === 'part' || (h === 'chk' && CHECKS_ON) || h === 'rep') pg = h; else if (h.startsWith('p/')) pg = 'party'; else if (h === 'jrd' || h.startsWith('jrd/')) pg = 'jrd'; else if (h === 'act') pg = 'act'; else if (h === 'qt') pg = 'qt';
+  if (h === 'set' || h === 'cash' || h === 'part' || (h === 'chk' && CHECKS_ON) || h === 'rep') pg = h; else if (h.startsWith('p/')) pg = 'party'; else if (h === 'jrd' || h.startsWith('jrd/')) pg = 'jrd'; else if (h === 'act') pg = 'act'; else if (h === 'qt') pg = 'qt'; else if (h === 'ord') pg = 'ord'; else if (h === 'prc') pg = 'prc';
   if (h === 'sup') tab = 'sup'; else if (pg === 'home' && tab === 'sup' && !isWide()) tab = 'mkt';   // الموبايل: الموردين تبويب لوحده تحت
   autoPartners();
   /* الموبايل: صفحة الحساب بتفتح فوق الصفحة اللي قبلها (مش مكانها)، فالرجوع بيلاقي القايمة زي ما هي في مكانها من غير ما تترسم تاني (كانت بتبيض) */
@@ -5949,7 +6176,7 @@ function route() {
       $('#p-party').innerHTML = '<div class="card empty" style="padding:60px 20px;font-size:var(--f3)">لسه مفيش حسابات. اضغط "+ حساب جديد".</div>';
     }
   }
-  if (pg === 'set') renderSettings(); else if (pg === 'rep') renderReports(); else if (pg === 'chk') renderChecks(); else if (pg === 'cash') renderCash(); else if (pg === 'part') renderPartners(); else if (pg === 'jrd') renderJrd(); else if (pg === 'act') renderAct(); else if (pg === 'qt') renderQts(); else if (pg === 'party') renderParty(h.slice(2)); else if (!split && !(back && homeVer === dataVer + '|' + tab)) renderHome();
+  if (pg === 'set') renderSettings(); else if (pg === 'rep') renderReports(); else if (pg === 'chk') renderChecks(); else if (pg === 'cash') renderCash(); else if (pg === 'part') renderPartners(); else if (pg === 'jrd') renderJrd(); else if (pg === 'act') renderAct(); else if (pg === 'qt') renderQts(); else if (pg === 'ord') renderOrds(); else if (pg === 'prc') renderPrc(); else if (pg === 'party') renderParty(h.slice(2)); else if (!split && !(back && homeVer === dataVer + '|' + tab)) renderHome();
 }
 /* شريط أعلى صفحة الحساب ثابت (مبيخبّيش وانت بتنزل): رجوع، فوق، تحت، تعديل */
 function setHdr() { const h = document.querySelector('header.top'); if (h) document.documentElement.style.setProperty('--hh', (getComputedStyle(h).position === 'fixed' ? 0 : h.offsetHeight) + 'px'); }   // على اللاب الشريط في القايمة الجانبية فمفيش مسافة فوق

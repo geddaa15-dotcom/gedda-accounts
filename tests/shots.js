@@ -112,6 +112,8 @@ const ACC = (sfx, vp, extra = {}) => [
   {name: 'acc-inv-edit-' + sfx, go: async A => { await accEval(`docModal(${party}, 'inv', [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'inv' && !e.del && (e.lines || []).length > 1).pop())`)(A); await A.focus('#dcLines .li:nth-child(2) [data-f=qty]'); }},
   {name: 'acc-inv-sug-' + sfx, go: async A => { await accEval(`docModal(${party}, 'inv')`)(A); await A.focus('#dcLines [data-f=name]'); }},
   {name: 'acc-pay-' + sfx, go: accEval(`payModal(${party}, 'pay')`)},
+  {name: 'acc-chk-' + sfx, go: accGo('chk'), full: true},
+  {name: 'acc-chkn-' + sfx, go: async A => { await accEval(`payModal(${party}, 'pay', null, {method: 'شيك'})`)(A); }},
   {name: 'acc-quick-' + sfx, go: accEval('quickModal()')},
   {name: 'acc-cash-' + sfx, go: accEval(`cashView = 'type'; cashMode = 'week'; cashDay = ''; cashOpenV = false; go('cash'); renderCash()`), full: true},
   {name: 'acc-part-' + sfx, go: accGo('part'), full: true},

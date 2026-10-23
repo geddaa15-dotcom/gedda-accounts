@@ -392,9 +392,25 @@ const T0 = Date.now();
     await A.click('#fbPay'); await A.fill('#pyAmt', '100'); await A.click('#pyOk'); await A.settle(150);
     eq('تنبيه الدفعة المكررة', (await A.textContent('#pyWarn')).includes('بنفس المبلغ'), true); await A.click('#pyX');
 
-    sec('٤) الشيكات مقفولة واختيارات كشف الحساب');
-    eq('مفيش زرار شيكات ولا طريقة دفع شيك', [!!(await A.$('nav button[data-go=chk]')), (await A.click('#fbPay'), !!(await A.$('#pyM button[data-v=شيك]')))], [false, false]); await A.click('#pyX');
-    eq('مفيش طريقة دفع في الدفعة، والكشف بيكتب "دفعة" بس', [(await A.click('#fbPay'), !!(await A.$('#pyM'))), await A.evaluate(() => rowsOf({kind: 'ppay', date: '2026-01-01', amt: 100, method: 'تحويل', cr: 100})[0].desc + '|' + docTitle({kind: 'pay', method: 'تحويل'}))], [false, 'دفعة|دفعة استلمتها']); await A.click('#pyX');
+    sec('٤) الشيكات وكارت الصبح واختيارات كشف الحساب');
+    eq('زرار الشيكات موجود، والدفعة فيها اختيارين بس (فلوس / شيك)', [!!(await A.$('nav button[data-go=chk]')), (await A.click('#fbPay'), await A.$$eval('#pyM button', b => b.map(x => x.dataset.v).join('|')))], [true, 'نقدي|شيك']); await A.click('#pyX'); await closed(A);
+    eq('الكشف بيكتب "دفعة" بس من غير نقدي/تحويل', await A.evaluate(() => rowsOf({kind: 'ppay', date: '2026-01-01', amt: 100, method: 'تحويل', cr: 100})[0].desc + '|' + docTitle({kind: 'pay', method: 'تحويل'})), 'دفعة|دفعة استلمتها');
+    {   // شيك وارد ميعاده النهارده: بينزل من رصيد العميل ومبيدخلش الخزنة لحد ما يتصرف، وبيظهر في كارت الصبح
+      const b0 = await bal(A, 'عميل تجربة واحد');
+      await A.click('#fbPay'); await A.click('#pyM button[data-v=شيك]'); await A.fill('#pyAmt', '700'); await A.fill('#pyCn', '123456');
+      await A.evaluate(() => { $('#pyCd').value = todayISO(); }); await A.click('#pyOk'); await closed(A);
+      eq('الشيك نزل من الرصيد ولسه مدخلش الخزنة', [await bal(A, 'عميل تجربة واحد'), await A.evaluate(() => { const e = chkList().pop(); return [e.chk.st, e.chk.no, e.vault || '']; })], [b0 - 70000, ['p', '123456', '']]);
+      const r = await A.evaluate(() => {
+        try { localStorage.removeItem('gd_mrn'); } catch (e) {}
+        go('home'); renderHome(); const m = $('#mrn'), r = [!!m && m.textContent.includes('شيك') && m.textContent.includes('عميل تجربة واحد'), !$('#chkAlert')];
+        $('#mrnOk').click(); r.push(!$('#mrn'), localStorage.getItem('gd_mrn') === todayISO(), !!$('#chkAlert'));
+        r.push(waNum('01012345678'), waNum('+20 101 234 5678'), waNum('0223456789'), waLink({name: 'أ', phone: '01012345678'}, 150000).startsWith('https://wa.me/201012345678?text='));
+        return r; });
+      eq('كارت الصبح: فيه الشيك (ومكان تنبيه الشيكات)، و"تمام" بيخفيه للنهارده، ورقم الواتساب بيتظبط', r, [true, true, true, true, true, '201012345678', '201012345678', '', true]);
+      eq('الشيك اتصرف: دخل الخزنة والرصيد مبيتغيرش تاني', await A.evaluate(() => { const e = chkList().pop(); cashCheck(e); $('#ccOk').click(); return [e.chk.st, !!e.vault]; }).then(async x => [...x, await bal(A, 'عميل تجربة واحد')]), ['c', true, b0 - 70000]);
+      await A.evaluate(() => { const e = chkList().pop(); e.del = true; touch(e); saveDB(); }); await A.settle(200);   // يرجع الرصيد زي ما كان للي بعده
+      await A.evaluate(() => go('p/' + liveParties().find(x => x.name === 'عميل تجربة واحد').id)); await A.settle(200);
+    }
     await A.click('#fbStmt'); await A.settle(150);
     eq('الكشف بيفتح على آخر فاتورة والرصيد قبلها', [await A.getAttribute('#smMode .on', 'data-m'), (await A.textContent('#smOut')).includes('الرصيد قبل الفاتورة')], ['last', true]);
     eq('آخر فاتورة: الرصيد قبل وبعد', await A.evaluate(() => { const p = liveParties().find(x => x.name === 'عميل تجربة واحد'), l = partyEntries(p.id).filter(e => e.kind === 'inv').pop(), s = stmtData(p.id, '', '', l.id); return [s.open, s.close, s.rows[0].kind || s.lastInv.kind]; }), [270000, 318500, 'inv']);
@@ -845,7 +861,8 @@ const T0 = Date.now();
     sec('١٢) الشركاء: مرتب كل خميس ومسحوبات');
     await bg(A, 'syncNow()');   // ياخد اللي اتسجل في الجهاز التاني الأول
     const vb0 = await A.evaluate(() => vaultBal(''));
-    eq('الموبايل: الشريط اللي تحت عملاء وموردين وتقارير وخزنة، والشركاء جوه الخزنة', await A.evaluate(() => [...document.querySelectorAll('nav button[data-go]')].filter(b => getComputedStyle(b).display !== 'none').sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left).map(b => b.dataset.go).reverse()), ["home", "sup", "rep", "cash"]);
+    eq('الموبايل: الشريط اللي تحت عملاء وموردين وشيكات وتقارير وخزنة في سطر واحد، والشركاء جوه الخزنة', await A.evaluate(() => [...document.querySelectorAll('nav button[data-go]')].filter(b => getComputedStyle(b).display !== 'none').sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left).map(b => b.dataset.go).reverse()), ["home", "sup", "chk", "rep", "cash"]);
+    eq('الموبايل: زراير الشريط اللي تحت كلها في سطر واحد', await A.evaluate(() => new Set([...document.querySelectorAll('nav button[data-go]')].filter(b => getComputedStyle(b).display !== 'none').map(b => Math.round(b.getBoundingClientRect().top))).size), 1);
     await A.evaluate(() => go('cash')); await A.click('#cMore'); await A.click('#modal [data-b=cPart]'); await A.waitForSelector('#ptBack', {timeout: 3000}).catch(() => {});   // الصفحة بتفتح بعد تغيير العنوان
     eq('الشركاء من الخزنة: الخزنة متعلّمة تحت وفيه رجوع', [await A.evaluate(() => $('nav button.on').dataset.go), !!await A.$('#ptBack')], ['cash', true]);
     await A.click('#psGo'); await A.fill('#psA', '10');

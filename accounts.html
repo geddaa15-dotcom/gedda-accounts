@@ -229,6 +229,8 @@ nav .nb{position:absolute;top:6px;inset-inline-start:calc(50% + 6px);background:
 .ckb{display:flex;gap:6px;flex-wrap:wrap}.ckb .btn{width:auto;flex:1;min-height:42px}
 .cb{display:inline-block;font-size:var(--f1);font-weight:800;border-radius:6px;padding:0 6px;background:var(--row);color:var(--blue)}
 .cb.ok{background:var(--green-l);color:var(--green)}.cb.warn{background:var(--gold-l);color:var(--gold-d)}.cb.bad{background:var(--red-l);color:var(--red)}
+.mrn{background:var(--card);border:1.5px solid var(--gold);border-radius:13px;padding:10px 10px 4px;margin-bottom:12px}.mrh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;font-size:var(--f3)}.mrh .btn{flex:none;width:auto}
+.mrs{font-size:var(--f2);font-weight:800;color:var(--sub);margin:8px 2px 6px}.mrn .pt{margin-bottom:6px;padding:8px 10px}.mrn .mwa{flex:none;color:var(--green);border-color:var(--green);text-decoration:none}.mrm{display:block;text-align:center;font-size:var(--f2);font-weight:700;color:var(--gold-d);padding:2px 0 8px}
 .rph{font-size:var(--f4);margin:6px 2px 8px;font-weight:800}.rph small{display:block;font-size:var(--f1);color:var(--sub);font-weight:700}
 .ldg.rp tr[data-p],.ldg.rp tr[data-k]{cursor:pointer}
 table.ldg.rp.wide{min-width:520px}.ldg.rp td{white-space:nowrap}.ldg.rp td.l{white-space:normal;min-width:110px}
@@ -295,7 +297,7 @@ ol.steps li{margin-bottom:6px}
 .who{font-size:var(--f2);color:var(--sub);background:var(--row);border-radius:10px;padding:6px 10px;margin:6px 0 10px;line-height:1.7}.who b{color:var(--ink)}
 .hist{border-top:1px dashed var(--line);padding:6px 0;font-size:var(--f2)}
 /* التنقل */
-nav{position:fixed;bottom:0;inset-inline:0;background:var(--bar);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom);z-index:30;border-top:3px solid var(--gold)}
+nav{position:fixed;bottom:0;inset-inline:0;background:var(--bar);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom);z-index:30;border-top:3px solid var(--gold)}
 nav button{background:none;border:0;color:#bbb;padding:9px 2px 8px;font-weight:700;font-size:var(--f1);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-height:64px}
 nav button.on{color:var(--gold)}
 nav svg{width:26px;height:26px}
@@ -2196,7 +2198,7 @@ function unlocked() {
   lastAct = Date.now(); docSoon();
   if (db.vaults.length && ensurePayCats()) saveDB();   // بنود الخزنة الثابتة (تحصيل من عميل / دفعات للموردين) زي ما كانت بتتعمل وقت الفتح
   /* أول شاشة بعد القفل: آخر صفحة كان فيها، وإلا العملاء */
-  try { if (!location.hash) { const h = landingHash(); if (h) location.hash = h; } } catch (e) {}
+  try { if (!location.hash && !mrnHtml()) { const h = landingHash(); if (h) location.hash = h; } } catch (e) {}   // كارت الصبح ظاهر = يفتح على الرئيسية
   route(); flushSave();
   if (pendingJoin) applyJoin(); else setTimeout(() => syncNow(), 600);
   askMe(); afLoad();
@@ -2246,8 +2248,10 @@ function renderHome() {
   if (au && !au.ok) probs.unshift(au.msg);
   const lb = db.cfg.lastBackup || 0, every = db.cfg.sheetOk ? 30 : 7, days = Math.floor((nowS() - lb) / 86400000);
   $('#nlRem').innerHTML = '';   // تنبيه الفواتير اللي بنودها لسه: في الوارد بس (بطلب صاحب المشروع)
-  $('#chk').innerHTML = afAlertHtml() + chkAlertHtml() + (probs.length ? `<div class="sync warn">⚠️ المراجعة لقت ${probs.length} مشكلة: ${esc(probs.slice(0, 3).join(' — '))}</div>` : '') + docAlertHtml();
+  const mrn = mrnHtml();
+  $('#chk').innerHTML = afAlertHtml() + (mrn || chkAlertHtml()) + (probs.length ? `<div class="sync warn">⚠️ المراجعة لقت ${probs.length} مشكلة: ${esc(probs.slice(0, 3).join(' — '))}</div>` : '') + docAlertHtml();
   if ($('#hDoc')) $('#hDoc').onclick = docOpen;
+  if (mrn) mrnBind();
   if ($('#hAf')) $('#hAf').onclick = async () => { if (await afWrite(true)) toast('✔ الحفظ الأوتوماتيك رجع شغال', 3000); };
   const bal = allBalances();
   let ly = 0, al = 0; bal.forEach((v, id) => { if (P.get(id).noTot) return; if (v > 0) ly += v; else al -= v; });   // الحساب الفرعي ميدخلش في الإجماليات
@@ -2408,8 +2412,8 @@ const UNITS = ['كيلو', 'لفة', 'قطعة', 'وحدة', 'متر'];
 const KIND = {inv: 'فاتورة بيع', pay: 'دفعة مستلمة', pur: 'فاتورة شراء', ppay: 'دفعة مدفوعة', rinv: 'مرتجع بيع', rpur: 'مرتجع شراء', adj: 'خصم / تسوية', bnc: 'شيك مرتجع', open: 'رصيد أول المدة', man: 'حركة'};
 const isRet = e => e.kind === 'rinv' || e.kind === 'rpur';
 const METHODS = ['نقدي', 'تحويل', 'شيك'];
-/* قسم الشيكات مقفول دلوقتي بطلب صاحب المشروع (محدش بيكتب شيكات). الكود موجود، ولو احتاجه نخلي دي true */
-const CHECKS_ON = false;
+/* قسم الشيكات: كان مقفول، واتفتح بطلب صاحب المشروع (23/10/2026). false بيخفيه تاني */
+const CHECKS_ON = true;
 const isDoc = e => e.kind === 'inv' || e.kind === 'pur' || e.kind === 'rinv' || e.kind === 'rpur';
 const lineTot = l => Math.round((+l.qty || 0) * (l.price || 0));
 const docTotal = e => (e.lines || []).reduce((s, l) => s + lineTot(l), 0) - (e.disc || 0);
@@ -2883,7 +2887,7 @@ function payModal(p, kind, e, opts = {}) {
   modal(`<h3>💵 ${isNew ? (rec ? 'استلمت دفعة' : 'دفعت دفعة') : 'تعديل دفعة'}<small class="mnm">${esc(p.name)}</small></h3>
     <div class="fld"><label>المبلغ</label><div class="amtrow"><input class="inp num amt" id="pyAmt" placeholder="0" value="${e ? fmtP(e.amt) : ''}">${isNew && (rec ? balance(p.id) > 0 : balance(p.id) < 0) ? '<button class="btn line sm" id="pyAll" type="button">كل الرصيد</button>' : ''}</div>
       <div class="hint" style="margin-top:4px">الرصيد الحالي: ${fmtP(Math.abs(balance(p.id)))} ${balWord(balance(p.id))}</div></div>
-    ${CHECKS_ON || method === 'شيك' ? `<div class="fld"><label>طريقة الدفع</label><div class="seg s3" id="pyM">${METHODS.map(m => `<button type="button" data-v="${m}" class="${m === method ? 'on' : ''}">${m}</button>`).join('')}</div></div>` : ''}
+    ${CHECKS_ON || method === 'شيك' ? `<div class="fld"><label>طريقة الدفع</label><div class="seg s2" id="pyM"><button type="button" data-v="${method === 'شيك' ? 'نقدي' : method}" class="${method === 'شيك' ? '' : 'on'}">💵 فلوس</button><button type="button" data-v="شيك" class="${method === 'شيك' ? 'on' : ''}">شيك</button></div></div>` : ''}
     <div id="pyChk" class="card" style="background:var(--gold-l);margin:0 0 10px">
       <div class="g2"><div class="fld"><label>رقم الشيك</label><input class="inp num" id="pyCn" inputmode="numeric" value="${esc(ck.no || '')}"></div>
         <div class="fld"><label>البنك</label><input class="inp" id="pyCb" value="${esc(ck.bank || '')}"></div></div>
@@ -5429,6 +5433,43 @@ function chkAlertHtml() {
   const d = chkDue(); if (!d.length) return '';
   const late = d.filter(e => daysTo(e.chk.due) < 0).length;
   return `<a class="sync warn" id="chkAlert" href="#chk" style="text-decoration:none">⏰ ${d.length} شيك ${late ? `(منهم ${late} ميعادهم فات) ` : ''}محتاجين متابعة — أقربهم ${esc((P.get(d[0].party) || {}).name || '')} ${fmtP(d[0].amt)} يوم ${dispDate(d[0].chk.due)} <b style="margin-inline-start:auto;text-decoration:underline">الشيكات ←</b></a>`;
+}
+/* ====================== كارت الصبح ======================
+   أول ما يفتح كل يوم: العملا المتأخرين عن عادة دفعهم، والشيكات اللي ميعادها قرّب أو فات، والطلبيات اللي ميعادها النهارده أو فات.
+   "تمام" بيخفيه لحد بكرة على الجهاز ده بس (gd_mrn = اليوم). جنب العميل زرار واتساب برسالة رصيد جاهزة لو رقمه متسجل */
+const MRN_MAX = 5;
+const mrnSeen = () => { try { return localStorage.getItem('gd_mrn') === todayISO(); } catch (e) { return false; } };
+const waNum = ph => { const d = normDigits(String(ph || '')).replace(/\D/g, ''); return /^01\d{9}$/.test(d) ? '2' + d : /^201\d{9}$/.test(d) ? d : ''; };
+function waLink(p, b) {
+  const n = waNum(p.phone); if (!n) return '';
+  return 'https://wa.me/' + n + '?text=' + encodeURIComponent(`السلام عليكم يا ${p.name}، رصيد حسابك عندنا لحد النهارده ${fmtP(b)} ${CUR}. شكراً — جَدة ال.جي`);
+}
+function mrnData() {
+  const bal = allBalances(), t = todayISO();
+  const late = lateParties().map(p => ({p, b: bal.get(p.id) || 0})).sort((a, b) => b.b - a.b);
+  const ck = CHECKS_ON ? chkDue() : [];
+  const od = liveOrds().filter(o => o.st === 'w' && o.due && o.due <= t).sort((a, b) => a.due.localeCompare(b.due));
+  return {late, ck, od};
+}
+function mrnHtml() {
+  if (!db || mrnSeen()) return '';
+  const {late, ck, od} = mrnData();
+  if (!late.length && !ck.length && !od.length) return '';
+  const more = (n, h) => n > MRN_MAX ? `<a class="mrm" href="${h}">و ${n - MRN_MAX} كمان ←</a>` : '';
+  const agoT = p => { const i = payInfo(p, partyEntries(p.id, true), balance(p.id)); return i ? `آخر دفعة من ${daysTxt(i.ago)}` : ''; };
+  return `<div class="mrn" id="mrn"><div class="mrh"><b>☀ صباح الخير، النهارده محتاج تتابع</b><button class="btn line sm" id="mrnOk" type="button">✔ تمام</button></div>
+    ${late.length ? `<div class="mrs">💵 ${late.length} عميل اتأخروا في الدفع</div>` + late.slice(0, MRN_MAX).map(({p, b}) => { const w = waLink(p, b);
+      return `<div class="pt" data-go="p/${esc(p.id)}"><div class="m"><b>${esc(p.name)}</b><small>${agoT(p)}</small></div>${w ? `<a class="btn line sm mwa" href="${esc(w)}" target="_blank" rel="noopener">📲 واتساب</a>` : ''}<div class="a"><b>${fmtP(b)}</b></div></div>`; }).join('') + more(late.length, '#home') : ''}
+    ${ck.length ? `<div class="mrs">⏰ ${ck.length} شيك ميعادهم قرّب أو فات</div>` + ck.slice(0, MRN_MAX).map(e => { const d = daysTo(e.chk.due);
+      return `<div class="pt" data-go="chk"><div class="m"><b>${e.kind === 'pay' ? 'وارد من' : 'صادر لـ'} ${esc((P.get(e.party) || {}).name || '؟')}</b><small>${d < 0 ? `فات ميعاده بـ ${daysTxt(-d)}` : 'يستحق ' + dayWord(e.chk.due)}</small></div><div class="a"><b>${fmtP(e.amt)}</b></div></div>`; }).join('') + more(ck.length, '#chk') : ''}
+    ${od.length ? `<div class="mrs">📋 ${od.length} طلبية ميعادها النهارده أو فات</div>` + od.slice(0, MRN_MAX).map(o =>
+      `<div class="pt" data-go="ord"><div class="m"><b>${esc(ordName(o))}</b><small>${esc(ordDueTxt(o))}</small></div></div>`).join('') + more(od.length, '#ord') : ''}
+  </div>`;
+}
+function mrnBind() {
+  $('#mrnOk').onclick = () => { try { localStorage.setItem('gd_mrn', todayISO()); } catch (e) {} renderHome(); };
+  $$('#mrn .pt').forEach(r => r.onclick = () => go(r.dataset.go));
+  $$('#mrn .mwa').forEach(a => a.onclick = ev => ev.stopPropagation());
 }
 let chkSt = 'p', chkDir = 'all';
 function renderChecks() {

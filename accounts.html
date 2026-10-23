@@ -661,11 +661,14 @@ html[data-theme=dark] :is(.page,.modal) .inp::placeholder{color:var(--sub)}
 html[data-theme=dark] :is(.page,.modal) .btn:not(.gold):not(.green):not(.line):not(.red):not(.redf){background:#34312a;color:var(--ink)}
 html[data-theme=dark] :is(.page,.modal) .btn.line{border-color:var(--field)}
 html[data-theme=dark] :is(.page,.modal) .btn.gold{background:var(--gold);color:var(--on-gold)}
-html[data-theme=dark] :is(.page,.modal) .btn.redf{background:var(--red);color:#fff}
+html[data-theme=dark] :is(.page,.modal) .btn.redf{background:var(--red);color:var(--on-gold)}
+/* الليلي: الأخضر والأحمر فاتحين فالكلام عليهم غامق علشان يتقري (بطلبه 23/10/2026) */
+html[data-theme=dark] .btn.green{color:var(--on-gold)}
+html[data-theme=dark] :is(.ldgf span,#p-party .ldgf span){color:var(--ink)}
 html[data-theme=dark] :is(.page,.modal) :is(.tots .k,.dash .k,.stm .k,.ldgf,.dtot,.phd){background:var(--gold-l);border-color:#5b4a1d}
 html[data-theme=dark] :is(.page,.modal) :is(.phd,.phd .bal b,.mini2 b,.tots .k b,.dash .k b,.stm .k b,.ldgf b,.dtot b,.dashm b,.cmt td.w b,.dr){color:var(--ink)}
 html[data-theme=dark] :is(.page,.modal) :is(.phd .bal b.cr,.tots .k b.cr,.tots b.cr2){color:var(--red)}
-html[data-theme=dark] :is(.page,.modal) :is(.phd small,.mini2,.pt .m small,.pt .a small,.en .dh span,.en .nt,.en .dl,.en .rb,.hint,.rph small,label,.tots div span,.stm div span,.cmt td.w small,.cmt td.d,.tabs button small,.seg button){color:var(--sub)}
+html[data-theme=dark] :is(.page,.modal) :is(.phd small,.mini2,.pt .m small,.pt .a small,.en .dh span,.en .nt,.en .dl,.en .rb,.hint,.rph small,label,.tots div span,.stm div span,.cmt td.w small,.cmt td.d,.tabs button small,.seg button:not(.on)){color:var(--sub)}
 html[data-theme=dark] :is(.page,.modal) :is(.en .dl.tot,.en .rb b,.chkrow label,.cm .m b,.pt .m b,.pt .a b,.card h2){color:var(--ink)}
 html[data-theme=dark] :is(.page,.modal) .card h2{color:var(--gold-d)}
 html[data-theme=dark] .seg{background:var(--row)}

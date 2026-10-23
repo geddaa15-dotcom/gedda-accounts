@@ -4,6 +4,7 @@
     node tests/shots.js <فولدر الصور>                 ← يصوّر النسخة اللي على الجهاز
     node tests/shots.js <فولدر الصور> --root=<فولدر>   ← يصوّر نسخة تانية (مثلاً git worktree من origin/main)
     --only=acc-list-m,acc-cash-m                       ← شاشات معينة بس
+    --dark                                             ← كل الشاشات في الوضع الليلي (اسم الصورة بيخلص بـ -dk)
   كل شاشة بتتصور بنفس المقاس ونفس البيانات كل مرة، فالمقارنة بين "قبل" و"بعد" صورة بصورة.
 */
 'use strict';
@@ -13,6 +14,7 @@ const CHROME = process.env.PW_CHROMIUM || ['/opt/pw-browsers/chromium-1194/chrom
 const args = process.argv.slice(2), opt = k => (args.find(a => a.startsWith(`--${k}=`)) || '').split('=')[1];
 const OUT = path.resolve(args.find(a => !a.startsWith('--')) || 'shots');
 const ROOT = path.resolve(opt('root') || path.join(__dirname, '..'));
+const DARK = args.includes('--dark');
 const ONLY = opt('only') ? opt('only').split(',') : null;
 const PASS = '246810';
 /* يوم ثابت للصور كلها علشان التواريخ متتغيرش بين "قبل" و"بعد" */
@@ -212,8 +214,9 @@ async function accPage(browser, base, vp, dark) {
   try {
     for (const s of SCREENS) {
       if (ONLY && !ONLY.some(o => s.name === o || (o.endsWith('*') && s.name.startsWith(o.slice(0, -1))))) continue;
-      const key = s.app + s.vp.width + (s.dark ? 'd' : '');
-      if (!pages[key]) pages[key] = await accPage(browser, base, s.vp, s.dark);
+      const dk = s.dark || (DARK && !s.el), key = s.app + s.vp.width + (dk ? 'd' : '');
+      if (DARK && !dk) continue;   // ورق الـ PDF أبيض على طول
+      if (!pages[key]) pages[key] = await accPage(browser, base, s.vp, dk);
       const X = pages[key];
       try {
         await s.go(X);
@@ -222,8 +225,8 @@ async function accPage(browser, base, vp, dark) {
         await X.waitForTimeout(1300);   // حركة الأرقام (العدّاد) بتخلص
         await X.evaluate(() => window.scrollTo(0, 0));
         if (process.env.SHOT_EVAL) console.log(s.name, await X.evaluate(process.env.SHOT_EVAL));   // للفحص: كود بيتشغل في الصفحة وبيطبع النتيجة
-        if (process.env.SHOT_DUMP) fs.writeFileSync(path.join(OUT, s.name + '.json'), await X.evaluate(fs.readFileSync(process.env.SHOT_DUMP, 'utf8')));   // للفحص: نتيجة كود (JSON) جنب كل صورة
-        const f = path.join(OUT, s.name + '.png');
+        if (process.env.SHOT_DUMP) fs.writeFileSync(path.join(OUT, s.name + (DARK && !s.dark ? '-dk' : '') + '.json'), await X.evaluate(fs.readFileSync(process.env.SHOT_DUMP, 'utf8')));   // للفحص: نتيجة كود (JSON) جنب كل صورة
+        const f = path.join(OUT, s.name + (DARK && !s.dark ? '-dk' : '') + '.png');
         /* الصفحة كلها: الشاشة بتطول على قد الصفحة (علشان الشريط اللي تحت يفضل تحت) وبترجع زي ما كانت */
         if (s.full) { const h = await X.evaluate(() => Math.max(document.documentElement.scrollHeight, innerHeight)); await X.setViewportSize({width: s.vp.width, height: Math.min(h, 6000)}); await X.waitForTimeout(300); }
         if (s.el) await X.locator(s.el).first().screenshot({path: f}); else await X.screenshot({path: f});

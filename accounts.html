@@ -1113,10 +1113,11 @@ html[data-theme=dark] .ifoot .btn.off,html[data-theme=dark] .ifoot .btn:disabled
 nav .ngrp,nav button.lap{display:none}
 .top #bSet{display:inline-flex;margin-inline-start:auto}
 .top #bTheme{margin-inline-start:0}
-/* الموبايل: تحت أربعة بس: العملاء | الموردين | التقارير | الخزنة. الشركاء زرار جوه الخزنة (#cPart) */
+/* الموبايل: تحت أربعة بس: العملاء | الموردين | التقارير | الخزنة. الشركاء زرار جوه الخزنة (#cPart)، والشيكات على اللاب بس (وتنبيهها في الرئيسية) */
 nav .nb:empty{display:none}
 @media (max-width:999.98px){
-  nav button[data-go=part]{display:none}
+  nav{grid-template-columns:repeat(4,1fr)}
+  nav button[data-go=part],nav button[data-go=chk]{display:none}
   nav button[data-go=rep]{order:1}
   nav button[data-go=cash]{order:2}
   /* الإعدادات ترس فوق (#bSet)، والجرد زرار في صفحة العملاء (#hJrd) */

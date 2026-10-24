@@ -861,7 +861,7 @@ const T0 = Date.now();
     sec('١٢) الشركاء: مرتب كل خميس ومسحوبات');
     await bg(A, 'syncNow()');   // ياخد اللي اتسجل في الجهاز التاني الأول
     const vb0 = await A.evaluate(() => vaultBal(''));
-    eq('الموبايل: الشريط اللي تحت عملاء وموردين وشيكات وتقارير وخزنة في سطر واحد، والشركاء جوه الخزنة', await A.evaluate(() => [...document.querySelectorAll('nav button[data-go]')].filter(b => getComputedStyle(b).display !== 'none').sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left).map(b => b.dataset.go).reverse()), ["home", "sup", "chk", "rep", "cash"]);
+    eq('الموبايل: الشريط اللي تحت عملاء وموردين وتقارير وخزنة في سطر واحد، والشركاء جوه الخزنة والشيكات على اللاب بس', await A.evaluate(() => [...document.querySelectorAll('nav button[data-go]')].filter(b => getComputedStyle(b).display !== 'none').sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left).map(b => b.dataset.go).reverse()), ["home", "sup", "rep", "cash"]);
     eq('الموبايل: زراير الشريط اللي تحت كلها في سطر واحد', await A.evaluate(() => new Set([...document.querySelectorAll('nav button[data-go]')].filter(b => getComputedStyle(b).display !== 'none').map(b => Math.round(b.getBoundingClientRect().top))).size), 1);
     await A.evaluate(() => go('cash')); await A.click('#cMore'); await A.click('#modal [data-b=cPart]'); await A.waitForSelector('#ptBack', {timeout: 3000}).catch(() => {});   // الصفحة بتفتح بعد تغيير العنوان
     eq('الشركاء من الخزنة: الخزنة متعلّمة تحت وفيه رجوع', [await A.evaluate(() => $('nav button.on').dataset.go), !!await A.$('#ptBack')], ['cash', true]);

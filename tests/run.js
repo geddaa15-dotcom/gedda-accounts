@@ -863,6 +863,8 @@ const T0 = Date.now();
     const vb0 = await A.evaluate(() => vaultBal(''));
     eq('الموبايل: الشريط اللي تحت عملاء وموردين وتقارير وخزنة في سطر واحد، والشركاء جوه الخزنة والشيكات على اللاب بس', await A.evaluate(() => [...document.querySelectorAll('nav button[data-go]')].filter(b => getComputedStyle(b).display !== 'none').sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left).map(b => b.dataset.go).reverse()), ["home", "sup", "rep", "cash"]);
     eq('الموبايل: زراير الشريط اللي تحت كلها في سطر واحد', await A.evaluate(() => new Set([...document.querySelectorAll('nav button[data-go]')].filter(b => getComputedStyle(b).display !== 'none').map(b => Math.round(b.getBoundingClientRect().top))).size), 1);
+    await A.evaluate(() => go('cash')); await A.waitForSelector('#cMore'); await A.click('#cMore'); await A.click('#modal [data-b=cChk]'); await A.waitForFunction(() => location.hash === '#chk', null, {timeout: 3000}).catch(() => {});
+    eq('الشيكات من ⋯ في الخزنة على الموبايل', await A.evaluate(() => location.hash), '#chk');
     await A.evaluate(() => go('cash')); await A.click('#cMore'); await A.click('#modal [data-b=cPart]'); await A.waitForSelector('#ptBack', {timeout: 3000}).catch(() => {});   // الصفحة بتفتح بعد تغيير العنوان
     eq('الشركاء من الخزنة: الخزنة متعلّمة تحت وفيه رجوع', [await A.evaluate(() => $('nav button.on').dataset.go), !!await A.$('#ptBack')], ['cash', true]);
     await A.click('#psGo'); await A.fill('#psA', '10');
@@ -1246,7 +1248,7 @@ const T0 = Date.now();
     await colOk('الحسابات — الخزنة (اتدفع)', A, '#fbOut', '.n');
     if (await A.evaluate(() => !isWide())) eq('الخزنة على الموبايل: الأدوات ورا ⋯ جوه الكارت الأسود', await A.evaluate(() => {
       const v = e => e && getComputedStyle(e).display !== 'none', r = [v($('#cMore')), !v($('#cTr')), !!$('#p-cash .kf #cMore')];
-      $('#cMore').click(); r.push($$('#modal .kmenu [data-b]').length === 3); $('#modal [data-b=cOpen2]').click(); r.push($('#mask').classList.contains('on') && !$('#modal .kmenu')); closeModal(); return r; }), [true, true, true, true, true]);
+      $('#cMore').click(); r.push($$('#modal .kmenu [data-b]').length === 4); $('#modal [data-b=cOpen2]').click(); r.push($('#mask').classList.contains('on') && !$('#modal .kmenu')); closeModal(); return r; }), [true, true, true, true, true]);
     {   // الاتنين على نفس الحسابات: الاسم على كل حركة، واللي اتعمل، وتحذير التكرار بالاسم، ومقارنة الشركاء، وقفل الشهر
       const r = await A.evaluate(async () => {
         closeModal(); const me = meName(), r = [me === 'جهاز تجربة'], n0 = db.txs.length, v = vaultsL()[0].id, c = catsL('exp')[0].id;
@@ -1321,6 +1323,19 @@ const T0 = Date.now();
         [o, m].forEach(x => { x.del = true; touch(x); }); saveDB(); ordF = 'w'; mixCur = ''; go('home');
         return r; });
       eq('الطلبات: الكيلو = اللفف × وزن اللفة، بتتسجل بالاسم من غير رصيد، المتأخرة بالأحمر، "اتسلمت" بتنقلها وتظهر في "اللي اتعمل". التسعير: 70/30 من 65 و55 + 6 + 10% = 74.80، والنسبة التانية بتتظبط لوحدها، والعكس بيقول تخلط بكام', r, Array(17).fill(true));
+    }
+    {   // تنبيه النسخة الاحتياطية: على اللاب بس، لما يعدّي BK_DAYS يوم من غير نسخة
+      await A.setViewportSize({width: 1280, height: 800}); await A.settle(200);
+      const r = await A.evaluate(() => {
+        const lb = db.cfg.lastBackup, r = [], has = () => (go('home'), renderHome(), !!$('#hBk'));
+        db.cfg.lastBackup = nowS() - BK_DAYS * 86400000 - 1000; r.push(has() && $('#hBk').textContent.includes('بقالك'));
+        db.cfg.lastBackup = 0; r.push(has() && $('#hBk').textContent.includes('لسه'));
+        db.cfg.lastBackup = nowS() - 86400000; r.push(!has());
+        db.cfg.lastBackup = 0; has(); $('#hBk').click(); r.push(location.hash === '#set');
+        db.cfg.lastBackup = lb; return r; });
+      await A.setViewportSize({width: 400, height: 860}); await A.settle(200);
+      r.push(await A.evaluate(() => { const lb = db.cfg.lastBackup; db.cfg.lastBackup = 0; go('home'); renderHome(); const x = !$('#hBk'); db.cfg.lastBackup = lb; renderHome(); return x; }));
+      eq('تنبيه النسخة الاحتياطية: بيظهر على اللاب لو عدّى 3 أيام أو مفيش نسخة خالص، ومش بيظهر لو فيه نسخة جديدة ولا على الموبايل، والدوس بيودّي للإعدادات', r, Array(5).fill(true));
     }
     {   // النسخ الاحتياطية: الحفظ الأوتوماتيك في فولدر على اللاب، وسطر النسخة اليومية على Drive
       const r = await A.evaluate(async () => {

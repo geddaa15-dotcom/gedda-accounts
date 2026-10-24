@@ -1113,7 +1113,7 @@ html[data-theme=dark] .ifoot .btn.off,html[data-theme=dark] .ifoot .btn:disabled
 nav .ngrp,nav button.lap{display:none}
 .top #bSet{display:inline-flex;margin-inline-start:auto}
 .top #bTheme{margin-inline-start:0}
-/* الموبايل: تحت أربعة بس: العملاء | الموردين | التقارير | الخزنة. الشركاء زرار جوه الخزنة (#cPart)، والشيكات على اللاب بس (وتنبيهها في الرئيسية) */
+/* الموبايل: تحت أربعة بس: العملاء | الموردين | التقارير | الخزنة. الشركاء والشيكات زراير جوه ⋯ في الخزنة (#cPart، #cChk) */
 nav .nb:empty{display:none}
 @media (max-width:999.98px){
   nav{grid-template-columns:repeat(4,1fr)}
@@ -2252,13 +2252,16 @@ function renderHome() {
   const probs = selfCheck();
   const au = db.cfg.audit;
   if (au && !au.ok) probs.unshift(au.msg);
-  const lb = db.cfg.lastBackup || 0, every = db.cfg.sheetOk ? 30 : 7, days = Math.floor((nowS() - lb) / 86400000);
   $('#nlRem').innerHTML = '';   // تنبيه الفواتير اللي بنودها لسه: في الوارد بس (بطلب صاحب المشروع)
   const mrn = mrnHtml();
-  $('#chk').innerHTML = afAlertHtml() + (mrn || chkAlertHtml()) + (probs.length ? `<div class="sync warn">⚠️ المراجعة لقت ${probs.length} مشكلة: ${esc(probs.slice(0, 3).join(' — '))}</div>` : '') + docAlertHtml();
+  $('#chk').innerHTML = afAlertHtml() + bkAlertHtml() + (mrn || chkAlertHtml()) + (probs.length ? `<div class="sync warn">⚠️ المراجعة لقت ${probs.length} مشكلة: ${esc(probs.slice(0, 3).join(' — '))}</div>` : '') + docAlertHtml();
   if ($('#hDoc')) $('#hDoc').onclick = docOpen;
   if (mrn) mrnBind();
   if ($('#hAf')) $('#hAf').onclick = async () => { if (await afWrite(true)) toast('✔ الحفظ الأوتوماتيك رجع شغال', 3000); };
+  if ($('#hBk')) $('#hBk').onclick = async () => {
+    if (afDir) { toast(await afWrite(true) ? '✔ اتحفظت نسخة' : 'معرفتش أحفظ', 3000); return renderHome(); }
+    go('set'); const c = $('#sAfC'); if (c) c.scrollIntoView({block: 'start', behavior: 'smooth'});
+  };
   const bal = allBalances();
   let ly = 0, al = 0; bal.forEach((v, id) => { if (P.get(id).noTot) return; if (v > 0) ly += v; else al -= v; });   // الحساب الفرعي ميدخلش في الإجماليات
   const net = ly - al;
@@ -4420,6 +4423,14 @@ async function afWrite(ask) {
 }
 /* الإذن بيرجع "اسأل" لما البرنامج يتقفل ويتفتح (حماية من المتصفح)، فسطر في الرئيسية بيطلبه بدوسة واحدة */
 const afAlertHtml = () => afDir && (afPerm === 'prompt' || (db && db.cfg.afErr)) ? `<div class="sync warn" id="hAf" style="cursor:pointer">💾 الحفظ الأوتوماتيك على اللاب واقف. دوس هنا علشان يكمّل.</div>` : '';
+/* النسخة الاحتياطية بقالها BK_DAYS يوم أو أكتر ماتعملتش (اللاب بس، لأن النسخ بتتحفظ عليه). لو الحفظ الأوتوماتيك واقف، تنبيهه هو اللي بيظهر (afAlertHtml) */
+const BK_DAYS = 3;
+function bkAlertHtml() {
+  if (!afOk() || !isWide() || afAlertHtml() || !liveEntries().length) return '';
+  const lb = db.cfg.lastBackup || 0, d = Math.floor((nowS() - lb) / 86400000);
+  if (lb && d < BK_DAYS) return '';
+  return `<div class="sync warn" id="hBk" style="cursor:pointer">💾 ${lb ? `بقالك ${daysTxt(d)} من غير نسخة احتياطية` : 'مفيش نسخة احتياطية لسه'} — <b>دوس هنا</b></div>`;
+}
 function afShow() {
   if ($('#hAf') || afAlertHtml()) renderHome();
   const b = $('#sAf'); if (!b) return;
@@ -4864,6 +4875,7 @@ function renderCash() {
         <button class="btn line" id="cOpen2" type="button" title="عدّ الفلوس: اكتب الفلوس اللي معاك فعلاً">✎ <span>عدّ الفلوس</span></button>
         <button class="btn line" id="cSet" type="button" title="البنود">⚙ <span>البنود</span></button>
         <button class="btn line mob" id="cPart" type="button">👥 <span>الشركاء</span></button>
+        ${CHECKS_ON ? '<button class="btn line mob" id="cChk" type="button">🧾 <span>الشيكات</span></button>' : ''}
       </div>
     </div>
     <div class="kvrow"><div class="seg s2" id="cView"><button type="button" data-v="type" class="${dv ? '' : 'on'}">بالنوع</button><button type="button" data-v="date" class="${dv ? 'on' : ''}">بالتاريخ</button></div><button type="button" class="ksrch" id="cSrch" title="دوّر في الخزنة" aria-label="دوّر في الخزنة">🔍</button></div>
@@ -4925,10 +4937,11 @@ function renderCash() {
   }
   $('#cSet').onclick = vaultSettings;
   $('#cPart').onclick = () => go('part');
+  if ($('#cChk')) $('#cChk').onclick = () => go('chk');
   $('#cOpen2').onclick = openingModal;
   /* الموبايل: عدّ الفلوس والتحويل والخزن والشركاء في زرار واحد ⋯ جنب الأرصدة (بطلبه 15/10/2026) */
   $('#cMore').onclick = () => {
-    modal(`<div class="kmenu">${[['cOpen2', '✎', 'عدّ الفلوس'], ['cSet', '⚙', 'البنود'], ['cPart', '👥', 'الشركاء']].map(([id, ic, n]) => `<button class="btn line" type="button" data-b="${id}">${ic} ${n}</button>`).join('')}<button class="btn line" id="kmX" type="button">رجوع</button></div>`);
+    modal(`<div class="kmenu">${[['cOpen2', '✎', 'عدّ الفلوس'], ['cSet', '⚙', 'البنود'], ['cPart', '👥', 'الشركاء'], ...(CHECKS_ON ? [['cChk', '🧾', `الشيكات${chkDue().length ? ` (${chkDue().length})` : ''}`]] : [])].map(([id, ic, n]) => `<button class="btn line" type="button" data-b="${id}">${ic} ${n}</button>`).join('')}<button class="btn line" id="kmX" type="button">رجوع</button></div>`);
     $('#kmX').onclick = closeModal;
     $$('#modal .kmenu [data-b]').forEach(b => b.onclick = () => { const t = $('#' + b.dataset.b); closeModal(); t.click(); });
   };

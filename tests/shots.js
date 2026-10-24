@@ -157,6 +157,7 @@ const SCREENS = [
   {name: 'acc-party-scroll-m', app: 'acc', vp: MOB, go: async A => { await accEval(`tab = 'mkt'; go('p/' + ${party}.id)`)(A); await A.evaluate(() => { const b = $('#p-party'); b.scrollTo(0, b.scrollHeight / 2); }); await A.waitForTimeout(300); console.log('th top', await A.evaluate(() => Math.round($('#p-party .ldg th').getBoundingClientRect().top))); }},
   {name: 'acc-party-zoom-m', app: 'acc', vp: MOB, go: async A => { await accEval(`tab = 'mkt'; go('p/' + ${party}.id)`)(A); await A.evaluate(() => { document.documentElement.style.setProperty('--lz', 1.8); document.documentElement.setAttribute('data-lz', ''); const st = document.createElement('style'); st.textContent = '.ldgw .ldg{zoom:var(--lz)}'; document.head.appendChild(st); }); await A.waitForTimeout(300); }},
   {name: 'acc-cash-l1100', app: 'acc', vp: LAP2, go: accGo('cash')},
+  {name: 'acc-cash-more-m', app: 'acc', vp: MOB, go: async A => { await accGo('cash')(A); await A.click('#cMore'); await A.waitForSelector('#modal .kmenu'); }},
   {name: 'acc-cash-pick-m', app: 'acc', vp: MOB, go: accEval("cashOpenV = false; cashVault = ''; cashMode = 'day'; cashDay = addDays(todayISO(), -1); go('cash'); renderCash(); $('#cPer').classList.add('pk')")},
   {name: 'acc-list-m-dark', app: 'acc', vp: MOB, dark: true, go: accEval("tab = 'mkt'; go('home'); renderHome()")},
   {name: 'acc-party-m-dark', app: 'acc', vp: MOB, dark: true, go: accEval(`go('p/' + ${party}.id)`)},

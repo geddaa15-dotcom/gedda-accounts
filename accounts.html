@@ -231,6 +231,11 @@ nav .nb{position:absolute;top:6px;inset-inline-start:calc(50% + 6px);background:
 .cb.ok{background:var(--green-l);color:var(--green)}.cb.warn{background:var(--gold-l);color:var(--gold-d)}.cb.bad{background:var(--red-l);color:var(--red)}
 .mrn{background:var(--card);border:1.5px solid var(--gold);border-radius:13px;padding:10px 10px 4px;margin-bottom:12px}.mrh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;font-size:var(--f3)}.mrh .btn{flex:none;width:auto}
 .mrs{font-size:var(--f2);font-weight:800;color:var(--sub);margin:8px 2px 6px}.mrn .pt{margin-bottom:6px;padding:8px 10px}.mrn .mwa{flex:none;color:var(--green);border-color:var(--green);text-decoration:none}.mrm{display:block;text-align:center;font-size:var(--f2);font-weight:700;color:var(--gold-d);padding:2px 0 8px}
+.ovh{margin:6px 2px 0}.ovg{display:flex;align-items:center;gap:8px;font-size:var(--f2);font-weight:800;color:var(--sub);margin:14px 2px 8px}.ovg::after{content:'';flex:1;border-top:1.5px solid var(--line)}
+.ovw{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ovc{display:flex;flex-direction:column;gap:2px;min-width:0;text-align:start;background:var(--card);border:1.5px solid var(--line);border-radius:13px;padding:10px 12px;cursor:pointer;font:inherit;color:var(--ink)}
+.ovc span{font-size:var(--f2);font-weight:800;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ovc b{font-size:var(--f4);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ovc b.nm{font-size:var(--f3);line-height:1.6}.ovc b.neg{color:var(--red)}
+.ovc small{font-size:var(--f1);font-weight:700;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ovc em{font-style:normal;font-weight:800}.ovc em.up{color:var(--green)}.ovc em.dn{color:var(--red)}
 .rph{font-size:var(--f4);margin:6px 2px 8px;font-weight:800}.rph small{display:block;font-size:var(--f1);color:var(--sub);font-weight:700}
 .ldg.rp tr[data-p],.ldg.rp tr[data-k]{cursor:pointer}
 table.ldg.rp.wide{min-width:520px}.ldg.rp td{white-space:nowrap}.ldg.rp td.l{white-space:normal;min-width:110px}
@@ -5679,7 +5684,7 @@ function searchModal(q0) {
   setTimeout(() => $('#saQ') && $('#saQ').focus(), 50);
 }
 let repColMode = 'week';   // تقرير التحصيل: أسبوعي (أسابيع الشهر، السبت للجمعة) أو شهري (شهور السنة)
-let repKind = 'profit', repSide = 'mkt', repMode = 'year', repDay = '', repMonth = '', repYear = '', repFrom = '', repTo = '', repVault = '', repItemKind = 'inv';
+let repKind = 'ov', repSide = 'mkt', repMode = 'year', repDay = '', repMonth = '', repYear = '', repFrom = '', repTo = '', repVault = '', repItemKind = 'inv';
 function repRange() {
   const t = todayISO();
   if (repMode === 'day') { const d = repDay || t; return [d, d]; }
@@ -5811,11 +5816,101 @@ function profitChart(rows) {
   return `<div class="card rch"><div class="rchk"><span><i class="s"></i>المبيعات</span><span><i class="p"></i>الربح</span></div>
     <div class="rchb">${rows.map(r => `<div class="c"><div class="bb"><i class="s" style="height:${h(r.raw.s)}%"></i><i class="p" style="height:${h(r.raw.p)}%"></i></div><small>${esc(rows.length > 6 ? r.raw.m.slice(0, 3) : r.raw.m)}</small></div>`).join('')}</div></div>`;
 }
+/* ====================== التقارير: الصورة كلها (كروت) ======================
+   أول ما تفتح التقارير (repKind 'ov'): كل تقرير كارت فيه أهم رقم، وتحته مقارنة بنفس عدد الأيام من الفترة اللي قبلها.
+   شريط فترة واحد لكل الكروت، والدوس على كارت بيفتح التقرير الكامل زي ما هو بنفس الفترة */
+let ovP = 'month';
+const OVP = [['day', 'النهارده'], ['week', 'الأسبوع'], ['month', 'الشهر'], ['year', 'السنة']];
+const monEnd = m => { const [y, mo] = m.split('-').map(Number); return m + '-' + pad2(new Date(y, mo, 0).getDate()); };
+function ovRanges(p = ovP, t = todayISO()) {
+  if (p === 'day') { const y = addDays(t, -1); return {cur: [t, t], prev: [y, y], vs: 'عن امبارح'}; }
+  if (p === 'week') { const f = weekStart(t); return {cur: [f, t], prev: [addDays(f, -7), addDays(t, -7)], vs: 'عن الأسبوع اللي فات'}; }
+  if (p === 'month') {
+    const [y, m] = t.slice(0, 7).split('-').map(Number), pm = m === 1 ? `${y - 1}-12` : `${y}-${pad2(m - 1)}`, e = monEnd(pm), d = pm + t.slice(7);
+    return {cur: [t.slice(0, 8) + '01', t], prev: [pm + '-01', d < e ? d : e], vs: 'عن ' + MONTHS[+pm.slice(5) - 1]};
+  }
+  const py = String(+t.slice(0, 4) - 1), e = monEnd(py + t.slice(4, 7)), d = py + t.slice(4);
+  return {cur: [t.slice(0, 4) + '-01-01', t], prev: [py + '-01-01', d < e ? d : e], vs: 'عن ' + py};
+}
+function ovData() {
+  const R = ovRanges(), [f, t] = R.cur, [pf, pt] = R.prev;
+  const pr = profitOf(f, t), pp = profitOf(pf, pt);
+  /* دفعات العملا (زي تقرير التحصيل) واللي اتباع للعملا (زي حركة العملاء) */
+  const col = (a, b) => { let c = 0; for (const e of db.entries) { if (e.del || e.kind !== 'pay' || e.date < a || e.date > b) continue; const p = P.get(e.party); if (p && !p.noTot && p.sec !== 'sup') c += e.amt; } return c; };
+  let mktS = 0, mktC = 0;
+  for (const e of db.entries) {
+    if (e.del || e.kind === 'open' || e.date < f || e.date > t) continue;
+    const p = P.get(e.party); if (!p || p.noTot || p.sec !== 'mkt') continue;
+    if (e.kind === 'pay') mktC += e.amt; else mktS += (e.dr || 0) - (e.cr || 0);
+  }
+  const items = new Map();
+  for (const e of db.entries) {
+    if (e.del || (e.kind !== 'inv' && e.kind !== 'rinv') || e.date < f || e.date > t) continue;
+    const sg = e.kind === 'rinv' ? -1 : 1;
+    (e.lines || []).forEach(l => { const k = norm(l.name) + '|' + l.unit, x = items.get(k) || {name: l.name, unit: l.unit, q: 0, v: 0}; x.q += sg * (+l.qty || 0); x.v += sg * lineTot(l); items.set(k, x); });
+  }
+  const top = [...items.values()].sort((a, b) => b.v - a.v)[0];
+  let ly = 0, al = 0, nly = 0, nal = 0;
+  allBalances().forEach((v, id) => { const p = P.get(id); if (!p || p.noTot) return; if (v > 0) { ly += v; nly++; } else if (v < 0) { al -= v; nal++; } });
+  const ps = partners(), part = ps && ps.on ? (() => {
+    const per = new Map(ps.list.map(x => [x.id, {p: x, v: 0}]));
+    db.txs.forEach(x => { if (!x.del && x.pt && x.date >= f && x.date <= t && per.has(x.pt)) per.get(x.pt).v += x.amt; });
+    return [...per.values()].filter(r => !r.p.to || r.v);
+  })() : [];
+  return {R, pr, pp, col: col(f, t), pcol: col(pf, pt), mktD: mktS - mktC, top: top && top.v > 0 ? top : null,
+    vault: vaultBal(''), vchg: vaultBal('', addDays(t, 1)) - vaultBal('', f), ly, al, nly, nal, part};
+}
+function renderOverview() {
+  const D = ovData(), {R, pr, pp} = D, vs = R.vs;
+  const cmp = (a, b, good = 1) => {
+    if (!b) return a ? `${vs.slice(3)}: مفيش` : '';
+    const d = Math.round((a - b) * 100 / Math.abs(b));
+    return d ? `<em class="${!good ? '' : d * good > 0 ? 'up' : 'dn'}">${d > 0 ? '▲' : '▼'} ${Math.abs(d)}%</em> ${vs}` : `زي ${vs.slice(3)} بالظبط`;
+  };
+  const card = (k, lbl, val, sub, cls = '') => `<button type="button" class="ovc" data-ov="${k}"><span>${lbl}</span><b class="${cls}">${val}</b><small>${sub || '&nbsp;'}</small></button>`;
+  const grp = (h, cards) => `<h3 class="ovg">${h}</h3><div class="ovw">${cards.join('')}</div>`;
+  const exp = pr.exp - pr.inc, pexp = pp.exp - pp.inc, sg = v => (v > 0 ? '+ ' : v < 0 ? '− ' : '') + fmtP(Math.abs(v));
+  $('#p-rep').innerHTML = (isWide() ? '' : `<div class="tstrip"><button class="btn line sm" id="rpJrd" type="button">📦 الجرد</button></div>`) + `
+    <div class="seg s4" id="ovP">${OVP.map(([k, n]) => `<button type="button" data-v="${k}" class="${ovP === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+    <p class="hint ovh">${rangeText(R.cur[0], R.cur[1])} — والمقارنة بنفس الأيام من اللي قبلها</p>
+    ${grp('فلوسي', [
+      card('profit', pr.before < 0 ? 'خسارة (قبل الشركاء)' : 'الربح (قبل الشركاء)', fmtP(Math.abs(pr.before)), cmp(pr.before, pp.before), pr.before < 0 ? 'money neg' : 'money'),
+      card('cash', 'في الخزنة', (D.vault < 0 ? '− ' : '') + fmtP(Math.abs(D.vault)), `${sg(D.vchg)} في الفترة`, D.vault < 0 ? 'money neg' : 'money')])}
+    ${grp('شغلي', [
+      card('item', 'المبيعات', fmtP(pr.sales), cmp(pr.sales, pp.sales), 'money'),
+      card('item', 'أكتر صنف اتباع', D.top ? esc(D.top.name) : '—', D.top ? `${D.top.unit ? fmtQ(D.top.q) + ' ' + esc(D.top.unit) + ' — ' : ''}${fmtP(D.top.v)}` : 'مفيش مبيعات', 'nm'),
+      card('itemp', 'المشتريات', fmtP(pr.purch), cmp(pr.purch, pp.purch, 0), 'money'),
+      card('cash', 'المصروفات', fmtP(Math.abs(exp)), cmp(exp, pexp, -1), 'money')])}
+    ${grp('الناس', [
+      card('tot', 'ليك برّه', fmtP(D.ly), `عند ${D.nly} حساب`, 'money'),
+      card('col', 'التحصيل', fmtP(D.col), cmp(D.col, D.pcol), 'money'),
+      card('debts', 'عليك للناس', fmtP(D.al), `لـ ${D.nal} حساب`, 'money'),
+      card('ah', 'اللي على العملاء', fmtP(Math.abs(D.mktD)), D.mktD > 0 ? 'زاد في الفترة' : D.mktD < 0 ? 'قلّ في الفترة' : 'زي ما هو', 'money'),
+      ...D.part.map(r => card('part', esc(r.p.name), fmtP(r.v), 'خد في الفترة', 'money'))])}`;
+  $$('#ovP button').forEach(b => b.onclick = () => { ovP = b.dataset.v; renderOverview(); });
+  $$('#p-rep [data-ov]').forEach(b => b.onclick = () => repOpen(b.dataset.ov));
+  if ($('#rpJrd')) $('#rpJrd').onclick = () => go('jrd');
+}
+/* الكارت بيفتح التقرير الكامل بنفس فترة الكروت */
+function repOpen(k) {
+  if (k === 'part') return go('part');
+  const t = todayISO(), [f, to] = ovRanges().cur;
+  repKind = k === 'itemp' ? 'item' : k === 'debts' ? 'debt' : k;
+  if (repKind === 'item') repItemKind = k === 'itemp' ? 'pur' : 'inv';
+  if (k === 'debts') repSide = 'sup';
+  if (repKind === 'col') { repColMode = ovP === 'year' ? 'month' : 'week'; repMonth = t.slice(0, 7); repYear = t.slice(0, 4); }
+  else if (ovP === 'month') { repMode = 'month'; repMonth = t.slice(0, 7); }
+  else if (ovP === 'year' && repKind !== 'ah') { repMode = 'year'; repYear = t.slice(0, 4); }
+  else if (ovP === 'week' && repKind === 'ah') { repMode = 'week'; repDay = t; }
+  else { repMode = 'range'; repFrom = f; repTo = to; }
+  renderReports(); window.scrollTo(0, 0);
+}
 function renderReports() {
+  if (repKind === 'ov') return renderOverview();
   loadPdfLibs().catch(() => {});   // نجهّز أداة الـ PDF من دلوقتي علشان تبقى جاهزة لما يدوس
   const R = buildReport(), t = todayISO(), [f, to] = repRange();
   const needRange = repKind === 'ah' || repKind === 'cash' || repKind === 'item' || repKind === 'profit';
-  $('#p-rep').innerHTML = (isWide() ? '' : `<div class="tstrip"><button class="btn line sm" id="rpJrd" type="button">📦 الجرد</button></div>`) + `
+  $('#p-rep').innerHTML = `<div class="tstrip"><button class="btn line sm" id="rpBack" type="button">→ كل التقارير</button>${isWide() ? '' : '<button class="btn line sm" id="rpJrd" type="button">📦 الجرد</button>'}</div>
     <div class="seg s6" id="rpK">${[['profit', 'الأرباح'], ['col', 'التحصيل'], ['debt', 'المسحوبات'], ['tot', 'ليا وعليا'], ['cash', 'الخزنة'], ['item', 'بالصنف'], ['ah', 'العملاء']].map(([k, n]) => `<button type="button" data-v="${k}" class="${repKind === k ? 'on' : ''}">${n}</button>`).join('')}</div>
     <div class="card">
       ${repKind === 'debt' ? `<div class="seg s2" id="rpSide" style="margin:0">${Object.entries(SECS).map(([k, n]) => `<button type="button" data-v="${k}" class="${repSide === k ? 'on' : ''}">${n}</button>`).join('')}</div>` : ''}
@@ -5846,6 +5941,7 @@ function renderReports() {
   bindI('#rpFrom', v => repFrom = v); bindI('#rpTo', v => repTo = v); bindI('#rpV', v => repVault = v);
   $$('#p-rep tr[data-p]').forEach(el => el.onclick = () => go('p/' + el.dataset.p));
   if ($('#rpJrd')) $('#rpJrd').onclick = () => go('jrd');
+  $('#rpBack').onclick = () => { repKind = 'ov'; renderReports(); window.scrollTo(0, 0); };
   $('#rpShare').onclick = () => exportReport(R, 'share');
   $('#rpPdf').onclick = () => exportReport(R, 'preview');
 }
@@ -6251,7 +6347,7 @@ initSetCards();
 let lastHash = '', wasWide = isWide();
 addEventListener('resize', () => { if (isWide() !== wasWide) { wasWide = isWide(); route(); } });
 if (!CHECKS_ON) { $('#sChkDays').closest('.card').style.display = 'none'; $('nav button[data-go="chk"]').remove(); $('nav').style.gridTemplateColumns = 'repeat(4,1fr)'; }
-$$('nav button[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+$$('nav button[data-go]').forEach(b => b.onclick = () => { if (b.dataset.go === 'rep') repKind = 'ov'; go(b.dataset.go); });   // التقارير من الشريط = الكروت الأول
 $('#bSet').onclick = () => go('set');
 $('#bTheme').onclick = () => { uiSet({theme: document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'}); if ($('#uiTheme')) bindUI(); };
 uiApply();

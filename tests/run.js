@@ -882,8 +882,23 @@ const T0 = Date.now();
     sec('١٣) الأرباح ولوحة النهارده والبحث');
     const PR = await A.evaluate(() => { const y = todayISO().slice(0, 4) + '-01-01', x = profitOf(y, todayISO()), ex = db.txs.filter(t => !t.del && t.type === 'exp' && !t.pt && !NOT_PL.has(t.cat) && t.date >= y).reduce((s, t) => s + t.amt, 0); return [x.sales, x.purch, x.part, x.exp === ex, x.before === x.sales - x.purch - x.exp + x.inc, x.after === x.before - x.part]; });
     eq('الأرباح: المبيعات والمشتريات والشركاء لوحدهم والربح قبل وبعد', PR, [968500, 5050000, 10000, true, true, true]);
-    await A.evaluate(() => go('rep')); await A.click('#rpK button[data-v=profit]'); await A.settle(200);
-    eq('تقرير الأرباح هو أول تقرير', [await A.getAttribute('#rpK .on', 'data-v'), (await A.textContent('#p-rep .ldgf')).includes('بعد الشركاء')], ['profit', true]);
+    /* التقارير بتفتح على الكروت: شريط فترة واحد، وكل كارت = رقم التقرير الكامل، والدوس بيفتحه بنفس الفترة */
+    await A.evaluate(() => { repKind = 'ov'; ovP = 'year'; go('rep'); renderReports(); }); await A.settle(200);
+    eq('التقارير: الكروت الأول بشريط فترة واحد، والأرقام = الأرباح والمبيعات والتحصيل، والمقارنة بنفس الأيام من الفترة اللي قبلها', await A.evaluate(() => {
+      const [f, t] = ovRanges().cur, pr = profitOf(f, t), card = k => $(`#p-rep .ovc[data-ov="${k}"] b`).textContent;
+      let c = 0; db.entries.forEach(e => { const p = P.get(e.party); if (!e.del && e.kind === 'pay' && e.date >= f && e.date <= t && p && !p.noTot && p.sec !== 'sup') c += e.amt; });
+      return [!!$('#ovP .on') && $('#ovP .on').dataset.v === 'year' && !$('#rpK'), card('profit') === fmtP(Math.abs(pr.before)), card('item') === fmtP(pr.sales), card('col') === fmtP(c),
+        ovRanges('month', '2026-03-31').prev.join(), ovRanges('year', '2028-02-29').prev.join(), ovRanges('week', '2026-10-24').prev[1], ovRanges('day', '2026-10-24').prev[0]]; }),
+      [true, true, true, true, '2026-02-01,2026-02-28', '2027-01-01,2027-02-28', '2026-10-17', '2026-10-23']);
+    await segOk(A, 'الحسابات — التقارير (الكروت)');
+    await A.click('#p-rep .ovc[data-ov=col]'); await A.settle(200);
+    eq('كارت التحصيل بيفتح التقرير الكامل، و"كل التقارير" بيرجع للكروت، وزرار التقارير في الشريط بيفتح الكروت', [await A.getAttribute('#rpK .on', 'data-v'),
+      (await A.click('#rpBack'), await A.settle(150), !!(await A.$('#ovP')) && !(await A.$('#rpK'))),
+      await A.evaluate(async () => { repOpen('cash'); const a = !!$('#rpK'); $('nav button[data-go=rep]').click(); await new Promise(r => setTimeout(r, 50)); renderReports(); return a && repKind === 'ov' && !!$('#ovP'); })], ['col', true, true]);
+    await A.evaluate(() => { repColMode = 'week'; repMonth = ''; repYear = ''; });   // كارت التحصيل بالسنة فتحه شهري
+    await A.evaluate(() => { repColMode = 'week'; repMonth = ''; repYear = ''; });   // كارت التحصيل بالسنة فتحه شهري
+    await A.click('#p-rep .ovc[data-ov=profit]'); await A.settle(200);
+    eq('كارت الربح بيفتح تقرير الأرباح بنفس الفترة', [await A.getAttribute('#rpK .on', 'data-v'), (await A.textContent('#p-rep .ldgf')).includes('بعد الشركاء')], ['profit', true]);
     /* تقرير التحصيل: دفعات العملاء (من غير الموردين والحساب الفرعي)، أسبوعي وشهري */
     await A.click('#rpK button[data-v=col]'); await A.settle(200);
     const CR = await A.evaluate(() => {

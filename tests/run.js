@@ -1142,9 +1142,9 @@ const T0 = Date.now();
 
       const [S1] = await open('accounts.html'); await ctl(S1);
       const fonts = [400, 600, 700, 800].flatMap(w => ['arabic', 'latin'].map(l => `fonts/cairo-${l}-${w}-normal.woff2`));
-      const need = ['index.html', 'accounts.html', 'accounts.webmanifest', 'lib/ui.css', 'lib/datepick.js', 'lib/swup.js', 'lib/icons.js', 'lib/doctor.js', 'fonts/fonts.css', ...fonts, 'icons/logo.jpg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
+      const need = ['index.html', 'accounts.html', 'accounts.webmanifest', 'lib/ui.css', 'lib/datepick.js', 'lib/swup.js', 'lib/icons.js', 'lib/doctor.js', 'lib/jspdf.umd.min.js', 'lib/html2canvas.min.js', 'fonts/fonts.css', ...fonts, 'icons/logo.jpg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
       const keys = await S1.evaluate(() => caches.open('gedda-acc-v1').then(c => c.keys()).then(ks => ks.map(k => new URL(k.url).pathname.slice(1))));
-      eq('من أول فتحة: كل ملفات الحسابات اتخزنت (الصفحتين والخطوط وui.css وdatepick.js والأيقونات والـ manifest)', need.filter(f => !keys.includes(f)), []);
+      eq('من أول فتحة: كل ملفات الحسابات اتخزنت (الصفحتين والخطوط وui.css وdatepick.js والأيقونات والـ manifest وأداة الـ PDF)', need.filter(f => !keys.includes(f)), []);
       const [Q0] = await open('reader.html'); await Q0.close();
       await S1.close();
 
@@ -1153,6 +1153,7 @@ const T0 = Date.now();
       {   // الوقت لحد ما شاشة كلمة السر تظهر فعلاً (بتترسم بعد ما الصفحة تفتح بلحظة، فالقراية على طول كانت بتقع أحياناً)
         const t0 = now(); [X] = await open('accounts.html'); const ok = await X.waitForSelector('#suP', {timeout: 5000}).then(() => true, () => false); ms = now() - t0;
         eq('النت مقطوع: الحسابات بتفتح من المحفوظ في أقل من 2 ثانية (شاشة إنشاء كلمة السر)', [ms < 2000, ok], [true, true]);
+        eq('النت مقطوع: أداة الـ PDF بتتحمّل من المحفوظ', await X.evaluate(() => loadPdfLibs().then(() => !!(window.jspdf && window.html2canvas), () => false)), true);
       }
       [X, ms] = await open('reader.html');
       eq('النت مقطوع: قارئ النسخ بيفتح من المحفوظ', await X.evaluate(() => document.body.children.length > 0), true);

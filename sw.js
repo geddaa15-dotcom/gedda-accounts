@@ -3,17 +3,17 @@
 // الحسابات (والملفات اللي محتاجاها): النسخة المحفوظة بتتفتح على طول ونجيب الجديد في الخلفية
 // (أول مرة خالص بس بنستنى النت). لما يوصل ويطلع مختلف بنقول للصفحة
 // 'sw-stale'، و lib/swup.js بيعمل reload لوحده في وقت آمن (مش والحد بيكتب).
-// الخطوط والأيقونات والـ manifest: المحفوظة على طول، وبنجددها في الخلفية.
+// الخطوط والأيقونات والـ manifest وأداة الـ PDF: المحفوظة على طول، وبنجددها في الخلفية (الـ PDF بيطلع من غير نت ومن غير ما يستنى نت ضعيف).
 // باقي الملفات: الشبكة أولاً، والمحفوظ لما مفيش نت بس.
 // كل ملفات الحسابات بتتخزن من أول فتحة (SHELL).
 const PRE = 'gedda-acc-', CACHE = PRE + 'v1';   // الكاش بتاعنا بس بيبدأ بـ PRE (أي كاش تاني على نفس الدومين مبنلمسوش)
 const FONTS = [400, 600, 700, 800].flatMap(w => ['arabic', 'latin'].map(l => `fonts/cairo-${l}-${w}-normal.woff2`))
   .concat([400, 500, 700, 800, 900].flatMap(w => ['arabic', 'latin'].map(l => `fonts/taj-${l}-${w}.woff2`)));
 const SHELL = ['./', 'index.html', 'accounts.html', 'accounts.webmanifest',
-  'lib/ui.css', 'lib/datepick.js', 'lib/swup.js', 'lib/icons.js', 'lib/doctor.js', 'fonts/fonts.css', ...FONTS,
+  'lib/ui.css', 'lib/datepick.js', 'lib/swup.js', 'lib/icons.js', 'lib/doctor.js', 'lib/jspdf.umd.min.js', 'lib/html2canvas.min.js', 'fonts/fonts.css', ...FONTS,
   'icons/logo.jpg', 'icons/logo-pdf.jpg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
 const FAST = /^(accounts\.html|lib\/(ui\.css|datepick\.js|swup\.js|icons\.js|doctor\.js)|fonts\/fonts\.css)$/;
-const STATIC = /^(fonts\/[^/]+\.woff2|icons\/[^/]+|[^/]+\.webmanifest)$/;
+const STATIC = /^(fonts\/[^/]+\.woff2|icons\/[^/]+|[^/]+\.webmanifest|lib\/(jspdf\.umd|html2canvas)\.min\.js)$/;
 
 const SCOPE = new URL(self.registration.scope);
 const rel = u => { const x = new URL(u); return x.origin === SCOPE.origin && x.pathname.startsWith(SCOPE.pathname) ? x.pathname.slice(SCOPE.pathname.length) : null; };

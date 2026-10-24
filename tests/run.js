@@ -662,7 +662,7 @@ const T0 = Date.now();
       sb('sup'); r.push(on()); sb('mkt'); r.push(on()); $('#pmDir button[data-v="cr"]').click(); sb('sup'); sb('mkt'); r.push(on()); closeModal(); return r; }), ['cr', 'dr', 'cr']);
 
     sec('٩) قفل الفترة');
-    await A.click('#bSet:visible, nav button[data-go=set]:visible'); await A.evaluate(() => setOpenAll()); await A.fill('#sLockD', today); await A.click('#sLockGo'); await A.click('#cOk'); await A.settle(200);
+    await A.click('#bSet:visible, nav button[data-go=set]:visible'); await A.evaluate(() => setOpenAll()); await A.fill('#sLockD', await A.evaluate(() => todayISO())); await A.click('#sLockGo'); await A.click('#cOk'); await A.settle(200);   // النهارده بتاع البرنامج وقت القفل نفسه (لو الاختبار عدّى 12 بالليل)
     await openParty(A, 'عميل تجربة واحد'); await A.click('#fbPay'); await A.fill('#pyAmt', '1'); await A.click('#pyOk'); await A.settle(150);
     eq('مينفعش تسجل في فترة مقفولة', (await A.textContent('#toast')).includes('مقفولة'), true); await A.click('#pyX');
     await A.click('#bSet:visible, nav button[data-go=set]:visible'); await A.evaluate(() => setOpenAll()); await A.click('#sUnlock'); await A.fill('#apP', PASS); await A.click('#apOk'); await A.settle(600);

@@ -1337,6 +1337,26 @@ const T0 = Date.now();
       r.push(await A.evaluate(() => { const lb = db.cfg.lastBackup; db.cfg.lastBackup = 0; go('home'); renderHome(); const x = !$('#hBk'); db.cfg.lastBackup = lb; renderHome(); return x; }));
       eq('تنبيه النسخة الاحتياطية: بيظهر على اللاب لو عدّى 3 أيام أو مفيش نسخة خالص، ومش بيظهر لو فيه نسخة جديدة ولا على الموبايل، والدوس بيودّي للإعدادات', r, Array(5).fill(true));
     }
+    {   // الموبايل: السحب لتحت مزامنة مش تحديث، زرار الرجوع بيقفل النافذة، والدوس على التبويب اللي انت فيه بيطلّع لفوق
+      eq('السحب لتحت: المتصفح مايعملش تحديث للصفحة (البرنامج نفسه بيزامن)', await A.evaluate(() => getComputedStyle(document.documentElement).overscrollBehaviorY), 'none');
+      await A.evaluate(() => { closeModal(); go('cash'); }); await A.settle(200);
+      const pH = await A.evaluate(n => { go('p/' + liveParties().find(x => x.name === n).id); return location.hash; }, 'عميل تجربة واحد'); await A.waitForSelector('#fbPay');
+      await A.click('#fbPay'); await A.waitForSelector('#pyX');   // بدوسة حقيقية زي الموبايل
+      await A.goBack({waitUntil: 'commit'}); await A.waitForFunction(() => !$('#mask').classList.contains('on'), null, {timeout: 3000}).catch(() => {}); await A.settle(200);   // زرار الرجوع بتاع المتصفح نفسه
+      const r1 = await A.evaluate(() => [!$('#mask').classList.contains('on'), location.hash]);
+      await A.click('#fbPay'); await A.click('#pyX');
+      await A.settle(200);
+      await A.goBack({waitUntil: 'commit'}); await A.waitForFunction(() => location.hash === '#cash', null, {timeout: 3000}).catch(() => {});
+      eq('زرار الرجوع: بيقفل النافذة المفتوحة ويفضل في نفس الصفحة، ولو النافذة اتقفلت بزرارها الرجوع بيودّي للصفحة اللي قبلها على طول', [...r1, await A.evaluate(() => location.hash)], [true, pH, '#cash']);
+      eq('زرار الرجوع في أول صفحة: "دوس رجوع تاني علشان تخرج" بدل ما يخرج على طول', await A.evaluate(() => {
+        const st = history.state; history.replaceState({gdbase: 1}, ''); exitAt = 0; dispatchEvent(new PopStateEvent('popstate', {state: {gdbase: 1}}));
+        const r = [$('#toast').textContent.includes('رجوع تاني'), !(history.state && history.state.gdbase)]; history.replaceState(st, ''); return r; }), [true, true]);
+      await A.evaluate(() => go('rep')); await A.settle(300);
+      await A.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)); await A.waitForFunction(() => window.scrollY > 100, null, {timeout: 3000}).catch(() => {});
+      await A.click('nav button[data-go=rep]'); await A.waitForFunction(() => window.scrollY === 0, null, {timeout: 3000}).catch(() => {});
+      eq('الدوس على التبويب اللي انت فيه وانت تحت: بيطلّعك لأول الصفحة', await A.evaluate(() => [window.scrollY, location.hash]), [0, '#rep']);
+      await A.evaluate(() => go('home')); await A.settle(200);
+    }
     {   // دليل التطبيق والفتح بالبصمة في الإعدادات
       eq('الإعدادات: زرار دليل التطبيق بيفتح guide.html في صفحة لوحدها، وكارت البصمة لوحده بزرار تشغيل', await A.evaluate(async () => {
         go('set'); renderSettings(); await refreshBio(); const g = $('#sGuide');

@@ -20,6 +20,8 @@
   --shadow2:0 1px 2px #0a1b2a0a,0 6px 18px #0a1b2a0f;   /* الكروت الكبيرة */
   --f1:13px;--f2:15px;--f3:17px;--f4:22px;--f5:32px;
 }
+/* السحب لتحت: المتصفح مايعملش تحديث للصفحة (كان بيقفل البرنامج ويطلب كلمة السر). البرنامج نفسه بيعمل مزامنة (#ptr) */
+html,body{overscroll-behavior-y:none}
 html[data-theme=dark]{
   --ink:#E8EEF3;--sub:#9AA8B4;--gold:#4CB2E6;--gold-d:#7FC9EF;--on-gold:#06202F;--green:#4FC777;--red:#FF7F75;--tr:#B79BEA;
   --gold-l:#0F2836;--green-l:#15291B;--red-l:#3A1D1A;--tr-l:#251C36;

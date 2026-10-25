@@ -1869,7 +1869,13 @@ function toastUndo(msg, fn, ms = 4000) {
   clearTimeout(toastT); toastT = setTimeout(() => { t.style.display = 'none'; t.classList.remove('act'); }, ms);
   $('#tUndo').onclick = () => { clearTimeout(toastT); t.style.display = 'none'; t.classList.remove('act'); fn(); };
 }
-function modal(html, wide) { $('#modal').className = 'modal' + (wide ? ' wide' : ''); $('#modal').innerHTML = html; $('#mask').classList.add('on'); oneVault(); }
+/* زرار الرجوع في الموبايل بيقفل النافذة المفتوحة بس (زي أي تطبيق): كل نافذة بتحط علامة gdm في التاريخ، والرجوع بيشيلها.
+   البرنامج مبيرجعش في التاريخ لوحده غير جوه رجوع داسه الشخص (popstate)، علشان ميتلخبطش مع نافذة بتتفتح ورا التانية */
+let curGdm = !!(history.state && history.state.gdm);
+function modal(html, wide) { $('#modal').className = 'modal' + (wide ? ' wide' : ''); $('#modal').innerHTML = html; $('#mask').classList.add('on'); oneVault();
+  /* بس لو اتفتحت بدوسة (كروم بيعدّي علامات التاريخ اللي اتحطت من غير دوسة، فالرجوع كان هيودّي لصفحة قبلها) */
+  const act = navigator.userActivation ? navigator.userActivation.isActive : true;
+  if (act && !(history.state && history.state.gdm)) try { history.pushState({gdm: 1}, ''); curGdm = true; } catch (e) {} }
 /* خزنة واحدة بس (درج واحد، بطلبه): أي اختيار خزنة في النوافذ بيتخبّى والحركة بتروح الخزنة الوحيدة (الاختيار بيفضل جوه بقيمته) */
 function oneVault() {
   if (!db || vaultsL().length > 1) return;
@@ -6370,7 +6376,10 @@ initSetCards();
 let lastHash = '', wasWide = isWide();
 addEventListener('resize', () => { if (isWide() !== wasWide) { wasWide = isWide(); route(); } });
 if (!CHECKS_ON) { $('#sChkDays').closest('.card').style.display = 'none'; $('nav button[data-go="chk"]').remove(); $('nav').style.gridTemplateColumns = 'repeat(4,1fr)'; }
-$$('nav button[data-go]').forEach(b => b.onclick = () => { if (b.dataset.go === 'rep') repKind = 'ov'; go(b.dataset.go); });   // التقارير من الشريط = الكروت الأول
+$$('nav button[data-go]').forEach(b => b.onclick = () => {
+  /* الدوس على التبويب اللي انت فيه وانت تحت في الصفحة: يطلعك لفوق بس */
+  if (b.classList.contains('on') && window.scrollY > 0 && !location.hash.startsWith('#p/')) return window.scrollTo({top: 0, behavior: 'smooth'});
+  if (b.dataset.go === 'rep') repKind = 'ov'; go(b.dataset.go); });   // التقارير من الشريط = الكروت الأول
 $('#bSet').onclick = () => go('set');
 $('#bTheme').onclick = () => { uiSet({theme: document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'}); if ($('#uiTheme')) bindUI(); };
 uiApply();
@@ -6384,11 +6393,26 @@ $$('nav .qk button').forEach(b => b.onclick = () => {
 try { history.scrollRestoration = 'manual'; } catch (e) {}
 const scrollMap = {}; let curH = location.hash, scrollHold = false, popNav = false;
 addEventListener('scroll', () => { if (!scrollHold) scrollMap[curH] = window.scrollY; }, {passive: true});
-addEventListener('popstate', () => { popNav = true; document.documentElement.classList.add('popnav'); });
+addEventListener('popstate', () => {
+  /* كروم بيبعت popstate كمان مع أي تنقل جديد (location.hash). الصفحة الجديدة لسه من غير علامة (state = null)، واللي اترجعلها عليها علامة {pg} من hashchange */
+  if (history.state === null) return;
+  const wasGdm = curGdm; curGdm = !!(history.state && history.state.gdm);
+  if ($('#mask').classList.contains('on')) return closeModal();   // الرجوع بيقفل النافذة بس
+  if (wasGdm || curGdm) { curGdm = false; history.back(); return; }   // علامة نافذة اتقفلت بزرارها: الرجوع يعدّيها ويودّي للصفحة اللي قبلها على طول
+  if (history.state && history.state.gdbase && db) {   // أول صفحة: "دوس رجوع تاني علشان تخرج" بدل ما يخرج على طول
+    if (Date.now() - exitAt < 2500) { history.back(); return; }
+    exitAt = Date.now(); try { history.pushState({pg: 1}, ''); } catch (e) {} toast('دوس رجوع تاني علشان تخرج من البرنامج', 2500); return;
+  }
+  popNav = true; document.documentElement.classList.add('popnav');
+});
+let exitAt = 0;
+try { if (!history.state) { history.replaceState({gdbase: 1}, ''); history.pushState({pg: 1}, ''); } } catch (e) {}
 addEventListener('hashchange', () => {
   const want = scrollMap[location.hash] || 0, back = popNav && !isWide();
   if (!popNav) document.documentElement.classList.remove('popnav');   // التنقل العادي بيرجّع الظهور التدريجي
   const newParty = location.hash.startsWith('#p/') && location.hash !== curH;
+  if (!history.state) try { history.replaceState({pg: 1}, ''); } catch (e) {}   // علامة إن الصفحة دي اتفتحت قبل كده (شوف popstate)
+  curGdm = !!(history.state && history.state.gdm);
   scrollHold = true; curH = location.hash; closeModal(); route();
   if (routeKeep) { if (newParty && $('#p-party')) $('#p-party').scrollTop = 0; }   // صفحة الحساب فوق القايمة: القايمة مكانها زي ما هو
   else if (location.hash !== lastHash) window.scrollTo(0, back ? want : 0);

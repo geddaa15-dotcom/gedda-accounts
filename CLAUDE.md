@@ -41,4 +41,5 @@
 | الشكل والألوان | `lib/ui.css` + بلوك `<style id="jg">` آخر الـ head |
 | اللوجو | `icons/` |
 | فحص البيانات | `lib/doctor.js` |
+| دليل التطبيق (من الإعدادات) | `guide.html` + صوره في `guide/` (مش في `SHELL`). لو شاشة اتغيرت كتير حدّث صورتها والكلام اللي عنها |
 | الاختبارات والصور | `tests/run.js`، `tests/shots.js`، `tests/speed.js` |

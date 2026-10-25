@@ -1337,6 +1337,17 @@ const T0 = Date.now();
       r.push(await A.evaluate(() => { const lb = db.cfg.lastBackup; db.cfg.lastBackup = 0; go('home'); renderHome(); const x = !$('#hBk'); db.cfg.lastBackup = lb; renderHome(); return x; }));
       eq('تنبيه النسخة الاحتياطية: بيظهر على اللاب لو عدّى 3 أيام أو مفيش نسخة خالص، ومش بيظهر لو فيه نسخة جديدة ولا على الموبايل، والدوس بيودّي للإعدادات', r, Array(5).fill(true));
     }
+    {   // دليل التطبيق والفتح بالبصمة في الإعدادات
+      eq('الإعدادات: زرار دليل التطبيق بيفتح guide.html في صفحة لوحدها، وكارت البصمة لوحده بزرار تشغيل', await A.evaluate(async () => {
+        go('set'); renderSettings(); await refreshBio(); const g = $('#sGuide');
+        return [g.getAttribute('href'), g.target, !$('#sBioC').hidden === bioOk(), $('#sBio').textContent.includes('البصمة'), !$('#sPass').closest('.card').querySelector('#sBio')]; }), ['guide.html', '_blank', true, true, true]);
+      const G = await D1.page('guide.html');
+      await G.evaluate(() => document.querySelectorAll('img').forEach(i => { i.loading = 'eager'; }));
+      await G.waitForFunction(() => [...document.images].every(i => i.complete), null, {timeout: 15000}).catch(() => {});
+      eq('دليل التطبيق: كل الصور بتظهر، وكل سطر في المحتويات بيودّي لجزء موجود، وفيه زرار PDF', await G.evaluate(() => [document.images.length >= 15, [...document.images].every(i => i.naturalWidth > 0),
+        [...document.querySelectorAll('nav.toc a')].every(a => !!document.querySelector(a.getAttribute('href'))), !!document.querySelector('button[onclick="print()"]')]), [true, true, true, true]);
+      await G.close();
+    }
     {   // النسخ الاحتياطية: الحفظ الأوتوماتيك في فولدر على اللاب، وسطر النسخة اليومية على Drive
       const r = await A.evaluate(async () => {
         const root = await navigator.storage.getDirectory(), dir = await root.getDirectoryHandle('af_test', {create: true}), orig = window.showDirectoryPicker, r = [];

@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>دليل برنامج الحسابات</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<!-- دليل الاستخدام: صفحة لوحدها بتتفتح من الإعدادات. مش في SHELL بتاع sw.js علشان متبطّأش البرنامج، وبتتحفظ بعد أول فتحة. الصور في guide/ -->
+<style>
+:root{--gold:#0a84c6;--gold-d:#086a9f;--gold-l:#e6f3fb;--ink:#14202b;--sub:#5b6875;--line:#dde4ea;--bg:#f4f7f9;--card:#fff;--green:#1b8a3c;--red:#c4372b;
+  --f1:13px;--f2:15px;--f3:17px;--f4:21px;--f5:27px}
+@media (prefers-color-scheme:dark){:root{--ink:#e8eef3;--sub:#9fb0be;--line:#2c3a46;--bg:#0f171e;--card:#17222c;--gold-l:#123447}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Cairo,Tajawal,system-ui,sans-serif;font-size:var(--f3);line-height:1.9}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+header{text-align:center;padding:18px 0 6px}
+header img{width:64px;height:64px;border-radius:16px}
+h1{font-size:var(--f5);margin:8px 0 0;color:var(--gold-d)}
+.sub{color:var(--sub);font-size:var(--f2);margin:0 0 12px}
+.bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0 18px}
+.btn{display:inline-block;border:2px solid var(--gold);background:var(--gold);color:#fff;border-radius:12px;padding:8px 18px;font:inherit;font-size:var(--f2);font-weight:800;text-decoration:none;cursor:pointer}
+.btn.line{background:none;color:var(--gold-d)}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 16px;margin-bottom:18px}
+nav.toc b{display:block;font-size:var(--f3);margin-bottom:4px}
+nav.toc ol{margin:0;padding-inline-start:22px;columns:2;column-gap:24px;font-size:var(--f2)}
+nav.toc a{color:var(--gold-d);text-decoration:none}
+section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin-bottom:16px;break-inside:avoid-page}
+h2{font-size:var(--f4);margin:0 0 6px;color:var(--gold-d)}
+h2 span{display:inline-block;min-width:34px;height:34px;line-height:34px;text-align:center;border-radius:50%;background:var(--gold-l);margin-inline-end:8px;font-size:var(--f2)}
+p{margin:6px 0}
+ol.st,ul.st{margin:6px 0;padding-inline-start:24px}
+ol.st li,ul.st li{margin:3px 0}
+.shot{display:block;margin:12px auto 4px;width:100%;max-width:300px;border-radius:18px;border:1px solid var(--line);box-shadow:0 4px 18px rgba(0,0,0,.08)}
+.shot.wide{max-width:520px;border-radius:8px}
+.cap{text-align:center;color:var(--sub);font-size:var(--f1);margin:0 0 6px}
+.tip{background:var(--gold-l);border-radius:12px;padding:8px 12px;margin:10px 0 4px;font-size:var(--f2)}
+.warn{background:#fdecea;color:var(--red);border-radius:12px;padding:8px 12px;margin:10px 0 4px;font-size:var(--f2);font-weight:700}
+@media (prefers-color-scheme:dark){.warn{background:#3a1d1a}}
+.k{display:inline-block;border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:0 7px;font-size:var(--f1);font-weight:800;direction:ltr}
+b.g{color:var(--green)}b.r{color:var(--red)}
+footer{text-align:center;color:var(--sub);font-size:var(--f1);padding:6px 0 24px}
+@media (max-width:520px){nav.toc ol{columns:1}}
+@media print{
+  :root{--ink:#000;--bg:#fff;--card:#fff;--line:#ccc}
+  .bar{display:none}
+  body{font-size:var(--f2)}
+  section{box-shadow:none}
+  .shot{max-width:240px;box-shadow:none}
+  a{color:inherit}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <img src="icons/icon-192.png" alt="">
+  <h1>دليل برنامج الحسابات</h1>
+  <p class="sub">شرح بسيط خطوة بخطوة. الأسامي والأرقام اللي في الصور تجريبية بس.</p>
+</header>
+<div class="bar">
+  <button class="btn" type="button" onclick="print()">💾 احفظه PDF أو اطبعه</button>
+  <a class="btn line" href="accounts.html">↩ ارجع للبرنامج</a>
+</div>
+
+<nav class="toc"><b>المحتويات</b><ol>
+  <li><a href="#s1">أول مرة تفتح البرنامج</a></li>
+  <li><a href="#s2">الشاشة الرئيسية (العملاء)</a></li>
+  <li><a href="#s3">حساب جديد</a></li>
+  <li><a href="#s4">فاتورة بيع</a></li>
+  <li><a href="#s5">استلام دفعة</a></li>
+  <li><a href="#s6">صفحة الحساب وكشف الحساب</a></li>
+  <li><a href="#s7">تعديل أو إلغاء حركة</a></li>
+  <li><a href="#s8">الموردين</a></li>
+  <li><a href="#s9">الخزنة والمصروفات</a></li>
+  <li><a href="#s10">التسجيل السريع (+)</a></li>
+  <li><a href="#s11">الشركاء</a></li>
+  <li><a href="#s12">الشيكات</a></li>
+  <li><a href="#s13">عروض الأسعار</a></li>
+  <li><a href="#s14">الطلبات</a></li>
+  <li><a href="#s15">التسعير</a></li>
+  <li><a href="#s16">الجرد</a></li>
+  <li><a href="#s17">التقارير</a></li>
+  <li><a href="#s18">الإعدادات والبصمة</a></li>
+  <li><a href="#s19">الأمان والنسخ الاحتياطية</a></li>
+  <li><a href="#s20">على اللاب</a></li>
+  <li><a href="#s21">أسئلة بتتكرر</a></li>
+</ol></nav>
+
+<section id="s1">
+  <h2><span>1</span>أول مرة تفتح البرنامج</h2>
+  <ol class="st">
+    <li>اعمل <b>كلمة سر</b> (6 أرقام على الأقل). دي اللي بتقفل البيانات، فاكتبها في حتة أمان.</li>
+    <li>البرنامج هيسألك عن <b>اسمك</b> مرة واحدة. الاسم ده بيتكتب على أي حركة تسجلها، علشان تعرفوا مين سجّل إيه.</li>
+    <li>من <b>الإعدادات ← النسخة على Google Sheet</b> اربط البرنامج بالشيت. كده كل حاجة بتتحفظ على جوجل أول بأول.</li>
+    <li>علشان تشغّله على جهاز تاني: من نفس المكان دوس <b>"ابعت رابط الربط لجهاز تاني"</b>، وافتح الرابط على الجهاز التاني. الجهازين هيشوفوا نفس الحسابات.</li>
+  </ol>
+  <img class="shot" src="guide/lock.jpg" alt="شاشة كلمة السر" loading="lazy">
+  <p class="cap">كل مرة تفتح البرنامج بتكتب كلمة السر، أو تفتح بالبصمة لو مشغّلها</p>
+  <div class="tip">💡 ثبّت البرنامج على الشاشة الرئيسية للموبايل: من قايمة المتصفح اختار "إضافة إلى الشاشة الرئيسية"، فيفتح زي أي تطبيق.</div>
+</section>
+
+<section id="s2">
+  <h2><span>2</span>الشاشة الرئيسية (العملاء)</h2>
+  <ul class="st">
+    <li>فوق: <b>ليا عند الناس</b> و<b>عليا للناس</b> و<b>الصافي</b>.</li>
+    <li>كارت <b>"صباح الخير"</b> بيظهر أول ما تفتح كل يوم: العملا اللي اتأخروا في الدفع (وتقدر تبعتلهم رسالة واتساب برصيدهم)، والشيكات والطلبات اللي ميعادها قرّب. لما تخلص دوس <b>"تمام"</b>.</li>
+    <li>تحت: قايمة العملا ورصيد كل واحد. دوّر بالاسم أو التليفون من خانة البحث.</li>
+    <li>الشريط اللي تحت: <b>العملاء</b>، <b>الموردين</b>، <b>التقارير</b>، <b>الخزنة</b>. والإعدادات من الترس ⚙ فوق.</li>
+  </ul>
+  <img class="shot" src="guide/home.jpg" alt="الشاشة الرئيسية" loading="lazy">
+  <p class="cap">العميل اللي رصيده عدّى الحد الأصفر أو الأحمر بيبان عليه علامة باللون (الحدود بتتظبط من الإعدادات المتقدمة)</p>
+</section>
+
+<section id="s3">
+  <h2><span>3</span>حساب جديد (عميل أو مورد)</h2>
+  <ol class="st">
+    <li>من الرئيسية دوس <b>"حساب جديد"</b>.</li>
+    <li>اختار القسم (عملاء ولا موردين)، واكتب الاسم والتليفون.</li>
+    <li>لو ليه رصيد قديم من قبل البرنامج، اكتبه في <b>رصيد أول المدة</b> واختار <b>عليه</b> أو <b>ليه</b>، وبعدين دوس <b>"إضافة الحساب"</b>.</li>
+  </ol>
+</section>
+
+<section id="s4">
+  <h2><span>4</span>فاتورة بيع</h2>
+  <ol class="st">
+    <li>افتح حساب العميل ودوس <b>"فاتورة بيع"</b>.</li>
+    <li>اكتب اسم الصنف (البرنامج بيقترح الأصناف اللي كتبتها قبل كده)، واختار الوحدة (كيلو، لفة، قطعة…)، واكتب الكمية والسعر.</li>
+    <li>الإجمالي بيتحسب لوحده. لو فيه خصم أو ملاحظة دوس <b>"+ ملاحظة أو خصم"</b>.</li>
+    <li>دوس <b>"حفظ الفاتورة"</b>. الرصيد بيتحدث على طول.</li>
+  </ol>
+  <img class="shot" src="guide/inv.jpg" alt="فاتورة بيع" loading="lazy">
+  <div class="tip">💡 زرار <b>"زي آخر فاتورة"</b> بيملالك نفس أصناف آخر فاتورة للعميل ده، وتغيّر الكميات بس.</div>
+</section>
+
+<section id="s5">
+  <h2><span>5</span>استلام دفعة</h2>
+  <ol class="st">
+    <li>من حساب العميل دوس <b>"استلمت دفعة"</b>.</li>
+    <li>اكتب المبلغ، أو دوس <b>"كل الرصيد"</b> لو دفع كل اللي عليه.</li>
+    <li>اختار <b>فلوس</b> أو <b>شيك</b>. الفلوس بتدخل الخزنة على طول، والشيك مبيدخلش الخزنة غير لما يتصرف.</li>
+    <li>دوس <b>"حفظ الدفعة"</b>.</li>
+  </ol>
+  <img class="shot" src="guide/pay.jpg" alt="استلام دفعة" loading="lazy">
+</section>
+
+<section id="s6">
+  <h2><span>6</span>صفحة الحساب وكشف الحساب</h2>
+  <ul class="st">
+    <li>فوق: <b>الرصيد</b>، وإجمالي المبيعات، واللي استلمته منه.</li>
+    <li>تحت: <b>كشف الحساب</b> بكل الحركات بالترتيب زي الإكسيل، وكل صنف في سطر لوحده.</li>
+    <li>زرار <b>"كشف حساب"</b> بيعمل ورقة PDF باسم الشركة، تبعتها للعميل على الواتساب أو تطبعها.</li>
+    <li>وكمان فيه: <b>مرتجع بيع</b>، و<b>خصم / تسوية</b>، و<b>عرض سعر</b>.</li>
+  </ul>
+  <img class="shot" src="guide/party.jpg" alt="صفحة الحساب" loading="lazy">
+  <img class="shot wide" src="guide/pdf.jpg" alt="كشف حساب PDF" loading="lazy">
+  <p class="cap">شكل كشف الحساب الـ PDF</p>
+</section>
+
+<section id="s7">
+  <h2><span>7</span>تعديل أو إلغاء حركة</h2>
+  <ol class="st">
+    <li>دوس على الحركة في كشف الحساب، هتفتحلك زي ما سجلتها.</li>
+    <li>غيّر اللي عاوزه ودوس <b>"حفظ التعديل"</b>. النسخة القديمة بتتحفظ، وتقدر تشوفها في أي وقت.</li>
+    <li>لو عاوز تلغيها، دوس <b>"إلغاء الحركة دي"</b>. هيطلعلك زرار <b>"↩ تراجع"</b> لمدة 4 ثواني لو غلطت.</li>
+  </ol>
+  <div class="tip">💡 مفيش حاجة بتتمسح نهائي. أي حركة ملغية تلاقيها في صفحة <b>"اللي اتعمل"</b> وتدوس <b>"رجّع الحركة دي"</b>.</div>
+</section>
+
+<section id="s8">
+  <h2><span>8</span>الموردين</h2>
+  <p>نفس فكرة العملا بالظبط، بس بالعكس: بتسجل <b>فاتورة شراء</b> لما تشتري منه، و<b>دفعة</b> لما تدفعله. الرقم اللي فوق هو <b>"ليهم عندي"</b>.</p>
+  <img class="shot" src="guide/sup.jpg" alt="الموردين" loading="lazy">
+</section>
+
+<section id="s9">
+  <h2><span>9</span>الخزنة والمصروفات</h2>
+  <ul class="st">
+    <li>الكارت الأسود فوق: <b>الفلوس اللي معاك دلوقتي</b> في الدرج.</li>
+    <li>الزراير اللي تحت: <b class="g">تحصيل</b> (فلوس دخلت من عميل)، <b>سداد</b> (فلوس دفعتها لمورد)، <b class="r">مصروف</b> (كهربا، خامات، صبغة…)، <b>إيراد</b> (أي فلوس دخلت من بره البيع).</li>
+    <li>تقدر تشوف <b>النهارده</b> أو <b>الأسبوع</b> أو <b>الشهر</b> أو من تاريخ لتاريخ، و<b>بالنوع</b> (كل بند لوحده) أو <b>بالتاريخ</b>.</li>
+  </ul>
+  <img class="shot" src="guide/cash.jpg" alt="الخزنة" loading="lazy">
+  <p>زرار <b>⋯</b> في الكارت الأسود فيه:</p>
+  <ul class="st">
+    <li><b>عدّ الفلوس</b>: اكتب الفلوس اللي في الدرج فعلاً، والبرنامج يقولك لو فيه فرق.</li>
+    <li><b>البنود</b>: أنواع المصروفات والإيرادات، تزوّد أو تغيّر فيها.</li>
+    <li><b>الشركاء</b> و<b>الشيكات</b>.</li>
+  </ul>
+  <img class="shot" src="guide/more.jpg" alt="قايمة الخزنة" loading="lazy">
+</section>
+
+<section id="s10">
+  <h2><span>10</span>التسجيل السريع (+)</h2>
+  <p>الزرار الأزرق المدوّر <b>+</b> اللي تحت على الشمال بيسجّل أي حاجة من أي صفحة: <b>فاتورة</b> أو <b>دفعة</b> أو <b>مصروف</b>، وتختار الحساب جوه.</p>
+  <img class="shot" src="guide/quick.jpg" alt="التسجيل السريع" loading="lazy">
+</section>
+
+<section id="s11">
+  <h2><span>11</span>الشركاء</h2>
+  <ul class="st">
+    <li>من الخزنة ← <b>⋯</b> ← <b>الشركاء</b>.</li>
+    <li>زرار <b>"مسحوبات شريك"</b> بيسجل الفلوس اللي أي شريك خدها، باسمه.</li>
+    <li>فوق بيبان <b>"مين خد كام"</b>: مقارنة بين الشركاء والفرق بينهم.</li>
+    <li>من <b>"إعدادات الشركاء"</b> تكتب أسامي الشركاء والمرتب الأسبوعي لو فيه.</li>
+  </ul>
+  <img class="shot" src="guide/part.jpg" alt="الشركاء" loading="lazy">
+</section>
+
+<section id="s12">
+  <h2><span>12</span>الشيكات</h2>
+  <ul class="st">
+    <li>من الخزنة ← <b>⋯</b> ← <b>الشيكات</b> (وعلى اللاب من القايمة اللي على الجنب).</li>
+    <li>أي دفعة متسجلة "شيك" بتظهر هنا تحت <b>"لسه"</b>، أو سجّل شيك جديد من <b>"+ شيك وارد من عميل"</b> أو <b>"+ شيك صادر لمورد"</b>.</li>
+    <li>لما الشيك يتصرف دوس <b>"✔ اتصرف"</b> اللي جنبه، ساعتها بس يدخل الخزنة. ولو رجع دوس <b>"✖ رجع"</b>، والمبلغ يرجع على العميل.</li>
+    <li>الشيكات اللي ميعادها قرّب أو فات بيطلعلها تنبيه في الرئيسية.</li>
+  </ul>
+  <img class="shot" src="guide/chk.jpg" alt="الشيكات" loading="lazy">
+</section>
+
+<section id="s13">
+  <h2><span>13</span>عروض الأسعار</h2>
+  <ul class="st">
+    <li>من حساب العميل ← <b>"عرض سعر"</b>، أو من صفحة <b>عروض الأسعار</b>.</li>
+    <li>العرض <b>مبيأثرش على أي رصيد</b>، وبيطلع PDF مكتوب عليه "عرض سعر".</li>
+    <li>لما العميل يوافق دوس <b>"اتنفذ"</b>: البرنامج بيعمل فاتورة بنفس الأصناف على طول.</li>
+  </ul>
+  <img class="shot" src="guide/qt.jpg" alt="عروض الأسعار" loading="lazy">
+</section>
+
+<section id="s14">
+  <h2><span>14</span>الطلبات</h2>
+  <ul class="st">
+    <li>سجّل طلبية العميل: الصنف وعدد اللفف ووزن اللفة (الكيلو بيتحسب لوحده)، وميعاد التسليم.</li>
+    <li>الطلبية المتأخرة بتبان بالأحمر وبتطلع في كارت الصبح.</li>
+    <li>لما تسلّمها دوس <b>"✔ اتسلمت"</b>. الطلبية مبتغيرش أي رصيد، فسجّل الفاتورة في حساب العميل لما تسلّم.</li>
+  </ul>
+  <img class="shot" src="guide/ord.jpg" alt="الطلبات" loading="lazy">
+</section>
+
+<section id="s15">
+  <h2><span>15</span>التسعير</h2>
+  <p>بيحسبلك سعر البيع من الخامات: تكتب الخامات ونسبة كل واحدة وسعرها، والمصنعية ونسبة المكسب، فيطلعلك سعر الكيلو. ولو عندك سعر معيّن عاوز توصله، البرنامج بيقولك تغيّر النسب إزاي.</p>
+  <img class="shot" src="guide/prc.jpg" alt="التسعير" loading="lazy">
+</section>
+
+<section id="s16">
+  <h2><span>16</span>الجرد</h2>
+  <ul class="st">
+    <li>اكتب تاريخ الجرد و<b>قيمة المخزون</b> اللي في المصنع.</li>
+    <li>البرنامج بيجمع: أرصدة العملا + الفلوس اللي في الخزنة + المخزون، ويطرح اللي عليك للموردين، فيطلعلك <b>صافي الجرد</b>، وبيقارنه بالجرد اللي قبله.</li>
+    <li>تقدر تطلعه PDF، وكل جرد بيتحفظ وترجعله بعدين.</li>
+  </ul>
+  <img class="shot" src="guide/jrd.jpg" alt="الجرد" loading="lazy">
+</section>
+
+<section id="s17">
+  <h2><span>17</span>التقارير</h2>
+  <ul class="st">
+    <li>اختار الفترة: النهارده، الأسبوع، الشهر، أو السنة. وكل رقم بيتقارن بالفترة اللي قبلها (السهم الأخضر زيادة والأحمر نقص).</li>
+    <li>الكروت: الربح، الخزنة، المبيعات، أكتر صنف اتباع، المشتريات، المصروفات، ليك وعليك، التحصيل، والشركاء.</li>
+    <li>دوس على أي كارت يفتحلك التقرير الكامل، وتقدر تطلعه PDF.</li>
+  </ul>
+  <img class="shot" src="guide/rep.jpg" alt="التقارير" loading="lazy">
+</section>
+
+<section id="s18">
+  <h2><span>18</span>الإعدادات والبصمة</h2>
+  <p>من الترس ⚙ فوق. كل كارت بيتفتح لما تدوس عليه:</p>
+  <ul class="st">
+    <li><b>المظهر</b>: فاتح أو ليلي، وحجم الخط.</li>
+    <li><b>كلمة السر</b>: تغييرها.</li>
+    <li><b>الفتح بالبصمة</b>: دوس <b>"شغّل الفتح بالبصمة"</b>، واكتب كلمة السر مرة، وحط صباعك أو وشك. بعد كده البرنامج هيطلب البصمة لوحده أول ما يفتح. بيشتغل على أندرويد وآيفون (لو الموبايل مش بيدعمها، الكارت مش هيظهر). وتقدر توقفها من نفس المكان.</li>
+    <li><b>قفل الشهر</b>: بعد ما تراجع شهر وتبعت الكشوف اقفله، فمحدش يعدّل فيه بالغلط.</li>
+    <li><b>بيانات الشركة في الـ PDF</b>: العنوان والتليفون والسجل التجاري والبطاقة الضريبية.</li>
+    <li><b>فحص البيانات</b>: بيراجع إن كل الأرصدة مظبوطة.</li>
+  </ul>
+  <img class="shot" src="guide/set.jpg" alt="الإعدادات" loading="lazy">
+</section>
+
+<section id="s19">
+  <h2><span>19</span>الأمان والنسخ الاحتياطية</h2>
+  <ul class="st">
+    <li>البيانات <b>متشفرة</b> على الجهاز، ومحدش يقدر يفتحها من غير كلمة السر.</li>
+    <li>البرنامج بيقفل لوحده بعد <b>10 دقايق</b> من غير استخدام.</li>
+    <li><b>Google Sheet</b>: كل حاجة بتتحفظ عليه أول بأول. العلامة اللي فوق تحت اسم البرنامج بتقولك لو متزامن ولا لأ.</li>
+    <li><b>على اللاب</b>: من الإعدادات اختار فولدر (أحسن حاجة جوه Google Drive)، والبرنامج يحفظ فيه نسخة كل يوم لوحده. لو بقالك 3 أيام من غير نسخة هيطلعلك تنبيه أحمر.</li>
+    <li><b>نسخة يومية على Drive</b>: من الإعدادات، وبتتركّب مرة واحدة بس.</li>
+  </ul>
+  <div class="warn">⚠️ لو نسيت كلمة السر: مفيش طريقة تفتح البيانات اللي على الجهاز. دوس "نسيت كلمة السر؟"، والبرنامج يمسح الجهاز ده وترجع تنزّل كل حاجة من الشيت. علشان كده لازم الشيت يبقى مربوط من أول يوم.</div>
+</section>
+
+<section id="s20">
+  <h2><span>20</span>على اللاب</h2>
+  <ul class="st">
+    <li>القايمة على الجنب فيها كل الصفحات، والحساب بيفتح جنب قايمة العملا.</li>
+    <li>اختصارات: وانت فاتح حساب <span class="k">F2</span> فاتورة بيع و<span class="k">F3</span> استلام دفعة، ومن أي مكان <span class="k">F4</span> تسجيل سريع.</li>
+    <li><b>"بحث في كل الحركات"</b>: دوّر بمبلغ أو صنف أو ملاحظة في كل الحسابات مرة واحدة.</li>
+  </ul>
+</section>
+
+<section id="s21">
+  <h2><span>21</span>أسئلة بتتكرر</h2>
+  <p><b>سجلت حاجة غلط؟</b> دوس عليها وعدّلها أو ألغيها، والقديم بيتحفظ.</p>
+  <p><b>الجهاز التاني مش شايف اللي سجلته؟</b> اتأكد إن النت شغال وإن العلامة اللي فوق مكتوب فيها متزامن، أو اسحب الصفحة لتحت علشان تتحدث.</p>
+  <p><b>غيرت الموبايل؟</b> افتح البرنامج على الموبايل الجديد، واربطه برابط الربط من الجهاز القديم أو اللاب، وكل حاجة هتنزل.</p>
+  <p><b>البرنامج بيشتغل من غير نت؟</b> أيوه. سجّل عادي، وأول ما النت يرجع كل حاجة بتتبعت للشيت لوحدها.</p>
+  <p><b>الرصيد مش مظبوط؟</b> من الإعدادات ← فحص البيانات، وبعدين راجع كشف حساب العميل حركة حركة.</p>
+</section>
+
+<footer>دليل برنامج الحسابات — جَدة ال.جي للصناعات الكهربائية المصرية</footer>
+</div>
+</body>
+</html>

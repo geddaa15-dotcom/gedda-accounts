@@ -1667,6 +1667,11 @@ body{font-size:var(--f3);line-height:1.6}
 <section class="page" id="p-set">
   <div class="sstat" id="sStat"></div>
   <div class="card">
+    <h2>📖 دليل التطبيق</h2>
+    <p class="hint">شرح بسيط بالصور لكل حاجة في البرنامج وإزاي تستخدمها. تقدر تحفظه PDF أو تطبعه.</p>
+    <a class="btn gold" id="sGuide" href="guide.html" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">افتح الدليل</a>
+  </div>
+  <div class="card">
     <h2>🌙 المظهر</h2>
     <label>اللون</label>
     <div class="seg s3" id="uiTheme"><button type="button" data-v="auto">تلقائي</button><button type="button" data-v="light">فاتح</button><button type="button" data-v="dark">ليلي</button></div>
@@ -1683,7 +1688,11 @@ body{font-size:var(--f3);line-height:1.6}
     <h2>🔑 كلمة السر</h2>
     
     <button class="btn line" id="sPass" type="button">تغيير كلمة السر</button>
-    <button class="btn line" id="sBio" type="button" style="display:none;margin-top:8px"></button>
+  </div>
+  <div class="card" id="sBioC" hidden>
+    <h2>🔓 الفتح بالبصمة</h2>
+    <p class="hint">بدل ما تكتب كلمة السر كل مرة، افتح ببصمة صباعك أو وشك (أندرويد وآيفون). براحتك تشغّلها أو توقفها، وكلمة السر بتفضل شغالة.</p>
+    <button class="btn line" id="sBio" type="button"></button>
   </div>
   <div class="card" id="sAfC" hidden>
     <h2>💻 حفظ أوتوماتيك على اللاب</h2>
@@ -2067,7 +2076,7 @@ async function showLock(msg) {
     <input class="inp" id="lkP" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="current-password" autofocus style="text-align:center;font-size:var(--f4)">
     <div class="err" id="lkErr">${esc(msg || '')}</div>
     <button class="btn gold big" id="lkGo" type="button">فتح</button>
-    ${bio ? '<button class="btn line" id="lkBio" type="button" style="margin-top:10px">🔓 فتح ببصمة الوجه</button>' : ''}
+    ${bio ? '<button class="btn line" id="lkBio" type="button" style="margin-top:10px">🔓 افتح بالبصمة</button>' : ''}
     <button class="lnk" id="lkAbc" type="button">كلمة السر فيها حروف؟ افتح لوحة الحروف</button>
     <button class="lnk" id="lkForgot" type="button">نسيت كلمة السر؟</button>`;
   let busy = false, tm = 0;
@@ -4251,11 +4260,11 @@ function showHelp() {
 $('#sPhoneSave').onclick = () => { db.cfg.phone = normDigits($('#sPhone').value).trim(); db.cfg.coAddr = $('#sCoAddr').value.trim(); db.cfg.coCr = normDigits($('#sCoCr').value).trim(); db.cfg.coTax = normDigits($('#sCoTax').value).trim(); db.cfg.coWeb = $('#sCoWeb').value.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, ''); saveDB(); toast('اتحفظت البيانات ✔'); };
 async function refreshBio() {
   const b = $('#sBio'); if (!b) return;
-  if (!bioOk()) { b.style.display = 'none'; return; }
+  $('#sBioC').hidden = !bioOk(); if (!bioOk()) return;
   let on = false; try { on = !!(await idbGet('bio')); } catch (e) {}
-  b.style.display = ''; b.textContent = on ? '🔓 البصمة شغالة — اضغط لإيقافها' : '🔓 فعّل الفتح ببصمة الوجه';
+  b.className = on ? 'btn line' : 'btn gold'; b.textContent = on ? '✔ البصمة شغالة — دوس هنا لإيقافها' : 'شغّل الفتح بالبصمة';
   b.onclick = on ? async () => { await idbDel('bio'); toast('اتوقفت البصمة'); refreshBio(); } : () => {
-    modal(`<h3>🔓 فتح ببصمة الوجه</h3><p style="font-size:var(--f2)">اكتب كلمة السر مرة علشان البصمة تحفظها بأمان، وبعدين الموبايل هيطلب بصمة الوجه.</p>
+    modal(`<h3>🔓 الفتح بالبصمة</h3><p style="font-size:var(--f2)">اكتب كلمة السر مرة علشان البصمة تحفظها بأمان، وبعدين الموبايل هيطلب البصمة.</p>
       <div class="fld"><input class="inp" id="bioP" type="password" inputmode="numeric" autocomplete="current-password" style="text-align:center;font-size:var(--f4)"></div>
       <div class="err" id="bioE"></div>
       <div class="stack"><button class="btn gold" id="bioOk" type="button">تفعيل</button><button class="btn line" id="bioX" type="button">إلغاء</button></div>`);
@@ -4264,7 +4273,7 @@ async function refreshBio() {
       const pw = $('#bioP').value; if (!pw) return;
       $('#bioOk').disabled = true; $('#bioE').textContent = '⏳ لحظة…';
       try { await unseal(await deriveKey(pw, saltU8), await idbGet('vault')); } catch (e) { $('#bioOk').disabled = false; return $('#bioE').textContent = 'كلمة السر غلط'; }
-      try { await bioEnable(pw); closeModal(); toast('البصمة اشتغلت ✔ المرة الجاية هتلاقي زرار "فتح ببصمة الوجه"', 6000); refreshBio(); }
+      try { await bioEnable(pw); closeModal(); toast('البصمة اشتغلت ✔ المرة الجاية البرنامج هيطلب البصمة أول ما يفتح', 6000); refreshBio(); }
       catch (e) { $('#bioOk').disabled = false; $('#bioE').textContent = e && e.message === 'noprf' ? 'الموبايل أو المتصفح ده مش بيدعم الميزة دي. كمّل بكلمة السر.' : e && e.name === 'NotAllowedError' ? 'اتلغى التفعيل.' : 'معرفتش أفعّل البصمة على الجهاز ده.'; }
     };
   };

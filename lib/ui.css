@@ -310,3 +310,9 @@ table.fbt{width:100%;border-collapse:collapse}
 .about .mkr{margin:4px auto 10px;cursor:default}
 .about ul{text-align:start;margin:6px 0 12px;padding-inline-start:20px;font-size:var(--f2);line-height:1.9}
 .about h4{margin:12px 0 0;text-align:start;font-size:var(--f2);color:var(--gold-d)}
+
+/* اختيار الاسم: كل اسم جنبه ✕ يشيله من القايمة */
+.mechip{display:inline-flex;align-items:stretch;flex:1;min-width:0}
+.mechip .btn{flex:1;border-start-end-radius:0;border-end-end-radius:0}
+.mechip .mex{border:1.5px solid var(--line);border-inline-start:0;background:var(--row);color:var(--sub);border-radius:0 10px 10px 0;padding:0 10px;font:inherit;font-size:var(--f1);cursor:pointer}
+[dir=rtl] .mechip .mex{border-radius:10px 0 0 10px}

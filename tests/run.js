@@ -1409,6 +1409,12 @@ const T0 = Date.now();
         m.click(); r.push($('#modal').textContent.includes('الإصدار ' + APP_VER), $$('#modal .about li').length === APP_NEWS.length); closeModal();
         const sw = await (await fetch('sw.js')).text(); r.push(sw.includes('fonts/montserrat-sig-600.woff2') && sw.includes('fonts/cormorant-sig-600.woff2'));
         r.push(await document.fonts.load('600 16px GdSig', 'M').then(f => f.length > 0)); return r; }), [true, true, true, true, true, true]);
+      eq('اختيار الاسم: الـ ✕ بيشيل الاسم من القايمة (من غير ما يلمس الحركات)، ولو اتكتب تاني بيرجع', await A.evaluate(() => {
+        const me0 = db.cfg.me, n = 'اسم تجربة مؤقت'; db.cfg.me = n; putSet('t_mehide', 1); db.cfg.me = me0;   // سجل باسم التجربة
+        askMe(true); const has = () => [...$$('#meKnown [data-me]')].some(b => b.dataset.me === n), r = [has()];
+        $(`#meKnown [data-mex="${n}"]`).click(); r.push(!has(), getSet('meHide', []).includes(n), IDX.set.get('t_mehide').by === n); closeModal();
+        askMe(true); r.push(!has()); $('#meN').value = n; $('#meOk').click(); r.push(!getSet('meHide', []).includes(n));
+        db.cfg.me = me0; const t = IDX.set.get('t_mehide'); t.del = true; touch(t); saveDB(); return r; }), [true, true, true, true, true, true]);
       const G = await D1.page('guide.html');
       await G.evaluate(() => document.querySelectorAll('img').forEach(i => { i.loading = 'eager'; }));
       await G.waitForFunction(() => [...document.images].every(i => i.complete), null, {timeout: 15000}).catch(() => {});

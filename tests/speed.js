@@ -27,7 +27,9 @@ const srv = http.createServer((q, r) => {
   await new Promise(r => srv.listen(0, r));
   const base = 'http://localhost:' + srv.address().port;
   const browser = await pw.chromium.launch(CHROME ? {executablePath: CHROME} : {});
-  const ctx = await browser.newContext({viewport: {width: 400, height: 860}});
+  /* من غير sw.js: الاختبار بيعمل reload ويقف على شاشة القفل وكلمة السر فاضية، وده الوقت اللي التحديث مسموحله يعمل فيه reload (swSafe)،
+     فكان ساعات بيعمل reload في نص القياس على جهاز GitHub. sw.js ليه اختباراته لوحده (قسم ٢٣ في run.js) */
+  const ctx = await browser.newContext({viewport: {width: 400, height: 860}, serviceWorkers: 'block'});
   await ctx.route(/^https:/, r => r.abort());   // مفيش نت: الشيت وGitHub برّه الاختبار ده
   const A = await ctx.newPage(), errs = [];
   A.on('pageerror', e => errs.push(e.message));

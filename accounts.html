@@ -1671,6 +1671,11 @@ body{font-size:var(--f3);line-height:1.6}
     <p class="hint">شرح بسيط بالصور لكل حاجة في البرنامج وإزاي تستخدمها. تقدر تحفظه PDF أو تطبعه.</p>
     <a class="btn gold" id="sGuide" href="guide.html" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">افتح الدليل</a>
   </div>
+  <div class="card" id="sInstC" hidden>
+    <h2>⬇ ثبّت البرنامج على الموبايل</h2>
+    <p class="hint">البرنامج مفتوح من المتصفح. ثبّته علشان يبقى ليه أيقونة على الشاشة الرئيسية ويفتح زي أي تطبيق.</p>
+    <button class="btn gold" id="sInst" type="button">ثبّت البرنامج</button>
+  </div>
   <div class="card">
     <h2>🌙 المظهر</h2>
     <label>اللون</label>
@@ -2156,6 +2161,7 @@ function renderSetup() {
       <div style="margin-top:6px"><input class="inp" id="suJoin" autocomplete="off" autocapitalize="off" spellcheck="false" style="direction:ltr;font-size:var(--f2)" placeholder="الصق رابط الربط هنا"><p class="hint">لو فتحت البرنامج من أيقونة على الشاشة الرئيسية، الصق الرابط هنا وحساباتك هتنزل لوحدها.</p></div></details>
     <div class="err" id="suErr"></div>
     <button class="btn gold big" id="suGo" type="button">ابدأ</button>`;
+  instShow();
   $('#suGo').onclick = async () => {
     const a = $('#suP').value, b = $('#suP2').value;
     if (a.length < 6) return $('#suErr').textContent = 'كلمة السر لازم تبقى 6 حروف أو أرقام على الأقل';
@@ -2269,10 +2275,11 @@ function renderHome() {
   if (au && !au.ok) probs.unshift(au.msg);
   $('#nlRem').innerHTML = '';   // تنبيه الفواتير اللي بنودها لسه: في الوارد بس (بطلب صاحب المشروع)
   const mrn = mrnHtml();
-  $('#chk').innerHTML = afAlertHtml() + bkAlertHtml() + (mrn || chkAlertHtml()) + (probs.length ? `<div class="sync warn">⚠️ المراجعة لقت ${probs.length} مشكلة: ${esc(probs.slice(0, 3).join(' — '))}</div>` : '') + docAlertHtml();
+  $('#chk').innerHTML = instHtml() + afAlertHtml() + bkAlertHtml() + (mrn || chkAlertHtml()) + (probs.length ? `<div class="sync warn">⚠️ المراجعة لقت ${probs.length} مشكلة: ${esc(probs.slice(0, 3).join(' — '))}</div>` : '') + docAlertHtml();
   if ($('#hDoc')) $('#hDoc').onclick = docOpen;
   if (mrn) mrnBind();
   if ($('#hAf')) $('#hAf').onclick = async () => { if (await afWrite(true)) toast('✔ الحفظ الأوتوماتيك رجع شغال', 3000); };
+  if ($('#hInst')) $('#hInst').onclick = instGo;
   if ($('#hBk')) $('#hBk').onclick = async () => {
     if (afDir) { toast(await afWrite(true) ? '✔ اتحفظت نسخة' : 'معرفتش أحفظ', 3000); return renderHome(); }
     go('set'); const c = $('#sAfC'); if (c) c.scrollIntoView({block: 'start', behavior: 'smooth'});
@@ -3962,7 +3969,7 @@ function renderSetStat() {
 function renderSettings() {
   $('#sMe').textContent = meName() || '—'; $('#sMeGo').onclick = () => askMe(true); afShow();
   bindUI();
-  refreshBio();
+  refreshBio(); instShow();
   $('#sVer').textContent = verText();
   const c = db.cfg;
   renderSetStat(); renderDocBox();
@@ -6420,6 +6427,45 @@ addEventListener('hashchange', () => {
   requestAnimationFrame(() => requestAnimationFrame(() => { scrollHold = false; }));
 });
 $('#mask').addEventListener('click', e => { if (e.target.id === 'mask' && !$('#modal').querySelector('#emOk,#pmOk,#cpOk,#fgGo,#rpOk,#dcOk,#pyOk,#txOk,#evOk,#ecOk,#opOk,#adOk,#ccOk,#bcOk,#apOk,#mvOk,#rtOk')) closeModal(); });
+
+/* ====================== زرار تثبيت البرنامج على الموبايل (بطلبه 25/10/2026) ======================
+   بيظهر بس لو البرنامج مفتوح من المتصفح على الموبايل ومش متثبت: في الرئيسية وفي الإعدادات وفي شاشة أول مرة.
+   أندرويد: Chrome بيقول إن التثبيت متاح (beforeinstallprompt) والزرار بيفتح رسالة التثبيت بتاعته على طول.
+   آيفون: مفيش تثبيت بدوسة، فالزرار بيشرح الخطوات (مشاركة ← إضافة إلى الشاشة الرئيسية).
+   أول ما يتثبت (appinstalled) أو يتفتح من الأيقونة (display-mode: standalone) بيختفي. */
+let instEv = null;
+const instStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const instIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const instOk = () => !instStandalone() && !isWide() && (!!instEv || instIOS());
+const instHtml = () => instOk() ? '<div class="sync mkrem" id="hInst">⬇ <b>ثبّت البرنامج على الموبايل</b> — دوس هنا، ويبقى ليه أيقونة ويفتح زي أي تطبيق</div>' : '';
+function instShow() {
+  const ok = instOk();
+  if (db && !!$('#hInst') !== ok) renderHome();
+  if ($('#sInstC')) $('#sInstC').hidden = !ok;
+  const su = $('#suGo') && $('#lockBox'), b = $('#suInst');
+  if (su && ok && !b) { $('#lockBox').insertAdjacentHTML('afterbegin', '<button class="btn line" id="suInst" type="button" style="width:100%;margin-bottom:12px">⬇ ثبّت البرنامج على الموبايل الأول</button>'); $('#suInst').onclick = instGo; }
+  else if (b && !ok) b.remove();
+}
+async function instGo() {
+  if (instEv) {
+    const ev = instEv; ev.prompt();
+    try { if ((await ev.userChoice).outcome === 'accepted') { instEv = null; instShow(); } } catch (e) {}
+    return;
+  }
+  modal(`<h3>⬇ ثبّت البرنامج على الآيفون</h3>
+    <ol style="font-size:var(--f3);line-height:2;padding-inline-start:22px;margin:0 0 10px">
+      <li>لازم يكون مفتوح من <b>Safari</b>.</li>
+      <li>دوس زرار <b>المشاركة</b> ⬆ (مربع طالع منه سهم) تحت في الشاشة. لو مش ظاهر، دوس <b>⋯</b> الأول.</li>
+      <li>انزل واختار <b>"إضافة إلى الشاشة الرئيسية"</b>.</li>
+      <li>دوس <b>"إضافة"</b> فوق، وافتح البرنامج بعد كده من الأيقونة.</li>
+    </ol>
+    <p class="hint" style="margin:0 0 12px">⚠️ على الآيفون، البرنامج اللي على الشاشة الرئيسية بيبدأ من الأول: اعمل كلمة سر واربطه بالشيت (أو برابط الربط من جهاز تاني)، وكل الحسابات هتنزل لوحدها.</p>
+    <button class="btn gold" id="inX" type="button">تمام</button>`);
+  $('#inX').onclick = closeModal;
+}
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); instEv = e; instShow(); });
+addEventListener('appinstalled', () => { instEv = null; instShow(); toast('✔ البرنامج اتثبت. افتحه من الأيقونة على الشاشة الرئيسية', 6000); });
+$('#sInst').onclick = instGo;
 
 showLock();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', {updateViaCache: 'none'}).catch(() => {});

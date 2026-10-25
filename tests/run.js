@@ -1357,6 +1357,24 @@ const T0 = Date.now();
       eq('الدوس على التبويب اللي انت فيه وانت تحت: بيطلّعك لأول الصفحة', await A.evaluate(() => [window.scrollY, location.hash]), [0, '#rep']);
       await A.evaluate(() => go('home')); await A.settle(200);
     }
+    {   // زرار تثبيت البرنامج: أندرويد (رسالة Chrome) وآيفون (شرح الخطوات)، وبيختفي أول ما يتثبت
+      const r = await A.evaluate(async () => {
+        go('home'); renderHome(); const r = [!$('#hInst')];   // من غير ما Chrome يقول إن التثبيت متاح: مفيش زرار
+        let asked = 0; const ev = new Event('beforeinstallprompt', {cancelable: true}); ev.prompt = () => { asked++; }; ev.userChoice = Promise.resolve({outcome: 'accepted'});
+        dispatchEvent(ev); r.push(ev.defaultPrevented, !!$('#hInst'));
+        go('set'); renderSettings(); r.push(!$('#sInstC').hidden);
+        await instGo(); r.push(asked === 1, $('#sInstC').hidden);
+        go('home'); renderHome(); r.push(!$('#hInst'));
+        const ev2 = new Event('beforeinstallprompt', {cancelable: true}); ev2.prompt = () => {}; ev2.userChoice = new Promise(() => {}); dispatchEvent(ev2); r.push(!!$('#hInst'));
+        dispatchEvent(new Event('appinstalled')); r.push(!$('#hInst'));
+        return r; });
+      eq('زرار التثبيت (أندرويد): بيظهر بس لما Chrome يقول إن التثبيت متاح، والدوسة بتفتح رسالة التثبيت، وبيختفي بعد التثبيت', r, Array(9).fill(true));
+      const ictx = await browser.newContext({viewport: {width: 390, height: 844}, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'});
+      const I = await ictx.newPage(); await I.goto(base + '/accounts.html'); await I.waitForSelector('#suInst', {timeout: 10000}).catch(() => {});
+      const hasBtn = !!(await I.$('#suInst')); if (hasBtn) await I.click('#suInst');
+      eq('زرار التثبيت (آيفون): بيظهر في شاشة أول مرة، والدوسة بتشرح خطوات Safari', [hasBtn, hasBtn && (await I.textContent('#modal')).includes('إضافة إلى الشاشة الرئيسية')], [true, true]);
+      await ictx.close();
+    }
     {   // دليل التطبيق والفتح بالبصمة في الإعدادات
       eq('الإعدادات: زرار دليل التطبيق بيفتح guide.html في صفحة لوحدها، وكارت البصمة لوحده بزرار تشغيل', await A.evaluate(async () => {
         go('set'); renderSettings(); await refreshBio(); const g = $('#sGuide');

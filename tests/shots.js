@@ -158,6 +158,8 @@ const SCREENS = [
   {name: 'acc-party-zoom-m', app: 'acc', vp: MOB, go: async A => { await accEval(`tab = 'mkt'; go('p/' + ${party}.id)`)(A); await A.evaluate(() => { document.documentElement.style.setProperty('--lz', 1.8); document.documentElement.setAttribute('data-lz', ''); const st = document.createElement('style'); st.textContent = '.ldgw .ldg{zoom:var(--lz)}'; document.head.appendChild(st); }); await A.waitForTimeout(300); }},
   {name: 'acc-cash-l1100', app: 'acc', vp: LAP2, go: accGo('cash')},
   {name: 'acc-set-guide-m', app: 'acc', vp: MOB, go: async A => { await accGo('set')(A); await A.evaluate(() => ['#sGuide', '#sBio'].forEach(q => { const c = $(q).closest('.card'); if (c.classList.contains('shut')) c.querySelector('h2').click(); })); await A.waitForSelector('#sBio', {state: 'visible'}); }},
+  {name: 'acc-inst-m', app: 'acc', vp: MOB, go: accEval("const ev = new Event('beforeinstallprompt', {cancelable: true}); ev.prompt = () => {}; ev.userChoice = new Promise(() => {}); dispatchEvent(ev); tab = 'mkt'; go('home'); renderHome(); scrollTo(0, 0)")},
+  {name: 'acc-inst-ios-m', app: 'acc', vp: MOB, go: accEval("instEv = null; instGo()")},
   {name: 'acc-cash-more-m', app: 'acc', vp: MOB, go: async A => { await accGo('cash')(A); await A.click('#cMore'); await A.waitForSelector('#modal .kmenu'); }},
   {name: 'acc-cash-pick-m', app: 'acc', vp: MOB, go: accEval("cashOpenV = false; cashVault = ''; cashMode = 'day'; cashDay = addDays(todayISO(), -1); go('cash'); renderCash(); $('#cPer').classList.add('pk')")},
   {name: 'acc-list-m-dark', app: 'acc', vp: MOB, dark: true, go: accEval("tab = 'mkt'; go('home'); renderHome()")},

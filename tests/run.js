@@ -1404,11 +1404,16 @@ const T0 = Date.now();
       eq('الإعدادات: زرار دليل التطبيق بيفتح guide.html في صفحة لوحدها، وكارت البصمة لوحده بزرار تشغيل', await A.evaluate(async () => {
         go('set'); renderSettings(); await refreshBio(); const g = $('#sGuide');
         return [g.getAttribute('href'), g.target, !$('#sBioC').hidden === bioOk(), $('#sBio').textContent.includes('البصمة'), !$('#sPass').closest('.card').querySelector('#sBio')]; }), ['guide.html', '_blank', true, true, true]);
+      eq('توقيع المطوّر آخر الإعدادات: الاسم والإصدار، والدوس بيفتح "عن البرنامج" بالجديد، وخطوطه محفوظة للفتح من غير نت', await A.evaluate(async () => {
+        go('set'); renderSettings(); const m = $('#sMaker'), r = [m.textContent.includes('MOSTAFA ABD ELHADY'), $('#sMakerV').textContent === 'VERSION ' + APP_VER];
+        m.click(); r.push($('#modal').textContent.includes('الإصدار ' + APP_VER), $$('#modal .about li').length === APP_NEWS.length); closeModal();
+        const sw = await (await fetch('sw.js')).text(); r.push(sw.includes('fonts/montserrat-sig-600.woff2') && sw.includes('fonts/cormorant-sig-600.woff2'));
+        r.push(await document.fonts.load('600 16px GdSig', 'M').then(f => f.length > 0)); return r; }), [true, true, true, true, true, true]);
       const G = await D1.page('guide.html');
       await G.evaluate(() => document.querySelectorAll('img').forEach(i => { i.loading = 'eager'; }));
       await G.waitForFunction(() => [...document.images].every(i => i.complete), null, {timeout: 15000}).catch(() => {});
       eq('دليل التطبيق: كل الصور بتظهر، وكل سطر في المحتويات بيودّي لجزء موجود، وفيه زرار PDF', await G.evaluate(() => [document.images.length >= 15, [...document.images].every(i => i.naturalWidth > 0),
-        [...document.querySelectorAll('nav.toc a')].every(a => !!document.querySelector(a.getAttribute('href'))), !!document.querySelector('button[onclick="print()"]')]), [true, true, true, true]);
+        [...document.querySelectorAll('nav.toc a')].every(a => !!document.querySelector(a.getAttribute('href'))), !!document.querySelector('button[onclick="print()"]'), document.querySelector('footer .mkr-n').textContent === 'MOSTAFA ABD ELHADY']), [true, true, true, true, true]);
       await G.close();
     }
     {   // النسخ الاحتياطية: الحفظ الأوتوماتيك في فولدر على اللاب، وسطر النسخة اليومية على Drive

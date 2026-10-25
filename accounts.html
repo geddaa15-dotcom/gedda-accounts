@@ -1753,6 +1753,7 @@ body{font-size:var(--f3);line-height:1.6}
     <h2>📝 سجل التعديلات</h2>
     <button class="btn line" id="sAudit" type="button">اعرض كل التعديلات والإلغاء</button>
   </div>
+  <button type="button" class="mkr" id="sMaker" aria-label="عن البرنامج"><span class="mkr-m">MA</span><span class="mkr-k">DESIGNED &amp; DEVELOPED BY</span><span class="mkr-n">MOSTAFA ABD ELHADY</span><span class="mkr-v"><span id="sMakerV"></span></span></button>
   <p class="hint" id="sVer" style="text-align:center"></p>
 </section>
 </main>
@@ -3962,6 +3963,27 @@ function bindUI() {
 /* آخر تحديث للبرنامج = وقت نشر الصفحة (Last-Modified اللي GitHub Pages بيبعته). لو المتصفح معرفوش بيدّي وقت الفتح نفسه، فساعتها مبنعرضش حاجة */
 const PAGE_LM = Date.parse(document.lastModified), PAGE_AT = Date.now();
 const verText = (lm = PAGE_LM, at = PAGE_AT) => lm && at - lm > 3000 ? `آخر تحديث للبرنامج على الجهاز ده: ${dispDate(isoOf(lm))} ${dispTime(lm)}` : '';
+/* ====================== الإصدار و"عن البرنامج" ======================
+   مع أي تعديل يترفع: زوّد APP_VER (تعديل صغير 1.1، 1.2… وحاجة كبيرة 2.0) وغيّر APP_DATE، واكتب أهم الجديد في APP_NEWS (3-5 سطور بالعامية البسيطة) */
+const APP_VER = '1.0', APP_DATE = '2026-10-25';
+const APP_NEWS = [
+  'دليل التطبيق بالصور من الإعدادات، وتقدر تحفظه PDF',
+  'الفتح بالبصمة (صباع أو وش) على أندرويد وآيفون',
+  'زرار تثبيت البرنامج على الموبايل، ورابط الربط بيفضل شغال بعد التثبيت',
+  'زرار الرجوع والسحب لتحت بقوا زي أي تطبيق على الموبايل',
+  'تنبيه لو بقالك 3 أيام من غير نسخة احتياطية على اللاب'];
+function aboutModal() {
+  modal(`<div class="about">
+    <div class="mkr" aria-hidden="true"><span class="mkr-m">MA</span><span class="mkr-k">DESIGNED &amp; DEVELOPED BY</span><span class="mkr-n">MOSTAFA ABD ELHADY</span></div>
+    <h3 style="margin:0">برنامج الحسابات — الإصدار ${APP_VER}</h3>
+    <p class="hint" style="margin:2px 0 0">${dispDate(APP_DATE)}</p>
+    <h4>الجديد في الإصدار ده</h4>
+    <ul>${APP_NEWS.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+    ${verText() ? `<p class="hint">${esc(verText())}</p>` : ''}
+    <button class="btn gold" id="abX" type="button">تمام</button></div>`);
+  $('#abX').onclick = closeModal;
+}
+$('#sMaker').onclick = aboutModal;
 function renderSetStat() {
   const c = db.cfg;
   const n = pendingRecs().length, st = $('#sStat'), openSheet = () => { const k = $('#sSheet').parentNode; $('#p-set').classList.add('advon'); k.classList.remove('shut'); k.scrollIntoView({block: 'start', behavior: 'smooth'}); };
@@ -3975,7 +3997,7 @@ function renderSettings() {
   $('#sMe').textContent = meName() || '—'; $('#sMeGo').onclick = () => askMe(true); afShow();
   bindUI();
   refreshBio(); instShow();
-  $('#sVer').textContent = verText();
+  $('#sVer').textContent = verText(); $('#sMakerV').textContent = 'VERSION ' + APP_VER;
   const c = db.cfg;
   renderSetStat(); renderDocBox();
   const lk = lockDate(), lim = limitsOf();

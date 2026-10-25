@@ -39,6 +39,10 @@ ol.st li,ul.st li{margin:3px 0}
 .k{display:inline-block;border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:0 7px;font-size:var(--f1);font-weight:800;direction:ltr}
 b.g{color:var(--green)}b.r{color:var(--red)}
 footer{text-align:center;color:var(--sub);font-size:var(--f1);padding:6px 0 24px}
+.mkr{display:flex;flex-direction:column;align-items:center;gap:3px;margin:8px auto 14px;direction:ltr}
+.mkr-m{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--gold);display:grid;place-items:center;font-family:GdMono,Georgia,serif;font-weight:600;font-size:var(--f3);color:var(--gold-d);margin-bottom:8px;padding-top:1px}
+.mkr-k{font-family:GdSig,sans-serif;font-weight:600;font-size:var(--f1);letter-spacing:.24em;color:var(--sub);opacity:.75;transform:scale(.8)}
+.mkr-n{font-family:GdSig,sans-serif;font-weight:600;font-size:var(--f2);letter-spacing:.22em;color:var(--ink);margin-inline-start:.22em}
 @media (max-width:520px){nav.toc ol{columns:1}}
 @media print{
   :root{--ink:#000;--bg:#fff;--card:#fff;--line:#ccc}
@@ -309,7 +313,10 @@ footer{text-align:center;color:var(--sub);font-size:var(--f1);padding:6px 0 24px
   <p><b>الرصيد مش مظبوط؟</b> من الإعدادات ← فحص البيانات، وبعدين راجع كشف حساب العميل حركة حركة.</p>
 </section>
 
-<footer>دليل برنامج الحسابات — جَدة ال.جي للصناعات الكهربائية المصرية</footer>
+<footer>
+  <div class="mkr"><span class="mkr-m">MA</span><span class="mkr-k">DESIGNED &amp; DEVELOPED BY</span><span class="mkr-n">MOSTAFA ABD ELHADY</span></div>
+  دليل برنامج الحسابات — جَدة ال.جي للصناعات الكهربائية المصرية
+</footer>
 </div>
 </body>
 </html>

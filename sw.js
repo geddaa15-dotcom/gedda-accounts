@@ -8,7 +8,7 @@
 // كل ملفات الحسابات بتتخزن من أول فتحة (SHELL).
 const PRE = 'gedda-acc-', CACHE = PRE + 'v1';   // الكاش بتاعنا بس بيبدأ بـ PRE (أي كاش تاني على نفس الدومين مبنلمسوش)
 const FONTS = [400, 600, 700, 800].flatMap(w => ['arabic', 'latin'].map(l => `fonts/cairo-${l}-${w}-normal.woff2`))
-  .concat([400, 500, 700, 800, 900].flatMap(w => ['arabic', 'latin'].map(l => `fonts/taj-${l}-${w}.woff2`)));
+  .concat([400, 500, 700, 800, 900].flatMap(w => ['arabic', 'latin'].map(l => `fonts/taj-${l}-${w}.woff2`)), ['fonts/montserrat-sig-600.woff2', 'fonts/cormorant-sig-600.woff2']);
 const SHELL = ['./', 'index.html', 'accounts.html', 'accounts.webmanifest',
   'lib/ui.css', 'lib/datepick.js', 'lib/swup.js', 'lib/icons.js', 'lib/doctor.js', 'lib/jspdf.umd.min.js', 'lib/html2canvas.min.js', 'fonts/fonts.css', ...FONTS,
   'icons/logo.jpg', 'icons/logo-pdf.jpg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];

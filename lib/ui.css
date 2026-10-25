@@ -297,3 +297,16 @@ table.fbt{width:100%;border-collapse:collapse}
 .fcs{padding:8px 0;border-top:1px solid var(--line)}.fcs>b{font-size:var(--f3)}
 .modal h3 small.fsm{display:block;margin-top:2px;font-size:var(--f2);font-weight:600;color:var(--sub)}
 @media (min-width:1000px){#p-fac{max-width:820px}}
+
+/* ============ توقيع المطوّر (آخر الإعدادات): ختم MA + الاسم بحروف متباعدة. الدوس بيفتح "عن البرنامج" ============ */
+.mkr{display:flex;flex-direction:column;align-items:center;gap:3px;margin:26px auto 4px;padding:6px 14px;background:none;border:0;cursor:pointer;direction:ltr;color:var(--sub);font:inherit;-webkit-tap-highlight-color:transparent}
+.mkr-m{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--gold);display:grid;place-items:center;font-family:GdMono,Georgia,serif;font-weight:600;font-size:var(--f3);color:var(--gold-d);letter-spacing:.02em;margin-bottom:8px;padding-top:1px}
+.mkr-k{font-family:GdSig,sans-serif;font-weight:600;font-size:var(--f1);letter-spacing:.24em;color:var(--sub);opacity:.75;transform:scale(.8)}
+.mkr-n{font-family:GdSig,sans-serif;font-weight:600;font-size:var(--f2);letter-spacing:.22em;color:var(--ink);margin-inline-start:.22em}
+.mkr-v{display:flex;align-items:center;gap:10px;width:210px;margin-top:6px;font-family:GdSig,sans-serif;font-weight:600;font-size:var(--f1);letter-spacing:.2em;color:var(--sub);white-space:nowrap}
+.mkr-v::before,.mkr-v::after{content:'';flex:1;height:1px;background:var(--gold);opacity:.45}
+.mkr-v span{transform:scale(.8)}
+.about{text-align:center}
+.about .mkr{margin:4px auto 10px;cursor:default}
+.about ul{text-align:start;margin:6px 0 12px;padding-inline-start:20px;font-size:var(--f2);line-height:1.9}
+.about h4{margin:12px 0 0;text-align:start;font-size:var(--f2);color:var(--gold-d)}

@@ -1375,6 +1375,31 @@ const T0 = Date.now();
       eq('زرار التثبيت (آيفون): بيظهر في شاشة أول مرة، والدوسة بتشرح خطوات Safari', [hasBtn, hasBtn && (await I.textContent('#modal')).includes('إضافة إلى الشاشة الرئيسية')], [true, true]);
       await ictx.close();
     }
+    {   // رابط الربط مع التثبيت: أندرويد (البرنامج المتثبت بيلاقي الرابط)، والآيفون (زرار نسخ الرابط ولصقه في البرنامج المتثبت)
+      const jctx = await browser.newContext({viewport: {width: 390, height: 844}, permissions: ['clipboard-read', 'clipboard-write']});
+      const J1 = await jctx.newPage(); await J1.goto(base + '/accounts.html'); await J1.waitForSelector('#suGo');
+      const link = await J1.evaluate(() => location.origin + location.pathname + '#join=' + b64u(JSON.stringify({u: 'https://script.google.com/macros/s/tst/exec', k: 'k_tst'})));
+      await J1.close(); const J0 = await jctx.newPage(); await J0.goto(link); await J0.waitForFunction(() => !!localStorage.getItem('gd_join'), null, {timeout: 10000}).catch(() => {});   // فتح الرابط في المتصفح
+      const J2 = await jctx.newPage(); await J2.goto(base + '/accounts.html'); await J2.waitForSelector('#suGo');   // البرنامج المتثبت: صفحة جديدة من غير الرابط
+      const r = [await J2.evaluate(() => !!pendingJoin && pendingJoin.k === 'k_tst' && getComputedStyle($('#suJoin').closest('details')).display === 'none')];
+      r.push(await J2.evaluate(() => { const l = JSON.parse(localStorage.getItem('gd_join')); l.t -= 3 * 864e5; localStorage.setItem('gd_join', JSON.stringify(l)); return true; }));
+      const J3 = await jctx.newPage(); await J3.goto(base + '/accounts.html'); await J3.waitForSelector('#suGo');
+      r.push(await J3.evaluate(() => !pendingJoin && !localStorage.getItem('gd_join')));   // الرابط القديم (أكتر من يومين) بيتنسي
+      await J3.evaluate(t => navigator.clipboard.writeText(t), link); await J3.click('#suJoin >> xpath=ancestor::details/summary'); await J3.click('#suPaste'); await J3.waitForFunction(() => !!$('#suErr').textContent, null, {timeout: 5000}).catch(() => {});
+      r.push(await J3.evaluate(() => $('#suJoin').value.includes('#join=') && $('#suErr').textContent.includes('اتلصق')));
+      await jctx.close();
+      eq('رابط الربط مع التثبيت: البرنامج المتثبت على أندرويد بيلاقي الرابط لوحده (لحد يومين)، وزرار "الصق" بيحط الرابط في شاشة أول مرة', r, [true, true, true, true]);
+      eq('رابط الربط محفوظ وفيه حسابات على الجهاز: بيتنسي ومبيربطش الجهاز بشيت تاني', await A.evaluate(async () => {
+        localStorage.setItem('gd_join', JSON.stringify({h: '#join=x', t: Date.now()})); joinLocal = true; pendingJoin = {u: 'https://x', k: 'y'};
+        await showLock(); const r = !pendingJoin && !localStorage.getItem('gd_join'); return r; }), true);
+      await unlock(A);
+      const r2 = await A.evaluate(async () => {
+        pendingJoin = {u: 'https://script.google.com/macros/s/tst/exec', k: 'k_tst'}; instEv = null; await instGo();
+        const r = [!!$('#inCopy')]; await $('#inCopy').onclick();
+        r.push((await navigator.clipboard.readText()) === joinUrl(pendingJoin), $('#inCopy') ? $('#inCopy').textContent.includes('اتنسخ') : false);
+        pendingJoin = null; closeModal(); return r; });
+      eq('زرار التثبيت على الآيفون: بيقول انسخ رابط الربط الأول، والدوسة بتنسخ الرابط', r2, [true, true, true]);
+    }
     {   // دليل التطبيق والفتح بالبصمة في الإعدادات
       eq('الإعدادات: زرار دليل التطبيق بيفتح guide.html في صفحة لوحدها، وكارت البصمة لوحده بزرار تشغيل', await A.evaluate(async () => {
         go('set'); renderSettings(); await refreshBio(); const g = $('#sGuide');

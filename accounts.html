@@ -2081,6 +2081,7 @@ async function showLock(msg) {
     $('#lockBox').innerHTML = `<div class="err">المتصفح ده مش سامح بالحفظ (ممكن تكون فاتح "تصفح خفي"). افتح الصفحة من المتصفح العادي.</div>`; return;
   }
   if (!vault) return renderSetup();
+  if (joinLocal) { pendingJoin = null; joinLocal = false; joinDrop(); }
   let bio = null; try { bio = bioOk() && await idbGet('bio'); } catch (e) {}
   $('#lockBox').innerHTML = `
     <label for="lkP">كلمة السر</label>
@@ -2157,11 +2158,15 @@ function renderSetup() {
     <p style="font-weight:700;text-align:center;margin:0 0 12px">أول مرة على الجهاز ده. اعمل كلمة سر للبرنامج.<br><small style="color:var(--sub)">اكتبها في ورقة واحتفظ بيها في مكان آمن.</small></p>
     <div class="fld"><label for="suP">كلمة السر (6 أرقام على الأقل)</label><input class="inp" id="suP" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="new-password" style="text-align:center;font-size:var(--f4)"></div>
     <div class="fld"><label for="suP2">اكتبها تاني للتأكيد</label><input class="inp" id="suP2" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="new-password" style="text-align:center;font-size:var(--f4)"></div>
-    <details class="fld" ${pendingJoin ? 'style="display:none"' : ''}><summary style="font-weight:700;color:var(--tr);cursor:pointer">عندك رابط ربط من جهاز تاني؟</summary>
-      <div style="margin-top:6px"><input class="inp" id="suJoin" autocomplete="off" autocapitalize="off" spellcheck="false" style="direction:ltr;font-size:var(--f2)" placeholder="الصق رابط الربط هنا"><p class="hint">لو فتحت البرنامج من أيقونة على الشاشة الرئيسية، الصق الرابط هنا وحساباتك هتنزل لوحدها.</p></div></details>
+    <details class="fld" ${pendingJoin ? 'style="display:none"' : ''}${!pendingJoin && instStandalone() && instIOS() ? ' open' : ''}><summary style="font-weight:700;color:var(--tr);cursor:pointer">عندك رابط ربط من جهاز تاني؟</summary>
+      <div style="margin-top:6px"><input class="inp" id="suJoin" autocomplete="off" autocapitalize="off" spellcheck="false" style="direction:ltr;font-size:var(--f2)" placeholder="الصق رابط الربط هنا">${navigator.clipboard && navigator.clipboard.readText ? '<button class="btn line sm" id="suPaste" type="button" style="margin-top:6px">📋 الصق الرابط اللي نسخته</button>' : ''}<p class="hint">لو فتحت البرنامج من أيقونة على الشاشة الرئيسية، الصق الرابط هنا وحساباتك هتنزل لوحدها.</p></div></details>
     <div class="err" id="suErr"></div>
     <button class="btn gold big" id="suGo" type="button">ابدأ</button>`;
   instShow();
+  if ($('#suPaste')) $('#suPaste').onclick = async () => {
+    try { const t = (await navigator.clipboard.readText() || '').trim(); if (!parseJoin(t)) return $('#suErr').textContent = 'اللي متنسخ مش رابط ربط. انسخ الرابط كله من الرسالة الأول.'; $('#suJoin').value = t; $('#suErr').textContent = '✔ اتلصق الرابط. اعمل كلمة السر ودوس "ابدأ".'; }
+    catch (e) { $('#suErr').textContent = 'معرفتش ألصق لوحدي. دوس على الخانة جامد واختار "لصق".'; }
+  };
   $('#suGo').onclick = async () => {
     const a = $('#suP').value, b = $('#suP2').value;
     if (a.length < 6) return $('#suErr').textContent = 'كلمة السر لازم تبقى 6 حروف أو أرقام على الأقل';
@@ -4135,19 +4140,27 @@ async function shareJoin() {
   try { await navigator.clipboard.writeText(url); toast('اتنسخ رابط الربط ✔ الصقه لنفسك في واتساب واحفظه', 6000); }
   catch (e) { modal(`<h3>رابط الربط</h3><p style="font-size:var(--f2)">انسخ الرابط ده وابعته لنفسك:</p><pre class="code">${esc(url)}</pre><button class="btn line" id="jlX" type="button">تمام</button>`); $('#jlX').onclick = closeModal; }
 }
-let pendingJoin = null;
+let pendingJoin = null, joinLocal = false;
+const JOIN_KEEP = 2 * 864e5;   // رابط الربط اللي لسه متنفذش بيفضل محفوظ على الجهاز يومين
+const joinUrl = o => location.origin + location.pathname + '#join=' + b64u(JSON.stringify({u: o.u, k: o.k}));
+const joinDrop = () => { try { sessionStorage.removeItem('gd_join'); localStorage.removeItem('gd_join'); } catch (e) {} };
 /* بياخد رابط الربط كامل (أو اللي بعد join=) ويرجّع بياناته، أو null لو الرابط مش سليم */
 function parseJoin(txt) {
   const m = String(txt || '').trim().match(/join=([\w-]+)/);
   try { const o = m && JSON.parse(unb64u(m[1])); return o && o.u && o.k ? o : null; } catch (e) { return null; }
 }
-/* الرابط بيتحفظ مؤقتاً في الجلسة لحد ما يتنفذ، علشان لو الصفحة اتعمللها ريفرش قبل ما تعمل كلمة السر ميضيعش */
+/* الرابط بيتحفظ مؤقتاً لحد ما يتنفذ، علشان لو الصفحة اتعمللها ريفرش قبل ما تعمل كلمة السر ميضيعش.
+   وكمان في localStorage (يومين): لو ثبّت البرنامج على أندرويد قبل ما يعمل كلمة السر، البرنامج المتثبت بيلاقيه (نفس التخزين).
+   الآيفون تخزين البرنامج المتثبت لوحده، فزرار التثبيت بينسخ الرابط علشان يلصقه (instGo) */
 if (/^#join=/.test(location.hash)) {
   pendingJoin = parseJoin(location.hash);
-  if (pendingJoin) { try { sessionStorage.setItem('gd_join', location.hash); } catch (e) {} }
+  if (pendingJoin) { try { sessionStorage.setItem('gd_join', location.hash); localStorage.setItem('gd_join', JSON.stringify({h: location.hash, t: Date.now()})); } catch (e) {} }
   else setTimeout(() => toast('رابط الربط ناقص أو اتقطع وانت بتنسخه. انسخه كله من الرسالة تاني.', 9000), 800);
   history.replaceState(null, '', location.pathname);
-} else { try { const h = sessionStorage.getItem('gd_join'); if (h) pendingJoin = parseJoin(h); } catch (e) {} }
+} else { try {
+  const h = sessionStorage.getItem('gd_join'); if (h) pendingJoin = parseJoin(h);
+  else { const l = JSON.parse(localStorage.getItem('gd_join') || 'null'); if (l && Date.now() - l.t < JOIN_KEEP) { pendingJoin = parseJoin(l.h); joinLocal = !!pendingJoin; } else if (l) localStorage.removeItem('gd_join'); }
+} catch (e) {} }
 const netWhy = e => !e ? 'الشيت رد بحاجة مش مفهومة'
   : e.srv ? 'الشيت رد: ' + e.message
   : e.name === 'AbortError' ? 'الشيت مردش في الوقت المحدد'
@@ -4175,7 +4188,7 @@ async function finishJoin(visible) {
     renderSyncBox(); return false;
   }
   delete c.joinWait; joinErr = ''; c.sheetOk = true; accNote(j); await flushSave();
-  try { sessionStorage.removeItem('gd_join'); } catch (e) {}
+  joinDrop();
   if (visible) modal('<p style="text-align:center">⏳ بنزّل حساباتك…</p>');
   await syncNow();
   closeModal(); route();
@@ -4185,9 +4198,10 @@ async function finishJoin(visible) {
 async function applyJoin() {
   const o = pendingJoin; pendingJoin = null; if (!o || !db) return;
   const c = db.cfg;
-  if (c.sheetOk && c.sheetUrl === o.u && c.sheetKey === o.k) { try { sessionStorage.removeItem('gd_join'); } catch (e) {} return toast('الجهاز ده مربوط أصلاً ✔'); }
+  if (c.sheetOk && c.sheetUrl === o.u && c.sheetKey === o.k) { joinDrop(); return toast('الجهاز ده مربوط أصلاً ✔'); }
   if (c.sheetUrl !== o.u) { c.cursor = 0; delete c.accV; delete c.accSheetUrl; Object.values(STORE).forEach(a => db[a].forEach(r => delete r.sy)); }
   Object.assign(c, {sheetUrl: o.u, sheetKey: o.k, sheetOk: false, joinWait: true}); await flushSave();
+  try { localStorage.removeItem('gd_join'); } catch (e) {}   // اتحفظ في الإعدادات المتشفرة، والمحاولة بتكمل من هناك
   await finishJoin(true);
 }
 setInterval(() => { if (db && db.cfg.joinWait && db.cfg.sheetUrl && !db.cfg.sheetOk && !joining) finishJoin(false); }, 20000);
@@ -6452,16 +6466,23 @@ async function instGo() {
     try { if ((await ev.userChoice).outcome === 'accepted') { instEv = null; instShow(); } } catch (e) {}
     return;
   }
+  /* الآيفون: البرنامج المتثبت تخزينه لوحده، فرابط الربط (اللي فتحه أو اللي الجهاز ده مربوط بيه) بيتنسخ علشان يلصقه هناك */
+  const link = pendingJoin ? joinUrl(pendingJoin) : db && db.cfg.sheetOk && db.cfg.sheetKey ? joinLink() : '';
   modal(`<h3>⬇ ثبّت البرنامج على الآيفون</h3>
+    ${link ? `<div class="sync mkrem" style="margin:0 0 10px"><b>الأول:</b> انسخ رابط الربط، علشان تلصقه في البرنامج بعد ما يتثبت وحساباتك تنزل لوحدها.<button class="btn gold" id="inCopy" type="button" style="width:100%;margin-top:8px">📋 انسخ رابط الربط</button></div>` : ''}
     <ol style="font-size:var(--f3);line-height:2;padding-inline-start:22px;margin:0 0 10px">
       <li>لازم يكون مفتوح من <b>Safari</b>.</li>
       <li>دوس زرار <b>المشاركة</b> ⬆ (مربع طالع منه سهم) تحت في الشاشة. لو مش ظاهر، دوس <b>⋯</b> الأول.</li>
       <li>انزل واختار <b>"إضافة إلى الشاشة الرئيسية"</b>.</li>
       <li>دوس <b>"إضافة"</b> فوق، وافتح البرنامج بعد كده من الأيقونة.</li>
     </ol>
-    <p class="hint" style="margin:0 0 12px">⚠️ على الآيفون، البرنامج اللي على الشاشة الرئيسية بيبدأ من الأول: اعمل كلمة سر واربطه بالشيت (أو برابط الربط من جهاز تاني)، وكل الحسابات هتنزل لوحدها.</p>
-    <button class="btn gold" id="inX" type="button">تمام</button>`);
+    <p class="hint" style="margin:0 0 12px">⚠️ على الآيفون، البرنامج اللي على الشاشة الرئيسية بيبدأ من الأول: ${link ? 'اعمل كلمة سر، ودوس "الصق الرابط اللي نسخته"، ودوس "ابدأ"' : 'اعمل كلمة سر واربطه بالشيت (أو برابط الربط من جهاز تاني)'}، وكل الحسابات هتنزل لوحدها.</p>
+    <button class="btn ${link ? 'line' : 'gold'}" id="inX" type="button">تمام</button>`);
   $('#inX').onclick = closeModal;
+  if ($('#inCopy')) $('#inCopy').onclick = async () => {
+    try { await navigator.clipboard.writeText(link); $('#inCopy').textContent = '✔ اتنسخ الرابط'; }
+    catch (e) { $('#inCopy').outerHTML = `<input class="inp" id="inLink" readonly style="direction:ltr;font-size:var(--f1)" value="${esc(link)}"><p class="hint">انسخ الرابط ده بإيدك: دوس عليه جامد واختار "نسخ".</p>`; $('#inLink').onfocus = e => e.target.select(); }
+  };
 }
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); instEv = e; instShow(); });
 addEventListener('appinstalled', () => { instEv = null; instShow(); toast('✔ البرنامج اتثبت. افتحه من الأيقونة على الشاشة الرئيسية', 6000); });

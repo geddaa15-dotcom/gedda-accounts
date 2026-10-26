@@ -2457,9 +2457,11 @@ function partyModal(p) {
    الشيك هو دفعة (pay/ppay) method 'شيك' وفيها chk {no, bank, due, st: p لسه | c اتصرف | b رجع, cdate, bnc}.
    الشيك مبيدخلش خزنة غير لما يتصرف، وتاريخ دخوله الخزنة هو cdate.
    open = رصيد أول المدة، man = حركة قديمة يدوية (من النسخة الأولى)
+   via  = حد حوّل لمورد بدالنا (فودافون كاش مثلاً): الدفعة ppay بتتسجل على المورد ومعاها via = حساب اللي حوّل ومن غير خزنة،
+          ونسختها على حساب اللي حوّل بـ id ثابت e_vp_<id الدفعة> (of = الدفعة، to = المورد) ← دائن بالمبلغ + العمولة (fee). viaSync بيظبطها
    الفاتورة فيها lines [{name, unit, qty, price(بالقرش)}] و disc (خصم بالقرش)، و dr/cr بيتحسبوا منها وقت الحفظ. */
 const UNITS = ['كيلو', 'لفة', 'قطعة', 'وحدة', 'متر'];
-const KIND = {inv: 'فاتورة بيع', pay: 'دفعة مستلمة', pur: 'فاتورة شراء', ppay: 'دفعة مدفوعة', rinv: 'مرتجع بيع', rpur: 'مرتجع شراء', adj: 'خصم / تسوية', bnc: 'شيك مرتجع', open: 'رصيد أول المدة', man: 'حركة'};
+const KIND = {inv: 'فاتورة بيع', pay: 'دفعة مستلمة', pur: 'فاتورة شراء', ppay: 'دفعة مدفوعة', rinv: 'مرتجع بيع', rpur: 'مرتجع شراء', adj: 'خصم / تسوية', bnc: 'شيك مرتجع', open: 'رصيد أول المدة', man: 'حركة', via: 'حوّل لمورد'};
 const isRet = e => e.kind === 'rinv' || e.kind === 'rpur';
 const METHODS = ['نقدي', 'تحويل', 'شيك'];
 /* قسم الشيكات: كان مقفول، واتفتح بطلب صاحب المشروع (23/10/2026). false بيخفيه تاني */
@@ -2478,6 +2480,7 @@ function applyAmounts(e) {
   else if (e.kind === 'rpur') { e.dr = docTotal(e); e.cr = 0; }
   else if (e.kind === 'adj') { const sup = (P.get(e.party) || {}).sec === 'sup', down = e.dir === 'dn'; e.dr = down === sup ? e.amt : 0; e.cr = down === sup ? 0 : e.amt; }
   else if (e.kind === 'bnc') { e.dr = e.of === 'pay' ? e.amt : 0; e.cr = e.of === 'pay' ? 0 : e.amt; }
+  else if (e.kind === 'via') { e.cr = e.amt + (e.fee || 0); e.dr = 0; }
 }
 /* تاريخ دخول الفلوس الخزنة: الشيك يوم ما اتصرف، وغير كده يوم الدفعة */
 const vdate = e => e.chk && e.chk.st === 'c' && e.chk.cdate ? e.chk.cdate : e.date;
@@ -2486,6 +2489,8 @@ const noRef = t => String(t || '').replace(/ رقم \d+/g, '');
 function docTitle(e) {
   if (isDoc(e)) return KIND[e.kind];
   if ((e.kind === 'pay' || e.kind === 'ppay') && e.chk) return `${e.kind === 'pay' ? 'شيك وارد' : 'شيك صادر'}${e.chk.no ? ' رقم ' + e.chk.no : ''} — يستحق ${dispDate(e.chk.due)}`;
+  if (e.kind === 'ppay' && e.via) return `دفعة دفعتها — حوّلها ${pName0(e.via)}`;
+  if (e.kind === 'via') return `حوّل لـ ${pName0(e.to)}${e.fee ? ' + عمولة' : ''}`;
   if (e.kind === 'pay' || e.kind === 'ppay') return `${e.kind === 'pay' ? 'دفعة استلمتها' : 'دفعة دفعتها'}${e.vault ? ' — ' + vName(e.vault) : ''}`;   // من غير طريقة الدفع (اتشالت بطلبه 17/10/2026)
   if (e.kind === 'adj') return `${e.dir === 'dn' ? 'خصم' : 'تسوية'}: ${e.note || ''}`;
   if (e.kind === 'bnc') return `شيك مرتجع${e.chkno ? ' رقم ' + e.chkno : ''}`;
@@ -2493,7 +2498,7 @@ function docTitle(e) {
 }
 function docDesc(e) {
   if (isDoc(e)) { const n = (e.lines || []).length; return `${docTitle(e)}: ` + (e.lines || []).slice(0, 2).map(l => l.name).join('، ') + (n > 2 ? ` و${n - 2} كمان` : ''); }
-  if (e.kind === 'pay' || e.kind === 'ppay') return docTitle(e) + (e.note ? ' — ' + e.note : '');
+  if (e.kind === 'pay' || e.kind === 'ppay' || e.kind === 'via') return docTitle(e) + (e.note ? ' — ' + e.note : '');
   return e.desc;
 }
 
@@ -2558,6 +2563,27 @@ function fwBind(p) {
     let n = 0; for (const e of list) if (fwMove(p, e)) n++;
     saveDB(); route(); if (n) toast(`✔ اتنقلت ${n} ${n === 1 ? 'فاتورة' : 'فواتير'} لحساب ${m.name}`);
   };
+}
+
+/* ====== حد بيحوّل للموردين بدالنا (بطلب صاحب المشروع 26/10/2026) ======
+   الدفعة على المورد مبتطلعش من الخزنة، ونفس المبلغ (+ العمولة لو فيه) بيزيد اللي ليه عند اللي حوّل.
+   العمولة 10 جنيه على كل 1000 (VIA_RATE في الألف)، ومبلغها بيتحفظ على الحركة فلو النسبة اتغيرت القديم ميتغيرش. العمولة مصروف في الأرباح */
+const VIA_RATE = 10;
+const viaFee = amt => Math.round(amt * VIA_RATE / 1000);
+const pName0 = id => (P.get(id) || {name: '؟'}).name;
+const viaPeople = p => liveParties().filter(x => x.sec === 'sup' && x.id !== p.id).sort((a, b) => (b.id === (db.cfg.lvia || '')) - (a.id === (db.cfg.lvia || '')) || a.name.localeCompare(b.name, 'ar'));
+/* بتخلّي نسخة اللي حوّل زي الدفعة بالظبط (أو ملغية لو الدفعة اتلغت أو بقت من الخزنة) */
+function viaSync(e) {
+  if (!e || e.kind !== 'ppay') return;
+  const id = 'e_vp_' + e.id, m = E.get(id), on = !e.del && !!e.via;
+  if (!on) { if (m && !m.del) { m.del = true; m.delAt = nowS(); touch(m); } return; }
+  const data = {party: e.via, kind: 'via', date: e.date, amt: e.amt, fee: e.fee || 0, of: e.id, to: e.party, note: e.note || ''};
+  if (m) {
+    if (!m.del && Object.keys(data).every(k => m[k] === data[k])) return;
+    if (!m.del) (m.hist = m.hist || []).push(snapshot(m));
+    Object.assign(m, data, {del: false}); delete m.delAt;
+    applyAmounts(m); m.desc = docDesc(m); touch(m);
+  } else { const n = addEntry(Object.assign({id}, data)); applyAmounts(n); n.desc = docDesc(n); }
 }
 
 let showX = false;
@@ -2658,7 +2684,7 @@ function entryCard(e, runB) {
   return `<div class="en row1 ${e.kind}${e.kind === 'adj' && e.dir === 'dn' ? ' dn' : ''} ${e.del ? 'x' : ''}" data-id="${esc(e.id)}">
     <div class="dh"><b>${e.kind === 'pay' || e.kind === 'ppay' ? '💵 ' : ''}${esc(docTitle(e))}</b><span>${dispDate(e.date)}${flags}</span></div>
     ${e.note && (e.kind === 'pay' || e.kind === 'ppay') ? `<div class="nt">${esc(e.note)}</div>` : ''}
-    <div class="dl tot"><span>${e.kind === 'pay' ? 'نزلت من اللي عليه' : e.kind === 'ppay' ? 'نزلت من اللي ليه' : e.cr ? 'دائن' : 'مدين'}</span><span class="money ${side}">${e.cr ? '−' : '+'} ${fmtP(amt)}</span></div>${balLine}</div>`;
+    <div class="dl tot"><span>${e.kind === 'pay' ? 'نزلت من اللي عليه' : e.kind === 'ppay' ? 'نزلت من اللي ليه' : e.kind === 'via' ? 'زادت اللي ليه' + (e.fee ? ` (منها عمولة ${fmtP(e.fee)})` : '') : e.cr ? 'دائن' : 'مدين'}</span><span class="money ${side}">${e.cr ? '−' : '+'} ${fmtP(amt)}</span></div>${balLine}</div>`;
 }
 /* دوسة على بند في كشف الحساب = نافذة للبند ده لوحده (الاسم والوحدة والكمية والسعر)، ومن جواها "افتح الفاتورة كاملة" */
 function lineModal(p, e, i) {
@@ -2700,6 +2726,7 @@ function lineModal(p, e, i) {
   };
 }
 function openEntry(p, e) {
+  if (e.kind === 'via') { const o = E.get(e.of), sp = o && P.get(o.party); if (o && sp) return openEntry(sp, o); }   // نسخة اللي حوّل بتفتح الدفعة نفسها
   if (e.del) return cancelledModal(e);
   if (isDoc(e)) return docModal(p, e.kind, e);
   if (e.kind === 'pay' || e.kind === 'ppay') return payModal(p, e.kind, e);
@@ -2712,12 +2739,12 @@ function cancelledModal(e) {
     ${histHtml(e)}
     <div class="stack"><button class="btn gold" id="emBack" type="button">رجّع الحركة دي</button><button class="btn line" id="emX" type="button">إغلاق</button></div>`);
   $('#emX').onclick = closeModal;
-  $('#emBack').onclick = () => { e.del = false; delete e.delAt; touch(e); saveDB(); closeModal(); route(); toast('رجعت الحركة ✔'); };
+  $('#emBack').onclick = () => { e.del = false; delete e.delAt; touch(e); viaSync(e); saveDB(); closeModal(); route(); toast('رجعت الحركة ✔'); };
 }
 /* حفظ التعديل: النسخة القديمة بتتحفظ في hist */
 /* "، اتسجلت بواسطة فلان الساعة كذا" لتحذير التكرار */
 const twinBy = x => x.cby || x.by ? `، اتسجلت بواسطة ${x.cby || x.by} الساعة ${dispTime(x.at || x.upd)}` : '';
-function snapshot(e) { const s = {t: nowS(), kind: e.kind, date: e.date, desc: e.desc, dr: e.dr || 0, cr: e.cr || 0}; if (e.by) s.by = e.by; ['no', 'lines', 'disc', 'amt', 'method', 'note', 'vault', 'chk', 'dir'].forEach(k => { if (e[k] !== undefined) s[k] = JSON.parse(JSON.stringify(e[k])); }); return s; }
+function snapshot(e) { const s = {t: nowS(), kind: e.kind, date: e.date, desc: e.desc, dr: e.dr || 0, cr: e.cr || 0}; if (e.by) s.by = e.by; ['no', 'lines', 'disc', 'amt', 'method', 'note', 'vault', 'chk', 'dir', 'via', 'fee'].forEach(k => { if (e[k] !== undefined) s[k] = JSON.parse(JSON.stringify(e[k])); }); return s; }
 async function cancelEntry(e) {
   if (isLocked(e.date)) return lockToast();
   /* الحساب الفرعي: مسح فاتورة اتنقلت عادي من غير أي تحذير (اللي في الأساسي بيفضل). التحذير مرة واحدة بس لو لسه متنقلتش */
@@ -2726,11 +2753,13 @@ async function cancelEntry(e) {
   const aff = [e];
   if (e.chk && e.chk.bnc) { const b = E.get(e.chk.bnc); if (b && !b.del) aff.push(b); }
   if (e.kind === 'bnc') { const o = E.get(e.ref); if (o && o.chk && o.chk.st === 'b') aff.push(o); }
+  if (E.get('e_vp_' + e.id)) aff.push(E.get('e_vp_' + e.id));   // نسخة اللي حوّل بتتلغي مع الدفعة
   const snap = aff.map(x => ({x, del: x.del, delAt: x.delAt, chk: x.chk ? JSON.parse(JSON.stringify(x.chk)) : undefined}));
   e.del = true; e.delAt = nowS(); touch(e);
   /* الدفعة اللي بشيك مرتجع: الشيك المرتجع بيتلغي معاها. والشيك المرتجع لو اتلغى، الشيك بيرجع "لسه" */
   if (e.chk && e.chk.bnc) { const b = E.get(e.chk.bnc); if (b && !b.del) { b.del = true; b.delAt = nowS(); touch(b); } }
   if (e.kind === 'bnc') { const o = E.get(e.ref); if (o && o.chk && o.chk.st === 'b') { o.chk = Object.assign({}, o.chk, {st: 'p', bnc: ''}); touch(o); } }
+  viaSync(e);
   saveDB(); closeModal(); route();
   toastUndo('اتلغت "' + docDesc(e) + '"', () => {
     snap.forEach(o => { o.x.del = o.del; if (o.delAt === undefined) delete o.x.delAt; else o.x.delAt = o.delAt; if (o.chk) o.x.chk = o.chk; touch(o.x); });
@@ -2934,10 +2963,19 @@ function payModal(p, kind, e, opts = {}) {
   const ck = e && e.chk || {};
   ensureVaults();
   const v0 = e ? e.vault || '' : (opts.vault || defVault(method));
+  /* "حد حوّلها" (للموردين بس): الدفعة مبتطلعش من الخزنة وبتتسجل لحساب اللي حوّل (viaSync) */
+  const canVia = !rec && !(e && e.chk), vps = canVia ? viaPeople(p) : [];
+  let useVia = !!(e && e.via), feeOn = e ? !!e.fee : db.cfg.lvfee !== 0;
+  const vp0 = e && e.via || (vps[0] || {}).id || '';
   modal(`<h3>💵 ${isNew ? (rec ? 'استلمت دفعة' : 'دفعت دفعة') : 'تعديل دفعة'}<small class="mnm">${esc(p.name)}</small></h3>
     <div class="fld"><label>المبلغ</label><div class="amtrow"><input class="inp num amt" id="pyAmt" placeholder="0" value="${e ? fmtP(e.amt) : ''}">${isNew && (rec ? balance(p.id) > 0 : balance(p.id) < 0) ? '<button class="btn line sm" id="pyAll" type="button">كل الرصيد</button>' : ''}</div>
       <div class="hint" style="margin-top:4px">الرصيد الحالي: ${fmtP(Math.abs(balance(p.id)))} ${balWord(balance(p.id))}</div></div>
-    ${CHECKS_ON || method === 'شيك' ? `<div class="fld"><label>طريقة الدفع</label><div class="seg s2" id="pyM"><button type="button" data-v="${method === 'شيك' ? 'نقدي' : method}" class="${method === 'شيك' ? '' : 'on'}">💵 فلوس</button><button type="button" data-v="شيك" class="${method === 'شيك' ? 'on' : ''}">شيك</button></div></div>` : ''}
+    ${CHECKS_ON || method === 'شيك' || canVia ? `<div class="fld"><label>طريقة الدفع</label><div class="seg ${canVia ? 's3' : 's2'}" id="pyM"><button type="button" data-v="${method === 'شيك' || useVia ? 'نقدي' : method}" class="${method === 'شيك' || useVia ? '' : 'on'}">💵 فلوس</button>${CHECKS_ON || method === 'شيك' ? `<button type="button" data-v="شيك" class="${method === 'شيك' ? 'on' : ''}">شيك</button>` : ''}${canVia ? `<button type="button" data-v="via" class="${useVia ? 'on' : ''}">📲 حد حوّلها</button>` : ''}</div></div>` : ''}
+    ${canVia ? `<div id="pyVia" class="card" style="background:var(--gold-l);margin:0 0 10px">${vps.length ? `
+      <div class="fld"><label>مين اللي حوّلها؟</label><select class="inp" id="pyVp">${vps.map(x => `<option value="${esc(x.id)}" ${x.id === vp0 ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div>
+      <div class="fld"><label>العمولة</label><div class="seg s2" id="pyFee"><button type="button" data-v="0" class="${feeOn ? '' : 'on'}">من غير عمولة</button><button type="button" data-v="1" class="${feeOn ? 'on' : ''}">بعمولة ${VIA_RATE} على الألف</button></div></div>
+      <p class="hint" id="pyViaH" style="margin:0"></p>` : '<p class="hint" style="margin:0">الشخص اللي بيحوّل لازم يبقى ليه حساب في <b>الموردين</b>. اعمله حساب مورد الأول (من الموردين ← حساب جديد) وارجع هنا.</p>'}
+    </div>` : ''}
     <div id="pyChk" class="card" style="background:var(--gold-l);margin:0 0 10px">
       <div class="g2"><div class="fld"><label>رقم الشيك</label><input class="inp num" id="pyCn" inputmode="numeric" value="${esc(ck.no || '')}"></div>
         <div class="fld"><label>البنك</label><input class="inp" id="pyCb" value="${esc(ck.bank || '')}"></div></div>
@@ -2955,11 +2993,23 @@ function payModal(p, kind, e, opts = {}) {
   if ($('#pyAll')) $('#pyAll').onclick = () => { $('#pyAmt').value = fmtP(Math.abs(balance(p.id))); $('#pyAmt').dispatchEvent(new Event('input')); };
   bindMoney($('#pyAmt'));
   $$('#pyM button').forEach(b => b.onclick = () => {
-    method = b.dataset.v; $$('#pyM button').forEach(x => x.classList.toggle('on', x === b));
-    if (method === 'شيك') $('#pyV').value = ''; else if (isNew || !$('#pyV').value) $('#pyV').value = defVault(method);
+    useVia = b.dataset.v === 'via'; method = useVia ? 'تحويل' : b.dataset.v; $$('#pyM button').forEach(x => x.classList.toggle('on', x === b));
+    if (method === 'شيك' || useVia) $('#pyV').value = ''; else if (isNew || !$('#pyV').value) $('#pyV').value = defVault(method);
     showChk();
   });
-  const showChk = () => { $('#pyChk').style.display = method === 'شيك' ? '' : 'none'; $('#pyVW').style.display = method === 'شيك' ? 'none' : ''; };
+  const viaHint = () => {
+    if (!$('#pyViaH')) return;
+    const a = toP($('#pyAmt').value), fee = feeOn ? viaFee(a) : 0, who = esc(pName0($('#pyVp').value));
+    $('#pyViaH').innerHTML = a > 0 ? `هيتزوّد لـ <b>${who}</b>: <b>${fmtP(a + fee)}</b>${fee ? ` (${fmtP(a)} + عمولة ${fmtP(fee)})` : ''}، والخزنة مش هتتأثر.` : `المبلغ هيتزوّد لـ <b>${who}</b>${feeOn ? ' ومعاه العمولة' : ''}، والخزنة مش هتتأثر.`;
+  };
+  $$('#pyFee button').forEach(b => b.onclick = () => { feeOn = b.dataset.v === '1'; $$('#pyFee button').forEach(x => x.classList.toggle('on', x === b)); viaHint(); });
+  if ($('#pyVp')) $('#pyVp').onchange = viaHint;
+  $('#pyAmt').addEventListener('input', viaHint);
+  const showChk = () => {
+    $('#pyChk').style.display = method === 'شيك' && !useVia ? '' : 'none'; $('#pyVW').style.display = method === 'شيك' || useVia ? 'none' : '';
+    if ($('#pyVia')) $('#pyVia').style.display = useVia ? '' : 'none';
+    viaHint();
+  };
   showChk();
   $('#pyX').onclick = closeModal;
   let warned = false;
@@ -2971,9 +3021,12 @@ function payModal(p, kind, e, opts = {}) {
     const amt = toP($('#pyAmt').value), date = $('#pyDate').value, note = $('#pyNote').value.trim(), vault = $('#pyV').value;
     if (amt <= 0) return toast('اكتب المبلغ');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return toast('اختار التاريخ');
-    if (!vault && method !== 'شيك' && (isNew || e.vault || e.chk)) return toast('اختار الخزنة');
+    const vp = useVia && $('#pyVp') ? $('#pyVp').value : '';
+    if (useVia && !vp) return toast('اعمل حساب مورد للي بيحوّل الأول');
+    if (!useVia && !vault && method !== 'شيك' && (isNew || e.vault || e.chk || e.via)) return toast('اختار الخزنة');
     if (isLocked(date)) return lockToast();
-    const o = {kind, date, amt, method, note, vault};
+    const o = {kind, date, amt, method, note, vault: useVia ? '' : vault};
+    if (useVia) { o.via = vp; o.fee = feeOn ? viaFee(amt) : 0; } else if (e && e.via) { o.via = undefined; o.fee = undefined; }
     if (method === 'شيك') {
       const due = $('#pyCd').value;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) return toast('اكتب تاريخ استحقاق الشيك');
@@ -2990,14 +3043,14 @@ function payModal(p, kind, e, opts = {}) {
     const effOf = (x, v) => x.chk && !v ? [] : [{v, d: kind === 'ppay' ? -x.amt : x.amt}];
     const hits = isNew || !cntHits(effOf(e, e.vault), e.date, e.at || 0).length ? cntHits(effOf(o, o.vault), date, isNew ? nowS() : e.at || 0) : [];
     if (cntGate($('#pyOk'), hits, cnSt)) return;
-    rememberVault(method, vault);
+    if (useVia) { db.cfg.lvia = vp; db.cfg.lvfee = feeOn ? 1 : 0; } else rememberVault(method, vault);
     o.desc = docDesc(o);
     if (cnSt.a) cntFix(hits, `${KIND[kind]} ${p.name} ${fmtP(amt)} بتاريخ ${dispDate(date)}`);
-    if (isNew) { if (!o.chk) delete o.chk; applyAmounts(addEntry(Object.assign({party: p.id}, o))); toast(o.chk ? 'اتسجل الشيك ✔' : 'اتسجلت الدفعة ✔'); }
+    if (isNew) { if (!o.chk) delete o.chk; const ne = addEntry(Object.assign({party: p.id}, o)); applyAmounts(ne); viaSync(ne); toast(o.chk ? 'اتسجل الشيك ✔' : useVia ? `اتسجلت الدفعة ✔ واتزوّدت لـ ${pName0(vp)}` : 'اتسجلت الدفعة ✔'); }
     else {
-      if (e.amt === amt && e.date === date && e.method === method && (e.note || '') === note && (e.vault || '') === o.vault && JSON.stringify(e.chk || null) === JSON.stringify(o.chk || null)) return closeModal();
+      if (e.amt === amt && e.date === date && e.method === method && (e.note || '') === note && (e.vault || '') === o.vault && JSON.stringify(e.chk || null) === JSON.stringify(o.chk || null) && (e.via || '') === (o.via || '') && (e.fee || 0) === (o.fee || 0)) return closeModal();
       (e.hist = e.hist || []).push(snapshot(e));
-      Object.assign(e, o); if (!o.chk) delete e.chk; applyAmounts(e); touch(e); toast('اتعدّلت الدفعة ✔');
+      Object.assign(e, o); if (!o.chk) delete e.chk; if (!o.via) { delete e.via; delete e.fee; } applyAmounts(e); touch(e); viaSync(e); toast('اتعدّلت الدفعة ✔');
     }
     saveDB(); closeModal(); route();
     if (again && isNew) pickParty(kind, Object.assign({}, opts, {date, vault: o.vault || opts.vault, method}));
@@ -3100,7 +3153,9 @@ function rowsOf(e) {
     return out;
   }
   if ((e.kind === 'pay' || e.kind === 'ppay') && e.chk) return [{date: e.date, desc: `شيك${e.chk.no ? ' رقم ' + e.chk.no : ''}`, ref: `يستحق ${dispDate(e.chk.due)}${e.chk.bank ? ' — ' + e.chk.bank : ''}`, dr: e.dr || 0, cr: e.cr || 0, pay: true}];
+  if (e.kind === 'ppay' && e.via) return [{date: e.date, desc: 'دفعة', ref: `حوّلها ${pName0(e.via)}${e.note ? ' — ' + e.note : ''}`, dr: e.dr || 0, cr: e.cr || 0, pay: true}];
   if (e.kind === 'pay' || e.kind === 'ppay') return [{date: e.date, desc: 'دفعة', ref: e.note || '', dr: e.dr || 0, cr: e.cr || 0, pay: true}];
+  if (e.kind === 'via') return [{date: e.date, desc: `حوّل لـ ${pName0(e.to)}`, ref: e.note || '', dr: 0, cr: e.amt || 0}].concat(e.fee ? [{date: e.date, desc: 'عمولة تحويل', ref: `${VIA_RATE} على الألف`, dr: 0, cr: e.fee}] : []);
   if (e.kind === 'adj') return [{date: e.date, desc: e.dir === 'dn' ? 'خصم' : 'تسوية', ref: e.note || '', dr: e.dr || 0, cr: e.cr || 0, pay: e.dir === 'dn'}];
   if (e.kind === 'bnc') return [{date: e.date, desc: `شيك مرتجع${e.chkno ? ' رقم ' + e.chkno : ''}`, ref: e.note || '', dr: e.dr || 0, cr: e.cr || 0, bnc: true}];
   return [{date: e.date, desc: e.desc, ref: '', dr: e.dr || 0, cr: e.cr || 0, op: e.kind === 'open'}];
@@ -3978,11 +4033,11 @@ const PAGE_LM = Date.parse(document.lastModified), PAGE_AT = Date.now();
 const verText = (lm = PAGE_LM, at = PAGE_AT) => lm && at - lm > 3000 ? `آخر تحديث للبرنامج على الجهاز ده: ${dispDate(isoOf(lm))} ${dispTime(lm)}` : '';
 /* ====================== الإصدار و"عن البرنامج" ======================
    مع أي تعديل يترفع: زوّد APP_VER (تعديل صغير 1.1، 1.2… وحاجة كبيرة 2.0) وغيّر APP_DATE، واكتب أهم الجديد في APP_NEWS (3-5 سطور بالعامية البسيطة) */
-const APP_VER = '1.1', APP_DATE = '2026-10-25';
+const APP_VER = '1.2', APP_DATE = '2026-10-26';
 const APP_NEWS = [
-  'تقدر تشيل أي اسم (زي اسم تجربة) من قايمة الأسامي بزرار ✕ جنبه، والحركات اللي اتسجلت بيه بتفضل زي ما هي',
-  'كارت دليل التطبيق في الإعدادات بقى بيتقفل ويتفتح زي باقي الكروت',
-  'دليل التطبيق بالصور من الإعدادات، والفتح بالبصمة، وزرار تثبيت البرنامج على الموبايل'];
+  'دفعة المورد بقى فيها "📲 حد حوّلها": لو حد حوّل للمورد بدالك (فودافون كاش مثلاً)، المورد بينزل واللي حوّل بيزيد اللي ليه، والخزنة متتحركش',
+  'العمولة اختيار: من غير عمولة أو 10 جنيه على الألف، والعمولة بتتحسب مصروف في الأرباح',
+  'تقدر تشيل أي اسم (زي اسم تجربة) من قايمة الأسامي بزرار ✕ جنبه، والحركات اللي اتسجلت بيه بتفضل زي ما هي'];
 function aboutModal() {
   modal(`<div class="about">
     <div class="mkr" aria-hidden="true"><span class="mkr-m">MA</span><span class="mkr-k">DESIGNED &amp; DEVELOPED BY</span><span class="mkr-n">MOSTAFA ABD ELHADY</span></div>
@@ -5674,6 +5729,8 @@ function cashSums(f, t) {
     if (x.type === 'exp') r.exp += x.amt; else r.inc += x.amt;
     const k = (x.type === 'exp' ? '− ' : '+ ') + cName(x.cat); r.byCat.set(k, (r.byCat.get(k) || 0) + x.amt);
   }
+  /* عمولة اللي بيحوّل للموردين مصروف (مبتطلعش من الخزنة، بتزيد اللي ليه) */
+  for (const e of db.entries) if (!e.del && e.kind === 'via' && e.fee && e.date >= f && e.date <= t) { r.exp += e.fee; r.byCat.set('− عمولة تحويل', (r.byCat.get('− عمولة تحويل') || 0) + e.fee); }
   return r;
 }
 function profitOf(f, t) {

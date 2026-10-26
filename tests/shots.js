@@ -103,6 +103,11 @@ const party = `liveParties().find(p => p.name.startsWith('${PNAME}'))`;
 /* جرد قديم (بالإيد) من 60 يوم وجرد النهارده، لصور الجرد القديم وفرق المخزون في الأرباح */
 const JRDSHOT = `if (!IDX.stk.get('jr_shot_o')) { const u = Date.now(), t = todayISO(), mk = (id, date, stock, n) => { const r = {id, date, stock, n, at: u, upd: u, del: false, hist: []}; db.stks.push(r); IDX.stk.set(id, r); };
   mk('jr_shot_o', addDays(t, -60), 15000000, {old: 1, mkt: 30000000, sup: 0, vault: 0, cnt: {mkt: 0, sup: 0}, rest: 5000000}); mk('jr_shot_n', t, 18000000, jrdCalc(t)); }; `;
+const SUP = `liveParties().find(p => p.name === 'مورد تجربة الخامات')`;
+const VIASHOT = `if (!P.get('p_shot_via')) { const u = Date.now(), p = {id: 'p_shot_via', sec: 'sup', name: 'شخص تجربة فودافون كاش', phone: '', note: '', noTot: false, at: u, upd: u, del: false}; db.parties.push(p); P.set(p.id, p);
+  const s1 = ${SUP}, s2 = liveParties().find(p => p.name === 'مورد تجربة الكرتون'), t = todayISO();
+  [[s1, -6, 500000, 1], [s2, -4, 300000, 1], [s1, -2, 200000, 0]].forEach(([sp, d, amt, f]) => { const e = addEntry({party: sp.id, kind: 'ppay', date: addDays(t, d), amt, method: 'تحويل', note: '', vault: '', via: 'p_shot_via', fee: f ? viaFee(amt) : 0}); applyAmounts(e); e.desc = docDesc(e); viaSync(e); });
+  const b = addEntry({party: 'p_shot_via', kind: 'ppay', date: addDays(t, -1), amt: 800000, method: 'نقدي', note: '', vault: vaultsL()[0].id}); applyAmounts(b); b.desc = docDesc(b); saveDB(); }; `;
 const ACC = (sfx, vp, extra = {}) => [
   {name: 'acc-list-' + sfx, go: accEval("tab = 'mkt'; go('home'); renderHome()"), full: true},
   {name: 'acc-sup-' + sfx, go: accEval("go(isWide() ? 'home' : 'sup'); tab = 'sup'; renderHome()")},
@@ -146,6 +151,11 @@ const SCREENS = [
   {name: 'acc-act-m', app: 'acc', vp: MOB, full: true, go: accEval("actDay = ''; go('act')")},
   {name: 'acc-who-m', app: 'acc', vp: MOB, go: accEval(`const e = [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'pay').pop(); e.by = 'كريم'; e.cby = 'سامح'; openEntry(${party}, e)`)},
   {name: 'acc-me-m', app: 'acc', vp: MOB, go: accEval('askMe(true)')},
+  /* حد بيحوّل للموردين (فودافون كاش): الدفعة والمورد وحساب اللي حوّل */
+  {name: 'acc-ppay-m', app: 'acc', vp: MOB, go: accEval(`payModal(${SUP}, 'ppay')`)},
+  {name: 'acc-via-m', app: 'acc', vp: MOB, go: async A => { await accEval(VIASHOT + `payModal(${SUP}, 'ppay')`)(A); await A.click('#pyM [data-v=via]'); await A.fill('#pyAmt', '5000'); await A.dispatchEvent('#pyAmt', 'input'); }},
+  {name: 'acc-via-sup-m', app: 'acc', vp: MOB, full: true, go: accEval(VIASHOT + `go('p/' + ${SUP}.id)`)},
+  {name: 'acc-via-man-m', app: 'acc', vp: MOB, full: true, go: accEval(VIASHOT + `go('p/p_shot_via')`)},
   ...ACC('l', LAP),
   {name: 'acc-party-l1100', app: 'acc', vp: LAP2, go: accEval(`go('p/' + ${party}.id)`)},
   {name: 'acc-cash-wk-m', app: 'acc', vp: MOB, go: accEval("cashSide = 'me'; cashMode = 'week'; go('cash'); renderCash()")},

@@ -2567,7 +2567,7 @@ function fwBind(p) {
 
 /* ====== حد بيحوّل للموردين بدالنا (بطلب صاحب المشروع 26/10/2026) ======
    الدفعة على المورد مبتطلعش من الخزنة، ونفس المبلغ (+ العمولة لو فيه) بيزيد اللي ليه عند اللي حوّل.
-   العمولة 10 جنيه على كل 1000 (VIA_RATE في الألف)، ومبلغها بيتحفظ على الحركة فلو النسبة اتغيرت القديم ميتغيرش. العمولة مصروف في الأرباح */
+   العمولة دايماً 10 جنيه على كل 1000 أوتوماتيك (VIA_RATE في الألف، بطلبه)، ومبلغها بيتحفظ على الحركة فلو النسبة اتغيرت القديم ميتغيرش. العمولة مصروف في الأرباح */
 const VIA_RATE = 10;
 const viaFee = amt => Math.round(amt * VIA_RATE / 1000);
 const pName0 = id => (P.get(id) || {name: '؟'}).name;
@@ -2624,8 +2624,9 @@ function renderParty(id) {
   const sup = p.sec === 'sup';
   const b = balance(id);
   const all = partyEntries(id, true);
-  let run = 0, tDoc = 0, tPay = 0; const runAt = new Map();
+  let run = 0, tDoc = 0, tPay = 0, tVia = 0, tFee = 0; const runAt = new Map();
   all.forEach(e => {
+    if (!e.del && e.kind === 'via') { tVia += e.amt || 0; tFee += e.fee || 0; }
     if (!e.del) { run += (e.dr || 0) - (e.cr || 0); if (e.kind === 'inv' || e.kind === 'pur') tDoc += docTotal(e); if (isRet(e)) tDoc -= docTotal(e); if (e.kind === 'pay' || e.kind === 'ppay') tPay += e.amt || 0; if (e.kind === 'bnc') tPay -= e.amt || 0; }
     runAt.set(e.id, run);
   });
@@ -2634,7 +2635,7 @@ function renderParty(id) {
     <div class="sech ppbar tb" style="margin-top:0"><a id="ppBack">→<em> كل الحسابات</em></a><b class="tt">${esc(p.name)}</b><span class="jb"><button id="jUp" type="button">↑ فوق</button><button id="jDn" type="button">↓ آخر حركة</button></span><a id="ppEdit" title="تعديل البيانات">✎<em> تعديل البيانات</em></a></div>
     <div class="phd"><div class="pnm"><h2><button class="pbk" id="ppBack2" type="button" aria-label="رجوع">→</button>${esc(p.name)}</h2>${payRhythm(p, all, b)}${limitChip(p, b)}</div><small>${SEC1[p.sec]}${p.phone ? ' — <span dir="ltr">' + esc(p.phone) + '</span>' : ''}${p.note ? ' — ' + esc(p.note) : ''}${p.noTot ? ' — <b style="color:var(--gold)">حساب فرعي خارج الإجماليات</b>' : ''}<button class="ped" id="ppEdit2" type="button">✎ تعديل</button></small>
       <div class="bal"><span>الرصيد: ${balWord(b)}</span><b class="${b < 0 ? 'cr' : ''}" data-ck="pb:${esc(id)}" data-cnt="${Math.abs(b)}">${fmtP(Math.abs(b))} <small style="font-size:var(--f2);color:var(--gold)">${CUR}</small></b></div>
-      <div class="mini2"><span>${sup ? 'المشتريات' : 'المبيعات'}: <b>${fmtP(tDoc)}</b></span><span>${sup ? 'اللي دفعته' : 'اللي استلمته'}: <b>${fmtP(tPay)}</b></span></div></div>
+      <div class="mini2"><span>${sup ? 'المشتريات' : 'المبيعات'}: <b>${fmtP(tDoc)}</b></span><span>${sup ? 'اللي دفعته' : 'اللي استلمته'}: <b>${fmtP(tPay)}</b></span>${tVia ? `<span>حوّل للموردين: <b>${fmtP(tVia)}</b></span><span>العمولة: <b>${fmtP(tFee)}</b></span>` : ''}</div></div>
     ${isFwdSrc(p) ? (fwAutoLink(p), fwBar(p)) : ''}
     <div class="acts">
       <button class="btn" id="ppDoc" type="button">🧾 ${sup ? 'فاتورة شراء' : 'فاتورة بيع'}</button>
@@ -2965,7 +2966,7 @@ function payModal(p, kind, e, opts = {}) {
   const v0 = e ? e.vault || '' : (opts.vault || defVault(method));
   /* "حد حوّلها" (للموردين بس): الدفعة مبتطلعش من الخزنة وبتتسجل لحساب اللي حوّل (viaSync) */
   const canVia = !rec && !(e && e.chk), vps = canVia ? viaPeople(p) : [];
-  let useVia = !!(e && e.via), feeOn = e ? !!e.fee : db.cfg.lvfee !== 0;
+  let useVia = !!(e && e.via);
   const vp0 = e && e.via || (vps[0] || {}).id || '';
   modal(`<h3>💵 ${isNew ? (rec ? 'استلمت دفعة' : 'دفعت دفعة') : 'تعديل دفعة'}<small class="mnm">${esc(p.name)}</small></h3>
     <div class="fld"><label>المبلغ</label><div class="amtrow"><input class="inp num amt" id="pyAmt" placeholder="0" value="${e ? fmtP(e.amt) : ''}">${isNew && (rec ? balance(p.id) > 0 : balance(p.id) < 0) ? '<button class="btn line sm" id="pyAll" type="button">كل الرصيد</button>' : ''}</div>
@@ -2973,7 +2974,6 @@ function payModal(p, kind, e, opts = {}) {
     ${CHECKS_ON || method === 'شيك' || canVia ? `<div class="fld"><label>طريقة الدفع</label><div class="seg ${canVia ? 's3' : 's2'}" id="pyM"><button type="button" data-v="${method === 'شيك' || useVia ? 'نقدي' : method}" class="${method === 'شيك' || useVia ? '' : 'on'}">💵 فلوس</button>${CHECKS_ON || method === 'شيك' ? `<button type="button" data-v="شيك" class="${method === 'شيك' ? 'on' : ''}">شيك</button>` : ''}${canVia ? `<button type="button" data-v="via" class="${useVia ? 'on' : ''}">📲 حد حوّلها</button>` : ''}</div></div>` : ''}
     ${canVia ? `<div id="pyVia" class="card" style="background:var(--gold-l);margin:0 0 10px">${vps.length ? `
       <div class="fld"><label>مين اللي حوّلها؟</label><select class="inp" id="pyVp">${vps.map(x => `<option value="${esc(x.id)}" ${x.id === vp0 ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div>
-      <div class="fld"><label>العمولة</label><div class="seg s2" id="pyFee"><button type="button" data-v="0" class="${feeOn ? '' : 'on'}">من غير عمولة</button><button type="button" data-v="1" class="${feeOn ? 'on' : ''}">بعمولة ${VIA_RATE} على الألف</button></div></div>
       <p class="hint" id="pyViaH" style="margin:0"></p>` : '<p class="hint" style="margin:0">الشخص اللي بيحوّل لازم يبقى ليه حساب في <b>الموردين</b>. اعمله حساب مورد الأول (من الموردين ← حساب جديد) وارجع هنا.</p>'}
     </div>` : ''}
     <div id="pyChk" class="card" style="background:var(--gold-l);margin:0 0 10px">
@@ -2999,10 +2999,9 @@ function payModal(p, kind, e, opts = {}) {
   });
   const viaHint = () => {
     if (!$('#pyViaH')) return;
-    const a = toP($('#pyAmt').value), fee = feeOn ? viaFee(a) : 0, who = esc(pName0($('#pyVp').value));
-    $('#pyViaH').innerHTML = a > 0 ? `هيتزوّد لـ <b>${who}</b>: <b>${fmtP(a + fee)}</b>${fee ? ` (${fmtP(a)} + عمولة ${fmtP(fee)})` : ''}، والخزنة مش هتتأثر.` : `المبلغ هيتزوّد لـ <b>${who}</b>${feeOn ? ' ومعاه العمولة' : ''}، والخزنة مش هتتأثر.`;
+    const a = toP($('#pyAmt').value), fee = viaFee(a), who = esc(pName0($('#pyVp').value));
+    $('#pyViaH').innerHTML = a > 0 ? `هيتزوّد لـ <b>${who}</b>: <b>${fmtP(a + fee)}</b> (${fmtP(a)} + عمولة ${fmtP(fee)})، والخزنة مش هتتأثر.` : `هيتزوّد لـ <b>${who}</b> المبلغ ومعاه عمولة ${VIA_RATE} جنيه على كل ألف، والخزنة مش هتتأثر.`;
   };
-  $$('#pyFee button').forEach(b => b.onclick = () => { feeOn = b.dataset.v === '1'; $$('#pyFee button').forEach(x => x.classList.toggle('on', x === b)); viaHint(); });
   if ($('#pyVp')) $('#pyVp').onchange = viaHint;
   $('#pyAmt').addEventListener('input', viaHint);
   const showChk = () => {
@@ -3026,7 +3025,7 @@ function payModal(p, kind, e, opts = {}) {
     if (!useVia && !vault && method !== 'شيك' && (isNew || e.vault || e.chk || e.via)) return toast('اختار الخزنة');
     if (isLocked(date)) return lockToast();
     const o = {kind, date, amt, method, note, vault: useVia ? '' : vault};
-    if (useVia) { o.via = vp; o.fee = feeOn ? viaFee(amt) : 0; } else if (e && e.via) { o.via = undefined; o.fee = undefined; }
+    if (useVia) { o.via = vp; o.fee = viaFee(amt); } else if (e && e.via) { o.via = undefined; o.fee = undefined; }
     if (method === 'شيك') {
       const due = $('#pyCd').value;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) return toast('اكتب تاريخ استحقاق الشيك');
@@ -3043,7 +3042,7 @@ function payModal(p, kind, e, opts = {}) {
     const effOf = (x, v) => x.chk && !v ? [] : [{v, d: kind === 'ppay' ? -x.amt : x.amt}];
     const hits = isNew || !cntHits(effOf(e, e.vault), e.date, e.at || 0).length ? cntHits(effOf(o, o.vault), date, isNew ? nowS() : e.at || 0) : [];
     if (cntGate($('#pyOk'), hits, cnSt)) return;
-    if (useVia) { db.cfg.lvia = vp; db.cfg.lvfee = feeOn ? 1 : 0; } else rememberVault(method, vault);
+    if (useVia) db.cfg.lvia = vp; else rememberVault(method, vault);
     o.desc = docDesc(o);
     if (cnSt.a) cntFix(hits, `${KIND[kind]} ${p.name} ${fmtP(amt)} بتاريخ ${dispDate(date)}`);
     if (isNew) { if (!o.chk) delete o.chk; const ne = addEntry(Object.assign({party: p.id}, o)); applyAmounts(ne); viaSync(ne); toast(o.chk ? 'اتسجل الشيك ✔' : useVia ? `اتسجلت الدفعة ✔ واتزوّدت لـ ${pName0(vp)}` : 'اتسجلت الدفعة ✔'); }
@@ -3135,7 +3134,7 @@ function ledgerTable(p) {
   return `<div class="sech"><span>كشف الحساب (${s.n} حركة)</span>${s.rows.length > 12 ? '<a id="ppEnd">آخر حركة ↓</a>' : ''}</div>
     <div class="ldgw"><table class="ldg"><thead><tr><th>التاريخ</th><th>البيان</th><th class="hq">الكمية</th><th class="hq">السعر</th><th>الإجمالي</th><th>دفعة</th><th>الرصيد</th></tr></thead><tbody>
     ${over ? `<tr class="more"><td colspan="${isWide() ? 6 : 4}">${ext ? '<a id="ldgFold">▲ طي</a>' : ''}${cut ? `<a id="ldgOld">▼ ${cut} سطر أقدم</a><small>الرصيد السابق</small>` : ''}</td><td class="b">${cut ? fmtP(s.rows[cut - 1].run * s.sg) : ''}</td></tr>` : ''}
-    ${(cut ? s.rows.slice(cut) : s.rows).map(r => (yPrev !== null && (r.date || '').slice(0, 4) !== yPrev ? `<tr class="yr"><td colspan="7">${yPrev = (r.date || '').slice(0, 4)}</td></tr>` : '') + `<tr data-id="${esc(r.e.id)}"${r.li !== undefined ? ` data-li="${r.li}"` : ''} class="${r.pay ? 'pay' : r.op ? 'op' : r.ret ? 'ret' : r.bnc ? 'bnc' : ''} ${r.first ? 'f' : ''}"><td class="dt">${shortDate(r.date)}</td><td class="l">${esc(r.desc)}${r.ref ? `<small>${esc(r.ref)}</small>` : ''}${fwTag(r)}${r.qty ? `<small class="qp">${esc(r.qty)}${r.price ? ' × ' + fmtP(r.price) : ''}</small>` : ''}</td><td class="q hq">${r.qty ? esc(r.qty.split(' ')[0]) + `<small>${esc(r.qty.split(' ').slice(1).join(' '))}</small>` : ''}</td><td class="n hq">${r.price ? fmtP(r.price) : ''}</td><td class="n">${r.gd ? fmtP(r.gd) : ''}</td><td class="n">${r.pd ? fmtP(r.pd) : ''}</td><td class="b">${fmtP(r.run * s.sg)}</td></tr>`).join('')}
+    ${(cut ? s.rows.slice(cut) : s.rows).map(r => (yPrev !== null && (r.date || '').slice(0, 4) !== yPrev ? `<tr class="yr"><td colspan="7">${yPrev = (r.date || '').slice(0, 4)}</td></tr>` : '') + `<tr data-id="${esc(r.e.id)}"${r.li !== undefined ? ` data-li="${r.li}"` : ''} class="${r.pay ? 'pay' : r.op ? 'op' : r.ret ? 'ret' : r.bnc ? 'bnc' : ''} ${r.first ? 'f' : ''}"><td class="dt">${shortDate(r.date)}</td><td class="l">${esc(r.desc)}${r.ref ? `<small>${esc(r.ref)}</small>` : ''}${r.e.kind === 'ppay' && r.e.via ? `<small>📲 حوّلها ${esc(pName0(r.e.via))}</small>` : ''}${fwTag(r)}${r.qty ? `<small class="qp">${esc(r.qty)}${r.price ? ' × ' + fmtP(r.price) : ''}</small>` : ''}</td><td class="q hq">${r.qty ? esc(r.qty.split(' ')[0]) + `<small>${esc(r.qty.split(' ').slice(1).join(' '))}</small>` : ''}</td><td class="n hq">${r.price ? fmtP(r.price) : ''}</td><td class="n">${r.gd ? fmtP(r.gd) : ''}</td><td class="n">${r.pd ? fmtP(r.pd) : ''}</td><td class="b">${fmtP(r.run * s.sg)}</td></tr>`).join('')}
     </tbody></table></div>
     <div class="ldgf" id="ldgEnd"><span>الرصيد</span><b data-ck="pe:${esc(p.id)}" data-cnt="${s.close * s.sg}">${fmtP(s.close * s.sg)} <small>${CUR}</small></b></div>
     ${ledgerHintOnce()}`;
@@ -3153,7 +3152,7 @@ function rowsOf(e) {
     return out;
   }
   if ((e.kind === 'pay' || e.kind === 'ppay') && e.chk) return [{date: e.date, desc: `شيك${e.chk.no ? ' رقم ' + e.chk.no : ''}`, ref: `يستحق ${dispDate(e.chk.due)}${e.chk.bank ? ' — ' + e.chk.bank : ''}`, dr: e.dr || 0, cr: e.cr || 0, pay: true}];
-  if (e.kind === 'ppay' && e.via) return [{date: e.date, desc: 'دفعة', ref: `حوّلها ${pName0(e.via)}${e.note ? ' — ' + e.note : ''}`, dr: e.dr || 0, cr: e.cr || 0, pay: true}];
+  /* دفعة "حد حوّلها": في كشف المورد "دفعة" عادي من غير اسم اللي حوّل (بطلبه 26/10/2026)، والتفاصيل في كشف اللي حوّل بس */
   if (e.kind === 'pay' || e.kind === 'ppay') return [{date: e.date, desc: 'دفعة', ref: e.note || '', dr: e.dr || 0, cr: e.cr || 0, pay: true}];
   if (e.kind === 'via') return [{date: e.date, desc: `حوّل لـ ${pName0(e.to)}`, ref: e.note || '', dr: 0, cr: e.amt || 0}].concat(e.fee ? [{date: e.date, desc: 'عمولة تحويل', ref: `${VIA_RATE} على الألف`, dr: 0, cr: e.fee}] : []);
   if (e.kind === 'adj') return [{date: e.date, desc: e.dir === 'dn' ? 'خصم' : 'تسوية', ref: e.note || '', dr: e.dr || 0, cr: e.cr || 0, pay: e.dir === 'dn'}];
@@ -4033,10 +4032,11 @@ const PAGE_LM = Date.parse(document.lastModified), PAGE_AT = Date.now();
 const verText = (lm = PAGE_LM, at = PAGE_AT) => lm && at - lm > 3000 ? `آخر تحديث للبرنامج على الجهاز ده: ${dispDate(isoOf(lm))} ${dispTime(lm)}` : '';
 /* ====================== الإصدار و"عن البرنامج" ======================
    مع أي تعديل يترفع: زوّد APP_VER (تعديل صغير 1.1، 1.2… وحاجة كبيرة 2.0) وغيّر APP_DATE، واكتب أهم الجديد في APP_NEWS (3-5 سطور بالعامية البسيطة) */
-const APP_VER = '1.2', APP_DATE = '2026-10-26';
+const APP_VER = '1.3', APP_DATE = '2026-10-26';
 const APP_NEWS = [
   'دفعة المورد بقى فيها "📲 حد حوّلها": لو حد حوّل للمورد بدالك (فودافون كاش مثلاً)، المورد بينزل واللي حوّل بيزيد اللي ليه، والخزنة متتحركش',
-  'العمولة اختيار: من غير عمولة أو 10 جنيه على الألف، والعمولة بتتحسب مصروف في الأرباح',
+  'كشف حساب المورد بيكتب "دفعة" بس من غير اسم اللي حوّل، والتفاصيل في كشف اللي حوّل',
+  'العمولة 10 جنيه على كل ألف بتتحسب لوحدها، وفوق في صفحة اللي بيحوّل إجمالي اللي حوّله وإجمالي العمولة',
   'تقدر تشيل أي اسم (زي اسم تجربة) من قايمة الأسامي بزرار ✕ جنبه، والحركات اللي اتسجلت بيه بتفضل زي ما هي'];
 function aboutModal() {
   modal(`<div class="about">

@@ -1058,17 +1058,21 @@ const T0 = Date.now();
     eq('العمولة 10 على الألف ظاهرة قبل الحفظ', (await A.textContent('#pyViaH')).includes('5,050'), true);
     await A.click('#pyOk'); await closed(A);
     eq('المورد نزل 5000، واللي حوّل زاد 5050، والخزنة متحركتش، والعمولة مصروف', [await bal(A, 'مورد تحويل تجربة'), await bal(A, 'شخص بيحوّل تجربة'), await vbal(A, '') - VB0, await FEE() - FEE0], [500000, -505000, 0, 5000]);
+    eq('جوه البرنامج بس: صفحة المورد بتقول مين حوّلها', await A.evaluate(() => { go('p/p_vt0'); return $('#p-party .ldg').textContent.includes('حوّلها شخص بيحوّل تجربة'); }), true);
+    eq('كشف المورد: "دفعة" من غير اسم اللي حوّل', await A.evaluate(() => stmtData('p_vt0', '', '').rows.map(r => [r.desc, r.ref, r.dr])), [['دفعة', '', 500000]]);
     eq('كشف اللي حوّل: سطر التحويل وسطر العمولة', await A.evaluate(() => stmtData('p_vt1', '', '').rows.map(r => [r.desc, r.cr])), [['حوّل لـ مورد تحويل تجربة', 500000], ['عمولة تحويل', 5000]]);
     /* الدوسة على الحركة من حساب اللي حوّل بتفتح الدفعة نفسها، والتعديل بيتنقل للاتنين */
     await openParty(A, 'شخص بيحوّل تجربة'); await A.click('#p-party .ldg tr[data-id^="e_vp_"]'); await A.settle(150);
     eq('من حساب اللي حوّل بتفتح دفعة المورد', (await A.textContent('#modal h3')).includes('مورد تحويل تجربة'), true);
-    await A.click('#pyFee [data-v="0"]'); await A.fill('#pyAmt', '6000'); await A.click('#pyOk'); await closed(A);
-    eq('التعديل (6000 من غير عمولة) اتنقل للاتنين', [await bal(A, 'مورد تحويل تجربة'), await bal(A, 'شخص بيحوّل تجربة'), await FEE() - FEE0], [600000, -600000, 0]);
+    eq('مفيش اختيار عمولة (دايماً 10 على الألف)', await A.$('#pyFee'), null);
+    await A.fill('#pyAmt', '6000'); await A.click('#pyOk'); await closed(A);
+    eq('التعديل (6000) اتنقل للاتنين ومعاه العمولة', [await bal(A, 'مورد تحويل تجربة'), await bal(A, 'شخص بيحوّل تجربة'), await FEE() - FEE0], [600000, -606000, 6000]);
+    eq('فوق في صفحة اللي حوّل: إجمالي اللي حوّله والعمولة', await A.evaluate(() => { go('p/p_vt1'); const t = $('#p-party .mini2').textContent; return [t.includes('حوّل للموردين: 6,000'), t.includes('العمولة: 60')]; }), [true, true]);
     const vid = await A.evaluate(() => db.entries.find(e => !e.del && e.party === 'p_vt0').id);
     await A.evaluate(id => cancelEntry(E.get(id)), vid); await A.settle(150);
     eq('إلغاء الدفعة بيلغي اللي عند اللي حوّل', [await bal(A, 'مورد تحويل تجربة'), await bal(A, 'شخص بيحوّل تجربة')], [0, 0]);
     await A.evaluate(id => { closeModal(); openEntry(P.get('p_vt1'), E.get('e_vp_' + id)); }, vid); await A.settle(150); await A.click('#emBack'); await closed(A);
-    eq('رجوع الدفعة الملغية بيرجّع الاتنين', [await bal(A, 'مورد تحويل تجربة'), await bal(A, 'شخص بيحوّل تجربة')], [600000, -600000]);
+    eq('رجوع الدفعة الملغية بيرجّع الاتنين', [await bal(A, 'مورد تحويل تجربة'), await bal(A, 'شخص بيحوّل تجربة')], [600000, -606000]);
     await A.evaluate(id => openEntry(P.get('p_vt0'), E.get(id)), vid); await A.settle(150); await A.click('#pyM button:first-child'); await A.click('#pyOk'); await closed(A);
     eq('لو بقت من الخزنة: اللي حوّل بيرجع صفر والفلوس طلعت من الخزنة', [await bal(A, 'شخص بيحوّل تجربة'), await vbal(A, '') - VB0], [0, -600000]);
 

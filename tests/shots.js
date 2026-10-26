@@ -106,7 +106,7 @@ const JRDSHOT = `if (!IDX.stk.get('jr_shot_o')) { const u = Date.now(), t = toda
 const SUP = `liveParties().find(p => p.name === 'مورد تجربة الخامات')`;
 const VIASHOT = `if (!P.get('p_shot_via')) { const u = Date.now(), p = {id: 'p_shot_via', sec: 'sup', name: 'شخص تجربة فودافون كاش', phone: '', note: '', noTot: false, at: u, upd: u, del: false}; db.parties.push(p); P.set(p.id, p);
   const s1 = ${SUP}, s2 = liveParties().find(p => p.name === 'مورد تجربة الكرتون'), t = todayISO();
-  [[s1, -6, 500000, 1], [s2, -4, 300000, 1], [s1, -2, 200000, 0]].forEach(([sp, d, amt, f]) => { const e = addEntry({party: sp.id, kind: 'ppay', date: addDays(t, d), amt, method: 'تحويل', note: '', vault: '', via: 'p_shot_via', fee: f ? viaFee(amt) : 0}); applyAmounts(e); e.desc = docDesc(e); viaSync(e); });
+  [[s1, -6, 500000], [s2, -4, 300000], [s1, -2, 200000]].forEach(([sp, d, amt]) => { const e = addEntry({party: sp.id, kind: 'ppay', date: addDays(t, d), amt, method: 'تحويل', note: '', vault: '', via: 'p_shot_via', fee: viaFee(amt)}); applyAmounts(e); e.desc = docDesc(e); viaSync(e); });
   const b = addEntry({party: 'p_shot_via', kind: 'ppay', date: addDays(t, -1), amt: 800000, method: 'نقدي', note: '', vault: vaultsL()[0].id}); applyAmounts(b); b.desc = docDesc(b); saveDB(); }; `;
 const ACC = (sfx, vp, extra = {}) => [
   {name: 'acc-list-' + sfx, go: accEval("tab = 'mkt'; go('home'); renderHome()"), full: true},
@@ -183,6 +183,7 @@ const SCREENS = [
   /* ورق الـ PDF (لازم ميتغيرش): بيتصور آخر حاجة في كل جهاز لأن الورقة بتتحط قدام الصفحة */
   {name: 'pdf-stmt', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`go('p/' + ${party}.id); buildStmtPages(${party}, stmtData(${party}.id, '', '')); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
   {name: 'pdf-stmt-sup', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`const sp = liveParties().find(p => p.sec === 'sup'); go('p/' + sp.id); const s = stmtData(sp.id, todayISO().slice(0, 8) + '01', todayISO()); buildStmtPages(sp, s); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
+  {name: 'pdf-via-sup', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(VIASHOT + `go('p/' + ${SUP}.id); buildStmtPages(${SUP}, stmtData(${SUP}.id, '', '')); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
   {name: 'pdf-ldg', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`cashView = 'date'; cashMode = 'range'; cashFrom = addDays(todayISO(), -20); cashTo = todayISO(); cashOpenV = false; go('cash'); renderCash(); buildReportPages(ldgReport(ldgItems(cashRange()[0], cashRange()[1]), cashRange()[0], cashRange()[1])); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
   {name: 'pdf-qt', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`const q = IDX.qt.get('q_shot0'); buildStmtPages(qtParty(q), qtStmt(q)); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
   {name: 'pdf-rcv', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`buildRcvPages(${party}, [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'inv' && !e.del && (e.lines || []).length > 1).pop(), false); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},

@@ -151,6 +151,8 @@ const SCREENS = [
   {name: 'acc-act-m', app: 'acc', vp: MOB, full: true, go: accEval("actDay = ''; go('act')")},
   {name: 'acc-who-m', app: 'acc', vp: MOB, go: accEval(`const e = [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'pay').pop(); e.by = 'كريم'; e.cby = 'سامح'; openEntry(${party}, e)`)},
   {name: 'acc-me-m', app: 'acc', vp: MOB, go: accEval('askMe(true)')},
+  /* حساب جديد: التليفون وزرار "من الأسماء" (بيظهر بس على الموبايلات اللي بتسمح، فبنقلّدها هنا) */
+  {name: 'acc-pnew-m', app: 'acc', vp: MOB, go: accEval("navigator.contacts = {select: async () => []}; partyModal()")},
   /* حد بيحوّل للموردين (فودافون كاش): الدفعة والمورد وحساب اللي حوّل */
   {name: 'acc-ppay-m', app: 'acc', vp: MOB, go: accEval(`payModal(${SUP}, 'ppay')`)},
   {name: 'acc-via-m', app: 'acc', vp: MOB, go: async A => { await accEval(VIASHOT + `payModal(${SUP}, 'ppay')`)(A); await A.click('#pyM [data-v=via]'); await A.fill('#pyAmt', '5000'); await A.dispatchEvent('#pyAmt', 'input'); }},

@@ -1076,6 +1076,16 @@ const T0 = Date.now();
     await A.evaluate(id => openEntry(P.get('p_vt0'), E.get(id)), vid); await A.settle(150); await A.click('#pyM button:first-child'); await A.click('#pyOk'); await closed(A);
     eq('لو بقت من الخزنة: اللي حوّل بيرجع صفر والفلوس طلعت من الخزنة', [await bal(A, 'شخص بيحوّل تجربة'), await vbal(A, '') - VB0], [0, -600000]);
 
+    sec('١٤د) رقم التليفون بالزيرو، واختيار الرقم من أسماء الموبايل');
+    eq('الرقم بيتظبط: الزيرو اللي اتشال بيرجع، و+20 بيبقى 0، والمسافات بتتشال، والأرضي زي ما هو', await A.evaluate(() => ['1012345678', '+20 101 234 5678', '٠١٠١٢٣٤٥٦٧٨', '010-1234-5678', '0223456789', ''].map(fixPhone)),
+      ['01012345678', '01012345678', '01012345678', '01012345678', '0223456789', '']);
+    await A.evaluate(() => { navigator.contacts = {select: async () => [{name: ['اسم تجربة من الموبايل'], tel: ['+20 109 876 5432']}]}; partyModal(); }); await A.settle(150);
+    await A.click('#pmCt'); await A.waitForFunction(() => $('#pmPh').value !== '');
+    eq('"من الأسماء" بيحط الرقم (بالزيرو) والاسم لو فاضي', [await A.inputValue('#pmPh'), await A.inputValue('#pmN')], ['01098765432', 'اسم تجربة من الموبايل']);
+    await A.click('#pmOk'); await A.settle(200);
+    eq('الحساب اتحفظ بالرقم صح، وفي الشيت بيتكتب نص علشان الزيرو ميتشالش', await A.evaluate(() => { const p = liveParties().find(x => x.name === 'اسم تجربة من الموبايل'); delete navigator.contacts; return [p.phone, viewOf('party', p)[3]]; }), ['01098765432', "'01098765432"]);
+    eq('من غير أسماء الموبايل (الآيفون) الزرار مش بيظهر', await A.evaluate(() => { partyModal(); const r = !!$('#pmCt'); closeModal(); return r; }), false);
+
     sec('١٤ب) راحة العين واستغلال المساحة (ماتدوسش حاجة مكان حاجة)');
     await A.setViewportSize({width: 400, height: 860}); await A.settle(200);
     {   // القفل وانت جوه حساب، وبعد ما تفتح ترجع: القايمة لازم تترسم تاني (كانت بتطلع فاضية والإجماليات بس)

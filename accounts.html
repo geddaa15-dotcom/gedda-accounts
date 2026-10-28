@@ -1731,7 +1731,7 @@ body{font-size:var(--f3);line-height:1.6}
   </div>
   <div class="card sadv">
     <h2>📄 بيانات الشركة في الـ PDF</h2>
-    <div class="fld"><label>رقم التليفون</label><input class="inp" id="sPhone" inputmode="tel" style="direction:ltr;text-align:right" placeholder="01xxxxxxxxx"></div>
+    <div class="fld"><label>رقم التليفون</label><input class="inp" id="sPhone" type="tel" inputmode="tel" autocomplete="tel" style="direction:ltr;text-align:right" placeholder="01xxxxxxxxx"></div>
     <div class="fld"><label>العنوان</label><input class="inp" id="sCoAddr" placeholder="مثلاً: المنطقة الصناعية — القاهرة"></div>
     <div class="fld"><label>السجل التجاري</label><input class="inp" id="sCoCr" inputmode="numeric" style="direction:ltr;text-align:right"></div>
     <div class="fld"><label>الموقع</label><input class="inp" id="sCoWeb" inputmode="url" style="direction:ltr;text-align:right" placeholder="www.example.com"></div>
@@ -1807,6 +1807,13 @@ const normDigits = s => String(s ?? '')
   .replace(/[٠-٩]/g, d => d.charCodeAt(0) - 1632)
   .replace(/[۰-۹]/g, d => d.charCodeAt(0) - 1776)
   .replace(/٫/g, '.').replace(/[٬,،]/g, '');
+/* رقم التليفون (بطلبه 28/10/2026): من غير مسافات وشُرَط، و+20 بيبقى 0، والموبايل المصري اللي الزيرو اتشال منه (من الإكسيل مثلاً) بيرجعله */
+const fixPhone = s => {
+  let t = normDigits(s).trim().replace(/[\s\-().]/g, '');
+  if (/^(\+|00)?20(1\d{9})$/.test(t)) t = '0' + t.replace(/^(\+|00)?20/, '');
+  if (/^1[0125]\d{8}$/.test(t)) t = '0' + t;
+  return t;
+};
 const num = s => { if (/\d\s*[+*×÷xX]\s*\d/.test(normDigits(s))) { const c = calcExpr(s); if (c !== null) return c; }   // حسبة لسه بتتكتب (الإجمالي يتحدّث صح)
   const n = parseFloat(normDigits(s).replace(/[^\d.\-]/g, '')); return isFinite(n) ? n : 0; };
 /* آلة حاسبة جوه خانات الأرقام (بطلبه 17/10/2026): "40*525" أو "1500+2300" بتتحسب أول ما تخرج من الخانة.
@@ -2395,13 +2402,15 @@ $('#bSearch').onclick = () => {
 $('#bSearchAll').onclick = () => searchModal($('#hSearch').value.trim());
 
 /* ====================== حساب جديد / تعديل حساب ====================== */
+/* "من الأسماء": بيفتح أسماء الموبايل يختار منها الرقم. أندرويد (كروم) بس، الآيفون مش بيسمح لأي موقع بكده فالزرار مبيظهرش */
+const contactsOn = () => 'contacts' in navigator && !!navigator.contacts && 'select' in navigator.contacts;
 function partyModal(p) {
   const isNew = !p;
   const sec0 = p ? p.sec : (tab !== 'all' ? tab : 'mkt');
   modal(`<h3>${isNew ? 'حساب جديد' : 'تعديل بيانات الحساب'}</h3>
     <div class="fld"><label>القسم</label><div class="seg s2" id="pmSec">${Object.entries(SECS).map(([k, n]) => `<button type="button" data-v="${k}" class="${k === sec0 ? 'on' : ''}">${n}</button>`).join('')}</div></div>
     <div class="fld"><label>الاسم</label><input class="inp" id="pmN" value="${esc(p ? p.name : '')}" autocomplete="off"></div>
-    <div class="fld"><label>التليفون (اختياري)</label><input class="inp" id="pmPh" inputmode="tel" style="direction:ltr;text-align:right" value="${esc(p ? p.phone || '' : '')}"></div>
+    <div class="fld"><label>التليفون (اختياري)</label><div class="amtrow"><input class="inp" id="pmPh" type="tel" inputmode="tel" autocomplete="tel" style="direction:ltr;text-align:right" placeholder="01xxxxxxxxx" value="${esc(p ? fixPhone(p.phone) : '')}">${contactsOn() ? '<button class="btn line sm" id="pmCt" type="button">👤 من الأسماء</button>' : ''}</div></div>
     <div class="fld"><label>ملاحظة (اختياري)</label><input class="inp" id="pmNote" value="${esc(p ? p.note || '' : '')}"></div>
     <div class="chkrow"><input type="checkbox" id="pmNoTot" ${p && p.noTot ? 'checked' : ''}><label for="pmNoTot">حساب فرعي: ميدخلش في أي إجماليات</label></div>
     
@@ -2420,13 +2429,20 @@ function partyModal(p) {
   $$('#pmSec button').forEach(b => b.onclick = () => { sec = b.dataset.v; $$('#pmSec button').forEach(x => x.classList.toggle('on', x === b)); if (isNew && !dirSet) { dir = sec === 'sup' ? 'cr' : 'dr'; showDir(); } });
   if (isNew) { bindMoney($('#pmAmt')); $$('#pmDir button').forEach(b => b.onclick = () => { dir = b.dataset.v; dirSet = true; showDir(); }); }
   $('#pmX').onclick = closeModal;
+  if ($('#pmCt')) $('#pmCt').onclick = async () => {
+    try {
+      const [c] = await navigator.contacts.select(['name', 'tel'], {multiple: false}); if (!c) return;
+      const tel = (c.tel || []).map(fixPhone).find(Boolean); if (tel) $('#pmPh').value = tel; else toast('الاسم ده مفيهوش رقم');
+      if (!$('#pmN').value.trim() && (c.name || [])[0]) $('#pmN').value = c.name[0].trim();
+    } catch (e) { toast('مقدرتش أفتح الأسماء. اسمح للبرنامج يوصلها من إعدادات الموبايل.', 5000); }
+  };
   setTimeout(() => isNew && $('#pmN') && $('#pmN').focus(), 50);
   $('#pmOk').onclick = async () => {
     const name = $('#pmN').value.trim().replace(/\s+/g, ' ');
     if (!name) return toast('اكتب الاسم');
     const dup = liveParties().find(x => x !== p && x.sec === sec && norm(x.name) === norm(name));
     if (dup && !(await confirmBox(`فيه حساب تاني بنفس الاسم "${dup.name}" في ${SECS[sec]}. تكمّل برضه؟`, 'أيوه كمّل'))) return;
-    const phone = normDigits($('#pmPh') ? $('#pmPh').value : '').trim(), note = ($('#pmNote') ? $('#pmNote').value : '').trim(), noTot = $('#pmNoTot').checked;
+    const phone = fixPhone($('#pmPh') ? $('#pmPh').value : ''), note = ($('#pmNote') ? $('#pmNote').value : '').trim(), noTot = $('#pmNoTot').checked;
     if (isNew) {
       const amt = toP($('#pmAmt').value), date = $('#pmDate').value || todayISO();
       const now = nowS();
@@ -2633,7 +2649,7 @@ function renderParty(id) {
   const nX = all.filter(e => e.del).length;
   $('#p-party').innerHTML = `
     <div class="sech ppbar tb" style="margin-top:0"><a id="ppBack">→<em> كل الحسابات</em></a><b class="tt">${esc(p.name)}</b><span class="jb"><button id="jUp" type="button">↑ فوق</button><button id="jDn" type="button">↓ آخر حركة</button></span><a id="ppEdit" title="تعديل البيانات">✎<em> تعديل البيانات</em></a></div>
-    <div class="phd"><div class="pnm"><h2><button class="pbk" id="ppBack2" type="button" aria-label="رجوع">→</button>${esc(p.name)}</h2>${payRhythm(p, all, b)}${limitChip(p, b)}</div><small>${SEC1[p.sec]}${p.phone ? ' — <span dir="ltr">' + esc(p.phone) + '</span>' : ''}${p.note ? ' — ' + esc(p.note) : ''}${p.noTot ? ' — <b style="color:var(--gold)">حساب فرعي خارج الإجماليات</b>' : ''}<button class="ped" id="ppEdit2" type="button">✎ تعديل</button></small>
+    <div class="phd"><div class="pnm"><h2><button class="pbk" id="ppBack2" type="button" aria-label="رجوع">→</button>${esc(p.name)}</h2>${payRhythm(p, all, b)}${limitChip(p, b)}</div><small>${SEC1[p.sec]}${p.phone ? ' — <span dir="ltr">' + esc(fixPhone(p.phone)) + '</span>' : ''}${p.note ? ' — ' + esc(p.note) : ''}${p.noTot ? ' — <b style="color:var(--gold)">حساب فرعي خارج الإجماليات</b>' : ''}<button class="ped" id="ppEdit2" type="button">✎ تعديل</button></small>
       <div class="bal"><span>الرصيد: ${balWord(b)}</span><b class="${b < 0 ? 'cr' : ''}" data-ck="pb:${esc(id)}" data-cnt="${Math.abs(b)}">${fmtP(Math.abs(b))} <small style="font-size:var(--f2);color:var(--gold)">${CUR}</small></b></div>
       <div class="mini2"><span>${sup ? 'المشتريات' : 'المبيعات'}: <b>${fmtP(tDoc)}</b></span><span>${sup ? 'اللي دفعته' : 'اللي استلمته'}: <b>${fmtP(tPay)}</b></span>${tVia ? `<span>حوّل للموردين: <b>${fmtP(tVia)}</b></span><span>العمولة: <b>${fmtP(tFee)}</b></span>` : ''}</div></div>
     ${isFwdSrc(p) ? (fwAutoLink(p), fwBar(p)) : ''}
@@ -3851,7 +3867,7 @@ function sheetData(r) {
 const clipCell = v => typeof v === 'string' && v.length > 2000 ? v.slice(0, 2000) + '…' : v;
 const cell = s => { s = String(s ?? ''); return /^[=+\-@]/.test(s) ? "'" + s : s; };   // علشان الشيت ميفهمش الكلام كمعادلة
 function viewOf(kind, r) {
-  if (kind === 'party') return ['', cell(r.name), SECS[r.sec] || '', cell(r.phone || ''), '', ''];
+  if (kind === 'party') return ['', cell(r.name), SECS[r.sec] || '', /^0/.test(r.phone || '') ? "'" + r.phone : cell(r.phone || ''), '', ''];   // ' علشان الشيت ميشيلش الزيرو اللي في الأول
   if (kind === 'vault') return ['', cell(r.name), 'خزنة', 'رصيد افتتاحي', (r.open || 0) / 100, ''];
   if (kind === 'cat') return ['', cell(r.name), r.type === 'exp' ? 'بند مصروف' : 'بند إيراد', '', '', ''];
   if (kind === 'set') return ['', r.id, 'إعداد', cell(JSON.stringify(r.val)), '', ''];
@@ -4032,8 +4048,10 @@ const PAGE_LM = Date.parse(document.lastModified), PAGE_AT = Date.now();
 const verText = (lm = PAGE_LM, at = PAGE_AT) => lm && at - lm > 3000 ? `آخر تحديث للبرنامج على الجهاز ده: ${dispDate(isoOf(lm))} ${dispTime(lm)}` : '';
 /* ====================== الإصدار و"عن البرنامج" ======================
    مع أي تعديل يترفع: زوّد APP_VER (تعديل صغير 1.1، 1.2… وحاجة كبيرة 2.0) وغيّر APP_DATE، واكتب أهم الجديد في APP_NEWS (3-5 سطور بالعامية البسيطة) */
-const APP_VER = '1.3', APP_DATE = '2026-10-26';
+const APP_VER = '1.4', APP_DATE = '2026-10-28';
 const APP_NEWS = [
+  'رقم التليفون بيتكتب بالزيرو صح، والأرقام القديمة اللي الزيرو اتشال منها بيرجعلها لوحده، وفي الشيت كمان بيبان بالزيرو',
+  'زرار "👤 من الأسماء" جنب التليفون في الحساب: بيفتح أسماء الموبايل وتختار منها الرقم (على أندرويد)',
   'دفعة المورد بقى فيها "📲 حد حوّلها": لو حد حوّل للمورد بدالك (فودافون كاش مثلاً)، المورد بينزل واللي حوّل بيزيد اللي ليه، والخزنة متتحركش',
   'كشف حساب المورد بيكتب "دفعة" بس من غير اسم اللي حوّل، والتفاصيل في كشف اللي حوّل',
   'العمولة 10 جنيه على كل ألف بتتحسب لوحدها، وفوق في صفحة اللي بيحوّل إجمالي اللي حوّله وإجمالي العمولة',
@@ -4372,7 +4390,7 @@ function showHelp() {
     }
   };
 }
-$('#sPhoneSave').onclick = () => { db.cfg.phone = normDigits($('#sPhone').value).trim(); db.cfg.coAddr = $('#sCoAddr').value.trim(); db.cfg.coCr = normDigits($('#sCoCr').value).trim(); db.cfg.coTax = normDigits($('#sCoTax').value).trim(); db.cfg.coWeb = $('#sCoWeb').value.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, ''); saveDB(); toast('اتحفظت البيانات ✔'); };
+$('#sPhoneSave').onclick = () => { db.cfg.phone = fixPhone($('#sPhone').value); db.cfg.coAddr = $('#sCoAddr').value.trim(); db.cfg.coCr = normDigits($('#sCoCr').value).trim(); db.cfg.coTax = normDigits($('#sCoTax').value).trim(); db.cfg.coWeb = $('#sCoWeb').value.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, ''); saveDB(); toast('اتحفظت البيانات ✔'); };
 async function refreshBio() {
   const b = $('#sBio'); if (!b) return;
   $('#sBioC').hidden = !bioOk(); if (!bioOk()) return;
@@ -4430,7 +4448,7 @@ function readImport(d) {
     const sec = x && x.sec === 'site' ? 'mkt' : x && x.sec;   // ملف فيه تقسيم عملاء قديم = كله عملاء
     if (!x || !x.ref || !x.name || !SECS[sec] || !Number.isInteger(x.expected)) return errs.push(`حساب رقم ${i + 1} ناقص بيانات`);
     if (byRef.has(x.ref)) return errs.push(`الحساب "${x.name}" متكرر في الملف`);
-    const p = {id: `p_imp${bt}_${x.ref}`, sec, name: String(x.name).trim(), phone: String(x.phone || ''), note: String(x.note || ''), at: upd, upd, del: false, imp: bt};
+    const p = {id: `p_imp${bt}_${x.ref}`, sec, name: String(x.name).trim(), phone: fixPhone(x.phone || ''), note: String(x.note || ''), at: upd, upd, del: false, imp: bt};
     parties.push(p); byRef.set(x.ref, {p, expected: x.expected});
   });
   const entries = [];
@@ -5582,7 +5600,7 @@ function chkAlertHtml() {
    "تمام" بيخفيه لحد بكرة على الجهاز ده بس (gd_mrn = اليوم). جنب العميل زرار واتساب برسالة رصيد جاهزة لو رقمه متسجل */
 const MRN_MAX = 5;
 const mrnSeen = () => { try { return localStorage.getItem('gd_mrn') === todayISO(); } catch (e) { return false; } };
-const waNum = ph => { const d = normDigits(String(ph || '')).replace(/\D/g, ''); return /^01\d{9}$/.test(d) ? '2' + d : /^201\d{9}$/.test(d) ? d : ''; };
+const waNum = ph => { const d = fixPhone(String(ph || '')).replace(/\D/g, ''); return /^01\d{9}$/.test(d) ? '2' + d : /^201\d{9}$/.test(d) ? d : ''; };
 function waLink(p, b) {
   const n = waNum(p.phone); if (!n) return '';
   return 'https://wa.me/' + n + '?text=' + encodeURIComponent(`السلام عليكم يا ${p.name}، رصيد حسابك عندنا لحد النهارده ${fmtP(b)} ${CUR}. شكراً — جَدة ال.جي`);

@@ -274,6 +274,7 @@ ol.steps li{margin-bottom:6px}
 .pcr i{height:12px;background:var(--row);border-radius:6px;overflow:hidden}.pcr i em{display:block;height:100%;background:var(--gold);border-radius:6px}
 .pcr b{direction:ltr;text-align:left;font-variant-numeric:tabular-nums}
 .pcd{margin:10px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:var(--f2);color:var(--sub)}.pcd b{color:var(--ink)}
+.qterms{border:1px solid var(--line);border-radius:12px;padding:8px 10px 2px;margin:0 0 10px}.qterms>b{display:block;font-size:var(--f3);margin-bottom:6px}.qterms textarea{resize:vertical}
 .qst{font-weight:800;font-size:var(--f2);border-radius:10px;padding:6px 10px;margin:0 0 10px;background:var(--row);color:var(--sub)}.qst.w{background:var(--gold-l);color:var(--gold-d)}.qst.d{color:var(--green)}.qst.x{color:var(--red)}
 .qls{border:1px solid var(--line);border-radius:12px;margin:0 0 10px}.qls>div{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--line)}.qls>div:first-child{border-top:0}.qls span{display:flex;flex-direction:column;font-weight:700}.qls small{color:var(--sub);font-weight:500;font-size:var(--f1)}.qls b{direction:ltr;white-space:nowrap}
 .qtp{display:grid;gap:8px;margin:0 0 10px}.qtc{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:right;font:inherit;color:var(--ink);background:var(--gold-l);border:1px dashed var(--gold);border-radius:12px;padding:10px 14px;cursor:pointer}.qtc span{display:flex;flex-direction:column;font-weight:800}.qtc small{color:var(--sub);font-weight:500;font-size:var(--f1)}.qtc b{direction:ltr;white-space:nowrap;font-size:var(--f3)}
@@ -445,6 +446,9 @@ nav svg{width:26px;height:26px}
 .pg tr.fr td{color:#B3261E;font-weight:700}
 .pg tr.nt td{background:#EDF4F9 !important;font-weight:800;border-bottom:2px solid #075E8F}
 .pg .sum .l.sub{font-weight:800;border-top:2px solid #0F2433;background:#EEF6FB}
+.pg .terms{margin-top:12px;border:1px solid #BCCFDC;border-radius:8px;padding:6px 14px 4px;flex:none}.pg .terms b{display:block;font-size:15px;font-weight:800;color:#0F2433;margin-bottom:2px}
+.pg .terms ol{margin:0;padding:0 20px 0 0;font-size:14.5px;font-weight:600;color:#333;line-height:1.7}
+.pg.plain .terms{border-color:#999}.pg.plain .terms b{color:#111}.pg.plain .tot .wd{background:#fff;border-color:#999}.pg.plain .sum .f{background:#111;color:#ccc}.pg.plain tr.it.f td,.pg.plain tr.is td{border-color:#111}
 .pg .note{margin-top:14px;font-size:13.5px;font-weight:600;color:#555;flex:none}
 .pg .coi{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 22px;margin:-6px 0 10px;padding:3px 10px;border-bottom:1px solid #DCE5EC;font-size:13.5px;font-weight:600;color:#555;flex:none}
 .pg .coi b{color:#0F2433;font-weight:800}.pg .coi b.ltr{direction:ltr;unicode-bidi:isolate}
@@ -2813,16 +2817,17 @@ function docModal(p, kind, e, opts = {}) {
   const ttl = {inv: '🧾 فاتورة بيع', pur: '🧾 فاتورة شراء', rinv: '↩ مرتجع بيع', rpur: '↩ مرتجع شراء', qt: '📝 عرض سعر'}[kind];
   if (e && !qt && isLocked(e.date)) return lockedView(p, e);
   const fill = isNew, src = e || opts.qt;   // opts.qt = عرض سعر اتنفذ: الفاتورة بتبدأ ببنوده
-  const lines = src ? src.lines.map(l => ({name: l.name, unit: l.unit, qty: fmtQ(l.qty), price: fmtP(l.price)})) : [{name: '', unit: 'كيلو', qty: '', price: ''}];
+  const lines = src ? src.lines.concat(!e && opts.qt ? qtXLines(opts.qt) : []).map(l => ({name: l.name, unit: l.unit, qty: fmtQ(l.qty), price: fmtP(l.price)})) : [{name: '', unit: 'كيلو', qty: '', price: ''}];
   let bk = null; const book = {get: k => (bk = bk || itemBook()).get(k)}, mine = custItems(p.id, base);   // كل أصناف كل الفواتير بتتحسب بس لما تحتاجها (كانت بتهنّج فتح الفاتورة)
   const lastDoc = fill && p.id ? db.entries.filter(x => x.party === p.id && x.kind === (qt ? 'inv' : kind) && !x.del && x.lines && x.lines.length).sort(entCmp).pop() : null;
   modal(`<h3>${isNew ? ttl : 'تعديل ' + (qt ? 'عرض السعر' : esc(docTitle(e)))}<small class="mnm">${esc(p.name)}</small></h3>
     ${e && kind === 'inv' && isFwdSrc(p) ? `<div class="fwbox ${fwState(e)}"><span>${FW_TAG[fwState(e)]}${fwState(e) !== 'no' && fwdMain(p) ? ` <small>(في حساب ${esc(fwdMain(p).name)})</small>` : ''}</span>${fwState(e) !== 'ok' && fwdMain(p) ? `<button class="btn gold sm" id="fwOne" type="button">📤 ${fwState(e) === 'chg' ? 'انقل التعديل' : 'انقلها للحساب الأساسي'}</button>` : ''}${fwState(e) === 'no' ? '<button class="btn line sm" id="fwMk" type="button">✓ دي متنقلة بالفعل</button>' : ''}${e.fwMan && !fwCopyOf(e) ? '<button class="btn line sm" id="fwUn" type="button">↩ رجّعها متنقلتش</button>' : ''}</div>` : ''}
     ${e && e.fwFrom ? `<div class="fwbox from"><span>↩ الفاتورة دي منقولة من حساب ${esc((P.get((E.get(e.fwFrom) || {}).party) || {}).name || 'فرعي')}. التعديل يكون هناك وبعدين "انقل التعديل".</span></div>` : ''}
-    ${qt ? `<div class="g2"><div class="fld"><label>تاريخ العرض</label><input class="inp" id="dcDate" type="date" value="${e ? e.date : todayISO()}"></div><div class="fld"><label>ساري لحد</label><input class="inp" id="dcTill" type="date" value="${e ? e.till || '' : addDays(todayISO(), 14)}"></div></div>`
+    ${qt ? `<div class="g2"><div class="fld"><label>تاريخ العرض</label><input class="inp" id="dcDate" type="date" value="${e ? e.date : todayISO()}"></div><div class="fld"><label>ساري لمدة (يوم)</label><input class="inp num" id="dcDays" inputmode="numeric" placeholder="من غير مدة" value="${e ? (e.till ? qtDays(e) : '') : qtLast().days}"></div></div>`
       : `<div class="fld"><label>التاريخ</label><input class="inp" id="dcDate" type="date" value="${e ? e.date : todayISO()}"></div>`}
     <div class="lhd"><span>#</span><span>الصنف</span><span>الوحدة</span><span>الكمية</span><span>السعر</span><span>الإجمالي</span><span></span></div>
     <div id="dcLines"></div>
+    ${qt ? qtTermsForm(e) : ''}
     <div class="mtools">${lastDoc ? `<button class="btn line sm" id="dcLast" type="button">↻ زي آخر ${ret ? 'مرتجع' : 'فاتورة'} (${dispDate(lastDoc.date)})</button>` : ''}</div>
     <details class="mmore" ${(src && (src.disc || src.note)) ? 'open' : ''}><summary>+ خصم أو ملاحظة</summary>
       <div class="g2"><div class="fld"><label>خصم على ${qt ? 'العرض' : 'الفاتورة'}</label><input class="inp num" id="dcDisc" placeholder="0" value="${src && src.disc ? fmtP(src.disc) : ''}"></div>
@@ -2844,7 +2849,8 @@ function docModal(p, kind, e, opts = {}) {
       el.querySelector('.lt2').textContent = lt ? fmtP(lt) : '—'; t += lt;
     });
     const ds = toP($('#dcDisc').value); t -= ds;
-    $('#dcDs').textContent = ds ? 'بعد خصم ' + fmtP(ds) : '';
+    const xs = qt ? qtSums(qtTermsRead(), t) : null; if (xs) t = xs.tot;
+    $('#dcDs').textContent = [ds ? (xs && (xs.ship || xs.vat) ? 'خصم ' : 'بعد خصم ') + fmtP(ds) : '', xs && xs.ship ? 'نقل ' + fmtP(xs.ship) : '', xs && xs.vat ? 'ضريبة ' + fmtP(xs.vat) : ''].filter(Boolean).join(' · ');
     $('#dcTot').textContent = fmtP(t) + ' ' + CUR; $('#dcTot').style.color = t < 0 ? 'var(--red)' : '';
   };
   /* البنود جدول (بطلبه 17/10/2026): كل صنف سطر واحد، وآخر سطر فاضي دايماً وأول ما يتكتب فيه بيطلع تحته سطر فاضي جديد بوحدة السطر اللي قبله.
@@ -2927,6 +2933,7 @@ function docModal(p, kind, e, opts = {}) {
   };
   draw(lines);
   bindMoney($('#dcDisc')); $('#dcDisc').addEventListener('input', calc);
+  if (qt) qtTermsBind(calc);
   $('#dcX').onclick = closeModal;
   if ($('#dcLast')) $('#dcLast').onclick = () => { draw(lastDoc.lines.map(l => ({name: l.name, unit: l.unit, qty: fmtQ(l.qty), price: fmtP(l.price)}))); toast('اتنسخت أصناف آخر ' + (ret ? 'مرتجع' : 'فاتورة') + '. راجع الكميات والأسعار.', 3000); };
   let warned = false;
@@ -2944,7 +2951,7 @@ function docModal(p, kind, e, opts = {}) {
     const disc = toP($('#dcDisc').value), no = e ? e.no || '' : '', note = $('#dcNote').value.trim();
     const doc = {kind, date, no, lines: ls, disc, note};
     if (docTotal(doc) <= 0) return toast('الخصم أكبر من الإجمالي');
-    if (qt) return qtSave(p, e, doc, $('#dcTill').value || '');
+    if (qt) { const d = $('#dcDays').value.trim(); if (d && !(+d >= 1 && +d <= 365 && Number.isInteger(+d))) return toast('اكتب مدة العرض بالأيام (رقم من 1 لـ 365) أو سيبها فاضية'); return qtSave(p, e, Object.assign(doc, qtTermsRead()), d ? addDays(date, +d) : ''); }
     if (isLocked(date)) return lockToast();
     /* تنبيهات قبل الحفظ: نفس الفاتورة اتسجلت قبل كده، أو العميل هيعدّي حد الرصيد */
     if (fill && !warned) {
@@ -3321,28 +3328,69 @@ function qtNew(p) {
   };
   setTimeout(() => $('#qnN') && $('#qnN').focus(), 50);
 }
+/* شروط العرض (بطلبه 28/10/2026): vat "" مش مكتوبة، x غير شامل الضريبة، v بتتضاف 14% على الإجمالي. tr "in" = شامل النقل، وshipA مصاريفه (لو فيه) بتتضاف.
+   terms = شروط تانية بيكتبها (كل شرط في سطر). العرض الجديد بيبدأ بنفس شروط آخر عرض */
+const QT_VAT = 0.14;
+function qtSums(q, base = docTotal(q)) { const ship = q.tr === 'in' ? q.shipA || 0 : 0, vat = q.vat === 'v' ? Math.round((base + ship) * QT_VAT) : 0; return {base, ship, vat, tot: base + ship + vat}; }
+const qtTotal = q => qtSums(q).tot;
+const qtDays = q => Math.round((Date.parse(q.till) - Date.parse(q.date)) / 864e5);
+const arDays = n => n === 1 ? 'يوم واحد' : n === 2 ? 'يومين' : n <= 10 ? n + ' أيام' : n + ' يوماً';
+function qtLast() { const q = liveQts().sort((a, b) => (a.at || 0) - (b.at || 0)).pop(); return q ? {days: q.till ? qtDays(q) : '', vat: q.vat || '', tr: q.tr || '', terms: q.terms || ''} : {days: 14, vat: '', tr: '', terms: ''}; }
+function qtTermsForm(e) {
+  const d = e || qtLast(), sg = (id, v, opts) => `<div class="seg s${opts.length}" id="${id}">${opts.map(([k, t]) => `<button type="button" data-v="${k}" class="${k === v ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+  return `<div class="qterms"><b>شروط العرض</b>
+    <div class="fld"><label>الضريبة</label>${sg('dcVat', d.vat || '', [['', 'مش مكتوبة'], ['x', 'غير شامل'], ['v', '+14% مضافة']])}</div>
+    <div class="fld"><label>النقل</label>${sg('dcTr', d.tr || '', [['', 'غير شامل'], ['in', 'شامل النقل']])}</div>
+    <div class="fld" id="dcShipF"${d.tr === 'in' ? '' : ' hidden'}><label>مصاريف النقل (بتتضاف على العرض، وسيبها فاضية لو ببلاش)</label><input class="inp num" id="dcShip" placeholder="0" value="${e && e.shipA ? fmtP(e.shipA) : ''}"></div>
+    <div class="fld"><label>شروط تانية (كل شرط في سطر)</label><textarea class="inp" id="dcTerms" rows="2" placeholder="مثلاً: الدفع نقداً عند الاستلام">${esc(d.terms || '')}</textarea></div></div>`;
+}
+const qtTermsRead = () => { const tr = $('#dcTr .on').dataset.v; return {vat: $('#dcVat .on').dataset.v, tr, shipA: tr === 'in' ? toP($('#dcShip').value) : 0, terms: $('#dcTerms').value.split('\n').map(x => x.trim()).filter(Boolean).join('\n')}; };
+function qtTermsBind(calc) {
+  ['#dcVat', '#dcTr'].forEach(id => $$(id + ' button').forEach(b => b.onclick = () => { $$(id + ' button').forEach(x => x.classList.toggle('on', x === b)); $('#dcShipF').hidden = $('#dcTr .on').dataset.v !== 'in'; calc(); }));
+  bindMoney($('#dcShip')); $('#dcShip').addEventListener('input', calc);
+}
+/* بنود الشروط على الورقة بالصيغة الرسمية */
+function qtTermsList(q) {
+  const x = qtSums(q), L = [];
+  if (q.vat === 'x') L.push('الأسعار الموضحة غير شاملة ضريبة القيمة المضافة.');
+  if (q.vat === 'v') L.push('إجمالي العرض شامل ضريبة القيمة المضافة بنسبة 14%، وقيمتها موضحة بالعرض.');
+  if (q.tr === 'in') L.push(x.ship ? 'السعر شامل النقل والتوصيل، ومصاريف النقل موضحة ومضافة على إجمالي العرض.' : 'الأسعار شاملة النقل والتوصيل.');
+  if (q.till) L.push(`هذا العرض ساري لمدة ${arDays(qtDays(q))} من تاريخه (حتى ${dispDate(q.till)}).`);
+  return L.concat((q.terms || '').split('\n').filter(Boolean));
+}
+/* لما العرض يتنفذ: النقل والضريبة بيبقوا سطرين في الفاتورة علشان إجماليها يطلع زي العرض */
+function qtXLines(q) { const x = qtSums(q), L = []; if (x.ship) L.push({name: 'مصاريف النقل', unit: 'وحدة', qty: 1, price: x.ship}); if (x.vat) L.push({name: 'ضريبة القيمة المضافة 14%', unit: 'وحدة', qty: 1, price: x.vat}); return L; }
 function qtSave(p, e, doc, till) {
-  if (till && till < doc.date) return toast('"ساري لحد" لازم يبقى بعد تاريخ العرض');
-  const f = {date: doc.date, lines: doc.lines, disc: doc.disc, note: doc.note, till};
+  const f = {date: doc.date, lines: doc.lines, disc: doc.disc, note: doc.note, till, vat: doc.vat, tr: doc.tr, shipA: doc.shipA, terms: doc.terms};
   if (!e) {
     const now = nowS(), no = db.qts.reduce((m, x) => Math.max(m, x.no || 0), 0) + 1;
     e = Object.assign({id: newId('q_'), kind: 'qt', party: p.id, name: p.id ? '' : p.name, no, st: 'w', inv: '', at: now, upd: now, del: false, hist: []}, f);
     db.qts.push(e); IDX.qt.set(e.id, e); toast('اتحفظ العرض ✔');
   } else {
-    if (JSON.stringify([e.date, e.lines, e.disc || 0, e.note || '', e.till || '']) === JSON.stringify([f.date, f.lines, f.disc || 0, f.note, f.till])) return qtView(e);
-    (e.hist = e.hist || []).push({t: nowS(), q: 1, by: e.by, date: e.date, dr: docTotal(e), desc: `${e.lines.length} صنف`});
+    const k = x => JSON.stringify([x.date, x.lines, x.disc || 0, x.note || '', x.till || '', x.vat || '', x.tr || '', x.shipA || 0, x.terms || '']);
+    if (k(e) === k(f)) return qtView(e);
+    (e.hist = e.hist || []).push({t: nowS(), q: 1, by: e.by, date: e.date, dr: qtTotal(e), desc: `${e.lines.length} صنف`});
     Object.assign(e, f); touch(e); toast('اتعدّل العرض ✔ (والنسخة القديمة محفوظة)');
   }
   saveDB(); route(); qtView(e);
 }
-function qtStmt(q) { const s = invOnlyData(qtParty(q), {kind: 'inv', date: q.date, lines: q.lines, disc: q.disc || 0}); s.qt = q; return s; }
+function qtStmt(q, plain) {
+  const s = invOnlyData(qtParty(q), {kind: 'inv', date: q.date, lines: q.lines, disc: q.disc || 0}), x = qtSums(q);
+  if (x.ship) s.rows.push({date: q.date, desc: 'مصاريف النقل', gd: x.ship, pd: 0});
+  if (x.vat) s.rows.push({date: q.date, desc: 'ضريبة القيمة المضافة 14%', ref: `على ${fmtP(x.base + x.ship)}`, gd: x.vat, pd: 0});
+  s.close = x.tot * s.sg; s.qt = q; s.plain = !!plain; return s;
+}
 function qtView(q) {
-  const p = qtParty(q), inv = q.inv ? E.get(q.inv) : null, open = q.st === 'w' || (q.st === 'd' && (!inv || inv.del));
+  const p = qtParty(q), inv = q.inv ? E.get(q.inv) : null, open = q.st === 'w' || (q.st === 'd' && (!inv || inv.del)), xs = qtSums(q), tl = qtTermsList(q);
+  let plain = false;
+  try { plain = localStorage.getItem('gd_qtPlain') === '1'; } catch (x) {}
   modal(`<h3>📝 عرض سعر رقم ${q.no || '—'}<small class="mnm">${esc(qtName(q))}${p.id ? '' : ' (لسه ملوش حساب)'}</small></h3>
     <div class="qmeta"><span>تاريخ العرض: <b>${dispDate(q.date)}</b></span><span>ساري لحد: <b${qtLate(q) ? ' style="color:var(--red)"' : ''}>${q.till ? dispDate(q.till) : '—'}</b></span></div>
     <div class="qst ${q.st}">${QST[q.st]}${q.st === 'w' ? ` من ${qtAge(q)} يوم${qtLate(q) ? ' — عدّى ميعاده' : ''}` : ''}${q.st === 'd' && inv ? ` — اتعملت فاتورة ${dispDate(inv.date)}${inv.del ? ' (الفاتورة اتلغت)' : ''}` : ''}</div>
-    <div class="qls">${q.lines.map(l => `<div><span>${esc(l.name)}<small>${fmtQ(l.qty)} ${esc(l.unit)} × ${fmtP(l.price)}</small></span><b>${fmtP(lineTot(l))}</b></div>`).join('')}${q.disc ? `<div><span>خصم</span><b>−${fmtP(q.disc)}</b></div>` : ''}<div class="qt"><span>إجمالي العرض</span><b>${fmtP(docTotal(q))} <small>${CUR}</small></b></div></div>
+    <div class="qls">${q.lines.map(l => `<div><span>${esc(l.name)}<small>${fmtQ(l.qty)} ${esc(l.unit)} × ${fmtP(l.price)}</small></span><b>${fmtP(lineTot(l))}</b></div>`).join('')}${q.disc ? `<div><span>خصم</span><b>−${fmtP(q.disc)}</b></div>` : ''}${xs.ship ? `<div><span>مصاريف النقل</span><b>${fmtP(xs.ship)}</b></div>` : ''}${xs.vat ? `<div><span>ضريبة القيمة المضافة 14%</span><b>${fmtP(xs.vat)}</b></div>` : ''}<div class="qt"><span>إجمالي العرض</span><b>${fmtP(xs.tot)} <small>${CUR}</small></b></div></div>
     ${q.note ? `<p class="hint">${esc(q.note)}</p>` : ''}
+    ${tl.length ? `<div class="qterms"><b>شروط العرض</b><p class="hint">${tl.map(esc).join('<br>')}</p></div>` : ''}
+    <div class="seg s2" id="qvKind"><button type="button" data-v="0" class="${plain ? '' : 'on'}">باللوجو</button><button type="button" data-v="1" class="${plain ? 'on' : ''}">سادة من غير لوجو</button></div>
     ${histHtml(q)}
     <div class="mfoot">
       ${q.st === 'w' ? `<div class="mrow"><button class="btn green" id="qvDo" type="button">✔ اتنفذ: اعمل فاتورة</button><button class="btn line" id="qvNo" type="button">✖ اتلغى</button></div>`
@@ -3352,8 +3400,9 @@ function qtView(q) {
       <button class="btn line" id="qvX" type="button">رجوع</button></div>`, true);
   const st = v => { q.st = v; if (v === 'w') q.inv = ''; touch(q); saveDB(); route(); qtView(q); toast(v === 'x' ? 'العرض اتعلّم "اتلغى"' : 'رجع مستني'); };
   $('#qvX').onclick = closeModal;
-  $('#qvShare').onclick = () => exportStmt(p, qtStmt(q), 'share');
-  $('#qvPdf').onclick = () => exportStmt(p, qtStmt(q), 'preview');
+  $$('#qvKind button').forEach(b => b.onclick = () => { plain = b.dataset.v === '1'; $$('#qvKind button').forEach(x => x.classList.toggle('on', x === b)); try { localStorage.setItem('gd_qtPlain', plain ? '1' : '0'); } catch (x) {} });
+  $('#qvShare').onclick = () => exportStmt(p, qtStmt(q, plain), 'share');
+  $('#qvPdf').onclick = () => exportStmt(p, qtStmt(q, plain), 'preview');
   $('#qvEdit').onclick = () => docModal(p, 'qt', q);
   if ($('#qvDo')) $('#qvDo').onclick = () => qtDone(q);
   if ($('#qvNo')) $('#qvNo').onclick = () => st('x');
@@ -3373,7 +3422,7 @@ async function qtDone(q) {
 /* عروض الحساب اللي لسه مستنية (فوق كشف الحساب، مش جواه) */
 function qtPartyHtml(p) {
   const L = liveQts().filter(q => q.party === p.id && q.st === 'w');
-  return L.length ? `<div class="qtp">${L.map(q => `<button class="qtc" data-q="${esc(q.id)}" type="button"><span>📝 عرض سعر ${dispDate(q.date)}<small>مستني من ${qtAge(q)} يوم${qtLate(q) ? ' — عدّى ميعاده' : ''}</small></span><b>${fmtP(docTotal(q))}</b></button>`).join('')}</div>` : '';
+  return L.length ? `<div class="qtp">${L.map(q => `<button class="qtc" data-q="${esc(q.id)}" type="button"><span>📝 عرض سعر ${dispDate(q.date)}<small>مستني من ${qtAge(q)} يوم${qtLate(q) ? ' — عدّى ميعاده' : ''}</small></span><b>${fmtP(qtTotal(q))}</b></button>`).join('')}</div>` : '';
 }
 let qtF = 'w';
 function renderQts() {
@@ -3381,7 +3430,7 @@ function renderQts() {
   const L = all.filter(q => q.st === qtF).sort((a, b) => qtF === 'w' ? a.date.localeCompare(b.date) || a.at - b.at : b.date.localeCompare(a.date) || b.at - a.at);
   $('#p-qt').innerHTML = `<div class="sech"><span>📝 عروض الأسعار</span></div>
     <div class="card"><div class="seg s3" id="qtF">${Object.entries(QST).map(([k, v]) => `<button type="button" data-v="${k}" class="${k === qtF ? 'on' : ''}">${v} (${n(k)})</button>`).join('')}</div></div>
-    ${L.length ? `<div class="list" id="qtL">${L.map(q => `<div class="pt qtr${qtLate(q) ? ' late' : ''}" data-q="${esc(q.id)}"><div class="m"><b>${esc(qtName(q))}</b><small>${dispDate(q.date)} — ${q.st === 'w' ? `من ${qtAge(q)} يوم${qtLate(q) ? ' — عدّى ميعاده' : ''}` : QST[q.st]}${q.cby || q.by ? ' — ' + esc(q.cby || q.by) : ''}</small></div><div class="a"><b class="money">${fmtP(docTotal(q))}</b></div></div>`).join('')}</div>`
+    ${L.length ? `<div class="list" id="qtL">${L.map(q => `<div class="pt qtr${qtLate(q) ? ' late' : ''}" data-q="${esc(q.id)}"><div class="m"><b>${esc(qtName(q))}</b><small>${dispDate(q.date)} — ${q.st === 'w' ? `من ${qtAge(q)} يوم${qtLate(q) ? ' — عدّى ميعاده' : ''}` : QST[q.st]}${q.cby || q.by ? ' — ' + esc(q.cby || q.by) : ''}</small></div><div class="a"><b class="money">${fmtP(qtTotal(q))}</b></div></div>`).join('')}</div>`
       : `<div class="card empty">${qtF === 'w' ? 'مفيش عروض أسعار مستنية.' : 'مفيش عروض هنا.'}</div>`}
     <button class="btn gold" id="qtNew" type="button" style="margin-top:12px">📝 عرض سعر جديد</button>`;
   $$('#qtF button').forEach(b => b.onclick = () => { qtF = b.dataset.v; renderQts(); });
@@ -3612,7 +3661,18 @@ function buildStmtPages(p, s) {
   const info = [['العنوان', c.coAddr], ['سجل تجاري', c.coCr], ['بطاقة ضريبية', c.coTax]].filter(x => x[1]);
   if (info.length && phone) info.push(['تليفون', phone]);
   const gen = `صدر${s.qt ? ' هذا العرض' : s.invOnly ? 'ت هذه الفاتورة' : ' هذا الكشف'} إلكترونياً من نظام جَدة ال.جي بتاريخ ${dispDate(isoOf(issued))} الساعة ${dispTime(issued)}`;
+  /* عرض السعر "السادة" (بطلبه 28/10/2026): زي إذن الاستلام، من غير لوجو ولا أي حاجة تخص الشركة */
+  const plainShell = first => {
+    const pg = document.createElement('div'); pg.className = 'pg plain';
+    pg.innerHTML = `<div class="in">` + (first
+      ? `<div class="rhd"><h3>عرض سعر</h3><div>رقم العرض: <span>${s.qt.no || '—'}</span> — التاريخ: <span>${esc(per)}</span>${s.qt.till ? ` — ساري حتى: <span>${dispDate(s.qt.till)}</span>` : ''}</div></div>
+         <div class="cust"><span>السادة / <b>${esc(p.name)}</b></span></div>`
+      : `<div class="mini"><b>عرض سعر</b><span>${esc(p.name)} — ${esc(per)}</span></div>`) + `</div><div class="ft"><span></span><span class="pn"></span></div>`;
+    box.appendChild(pg);
+    return {pg, inn: pg.querySelector('.in')};
+  };
   const shell = first => {
+    if (s.plain) return plainShell(first);
     const pg = document.createElement('div'); pg.className = 'pg';
     pg.innerHTML = `<div class="strip"></div><div class="in">` + (first
       ? `<div class="hd"><img src="icons/logo-pdf.jpg" alt=""><div class="co"><b>جَدة ال.جي</b><span>للصناعات الكهربائية المصرية</span>${web ? `<i class="web" data-url="${esc(webUrl(web))}">🌐 ${esc(web)}</i>` : ''}${phone && !info.length ? `<em>${esc(phone)}</em>` : ''}</div>
@@ -3673,8 +3733,10 @@ function buildStmtPages(p, s) {
   const tot = document.createElement('div'); tot.className = 'tot';
   tot.innerHTML = `<div class="wd"><span>المبلغ بالحروف</span><b>${moneyWords(v)}</b></div><div class="sum"><div class="f"><span>${lbl}</span><b>${fmtP(s.invOnly ? v : Math.abs(v))} <small style="font-size:15px;color:#DAAE57">${CUR}</small></b></div></div>`;
   const note = document.createElement('div'); note.className = 'note';
-  note.textContent = s.qt ? `هذا عرض سعر وليس فاتورة${s.qt.till ? '، ساري حتى ' + dispDate(s.qt.till) : ''}. نشكركم على اهتمامكم بمنتجات جَدة ال.جي، ويسعدنا تواصلكم معنا لتأكيد الطلب.` : s.invOnly ? 'نشكركم على ثقتكم في جَدة ال.جي. لأي استفسار بخصوص هذه الفاتورة يرجى التواصل معنا.' : 'يرجى مراجعة هذا الكشف وإخطارنا بأي ملاحظات خلال سبعة أيام من تاريخ إصداره، وإلا اعتُبر الرصيد الوارد به صحيحاً ومعتمداً.';
-  [tot].concat(s.invOnly ? [note] : []).forEach(el => {   // جملة "يرجى مراجعة الكشف" اتشالت بطلب صاحب المشروع (الفاتورة لسه فيها جملة الشكر)
+  note.textContent = s.qt ? `هذا عرض سعر وليس فاتورة. نشكركم على اهتمامكم${s.plain ? '' : ' بمنتجات جَدة ال.جي'}، ويسعدنا تواصلكم معنا لتأكيد الطلب.` : s.invOnly ? 'نشكركم على ثقتكم في جَدة ال.جي. لأي استفسار بخصوص هذه الفاتورة يرجى التواصل معنا.' : 'يرجى مراجعة هذا الكشف وإخطارنا بأي ملاحظات خلال سبعة أيام من تاريخ إصداره، وإلا اعتُبر الرصيد الوارد به صحيحاً ومعتمداً.';
+  const tl = s.qt ? qtTermsList(s.qt) : [], terms = document.createElement('div'); terms.className = 'terms';
+  terms.innerHTML = `<b>الشروط والأحكام</b><ol>${tl.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`;
+  [tot].concat(tl.length ? [terms] : [], s.invOnly ? [note] : []).forEach(el => {   // جملة "يرجى مراجعة الكشف" اتشالت بطلب صاحب المشروع (الفاتورة لسه فيها جملة الشكر)
     pg.inn.appendChild(el); if (over(pg.inn, el, el === note ? 0 : 16)) { el.remove(); pg = shell(false); pg.inn.appendChild(el); } });   // الجملة الصغيرة اللي تحت مبتفتحش صفحة لوحدها لو فاضل مكان ليها
   const pages = [...box.children];
   pages.forEach((x, i) => x.querySelector('.pn').textContent = `صفحة ${i + 1} من ${pages.length}`);
@@ -4048,10 +4110,13 @@ const PAGE_LM = Date.parse(document.lastModified), PAGE_AT = Date.now();
 const verText = (lm = PAGE_LM, at = PAGE_AT) => lm && at - lm > 3000 ? `آخر تحديث للبرنامج على الجهاز ده: ${dispDate(isoOf(lm))} ${dispTime(lm)}` : '';
 /* ====================== الإصدار و"عن البرنامج" ======================
    مع أي تعديل يترفع: زوّد APP_VER (تعديل صغير 1.1، 1.2… وحاجة كبيرة 2.0) وغيّر APP_DATE، واكتب أهم الجديد في APP_NEWS (3-5 سطور بالعامية البسيطة) */
-const APP_VER = '1.4', APP_DATE = '2026-10-28';
+const APP_VER = '1.5', APP_DATE = '2026-10-28';
 const APP_NEWS = [
-  'رقم التليفون بيتكتب بالزيرو صح، والأرقام القديمة اللي الزيرو اتشال منها بيرجعلها لوحده، وفي الشيت كمان بيبان بالزيرو',
-  'زرار "👤 من الأسماء" جنب التليفون في الحساب: بيفتح أسماء الموبايل وتختار منها الرقم (على أندرويد)',
+  'عرض السعر بقى ليه نوعين زي إذن الاستلام: باللوجو وبيانات الشركة، أو سادة من غير لوجو',
+  'شروط العرض: "غير شامل الضريبة"، أو "+14% قيمة مضافة" بتتحسب وتتضاف على الإجمالي لوحدها',
+  'النقل: "شامل النقل" وتكتب مصاريفه لو فيه وبتتضاف على العرض، أو "غير شامل" ومبيتكتبش',
+  '"ساري لمدة" بالأيام، وخانة "شروط تانية" تكتب فيها أي شرط (زي طريقة الدفع)، وكلها بتتكتب تحت العرض بصيغة رسمية',
+  'لما العرض يتنفذ، النقل والضريبة بيتنقلوا للفاتورة كسطرين علشان إجماليها يطلع زي العرض',
   'دفعة المورد بقى فيها "📲 حد حوّلها": لو حد حوّل للمورد بدالك (فودافون كاش مثلاً)، المورد بينزل واللي حوّل بيزيد اللي ليه، والخزنة متتحركش',
   'كشف حساب المورد بيكتب "دفعة" بس من غير اسم اللي حوّل، والتفاصيل في كشف اللي حوّل',
   'العمولة 10 جنيه على كل ألف بتتحسب لوحدها، وفوق في صفحة اللي بيحوّل إجمالي اللي حوّله وإجمالي العمولة',
@@ -5504,7 +5569,7 @@ function actItems(day) {
   const what = r => r.del ? 'لغى' : inD(r.at || 0) && !(r.hist || []).length ? 'سجّل' : 'عدّل';
   db.entries.forEach(e => { if (!inD(e.upd)) return; const p = P.get(e.party); out.push({r: e, k: 'e', t: e.upd, by: e.by, w: what(e), d: (KIND[e.kind] || 'حركة') + (p ? ' — ' + p.name : ''), a: e.amt || e.dr || e.cr || docTotal(e) || 0, dt: e.date}); });
   db.txs.forEach(x => { if (!inD(x.upd)) return; out.push({r: x, k: 't', t: x.upd, by: x.by, w: what(x), d: (x.pt ? 'الشركاء: ' + (partName(x.pt) || '') : TXT[x.type] + (x.cat ? ' — ' + cName(x.cat) : '')) + (x.note ? ' — ' + x.note : ''), a: x.amt || 0, dt: x.date}); });
-  db.qts.forEach(q => { if (!inD(q.upd)) return; out.push({r: q, k: 'q', t: q.upd, by: q.by, w: q.del ? 'لغى' : inD(q.at || 0) && !(q.hist || []).length && q.st === 'w' ? 'سجّل' : 'عدّل', d: 'عرض سعر — ' + qtName(q) + (q.st !== 'w' ? ` (${QST[q.st]})` : ''), a: docTotal(q), dt: q.date}); });
+  db.qts.forEach(q => { if (!inD(q.upd)) return; out.push({r: q, k: 'q', t: q.upd, by: q.by, w: q.del ? 'لغى' : inD(q.at || 0) && !(q.hist || []).length && q.st === 'w' ? 'سجّل' : 'عدّل', d: 'عرض سعر — ' + qtName(q) + (q.st !== 'w' ? ` (${QST[q.st]})` : ''), a: qtTotal(q), dt: q.date}); });
   db.ords.forEach(o => { if (!inD(o.upd)) return; out.push({r: o, k: 'o', t: o.upd, by: o.by, w: o.del ? 'لغى' : o.st === 'd' && inD(o.dAt || 0) ? 'علّم اتسلمت' : inD(o.at || 0) && !(o.hist || []).length ? 'سجّل' : 'عدّل', d: 'طلبية — ' + ordName(o), a: 0, dt: ''}); });
   db.parties.forEach(p => { if (!inD(p.upd)) return; out.push({r: p, k: 'p', t: p.upd, by: p.by, w: p.del ? 'لغى' : inD(p.at || 0) ? 'عمل حساب' : 'عدّل حساب', d: p.name + ' (' + (SEC1[p.sec] || '') + ')', a: 0, dt: ''}); });
   return out.sort((a, b) => b.t - a.t);

@@ -1308,7 +1308,7 @@ const T0 = Date.now();
       const r = await A.evaluate(async () => {
         closeModal(); const bal = () => JSON.stringify([...allBalances()]), b0 = bal(), n0 = db.entries.length, p = liveParties().find(x => x.sec !== 'sup'), r = [];
         const fill = () => { const li = $$('#dcLines .li')[0]; li.querySelector('[data-f=name]').value = 'صنف عرض تجربة'; li.querySelector('[data-f=qty]').value = '10'; li.querySelector('[data-f=price]').value = '250'; li.querySelector('[data-f=price]').dispatchEvent(new Event('input')); };
-        docModal(p, 'qt'); r.push(!!$('#dcTill') && $('#dcTill').value === addDays(todayISO(), 14)); fill(); $('#dcOk').click();
+        docModal(p, 'qt'); r.push(!!$('#dcDays') && $('#dcDays').value === String(qtLast().days)); $('#dcDays').value = '14'; fill(); $('#dcOk').click();
         const q = db.qts[db.qts.length - 1]; r.push(!!q && q.st === 'w' && q.party === p.id && docTotal(q) === 250000 && q.by === meName(), db.entries.length === n0 && bal() === b0, !!$('#qvDo'));
         const pg = buildStmtPages(p, qtStmt(q)); r.push(pg.length === 1 && pg[0].textContent.includes('عرض سعر') && pg[0].textContent.includes('ساري حتى')); $('#render').innerHTML = '';
         const keep = $('#modal').innerHTML; renderParty(p.id); r.push(!!$(`#p-party .qtc[data-q="${q.id}"]`)); qtView(q);
@@ -1323,9 +1323,30 @@ const T0 = Date.now();
         closeModal(); qtView(q2); $('#qvNo').click(); r.push(q2.st === 'x');
         go('qt'); renderQts(); r.push($$('#p-qt .qtr').length === liveQts().filter(x => x.st === 'w').length);
         $('#qtF [data-v=x]').click(); r.push(!!$(`#p-qt [data-q="${q2.id}"]`), actItems(todayISO()).some(x => x.r === q2 && x.k === 'q'));
+        r.push(q.till === addDays(q.date, 14));
         [inv, q, q2, np].forEach(x => { x.del = true; touch(x); }); saveDB(); closeModal(); r.push(bal() === b0); qtF = 'w';
         return r; });
-      eq('عروض الأسعار: بتتسجل من غير ما أي رصيد يتغير، والـ PDF مكتوب عليه "عرض سعر"، و"اتنفذ" بيعمل فاتورة بنفس البنود، والاسم الجديد بيتعمله حساب، و"اتلغى"، وصفحة العروض و"اللي اتعمل"', r, Array(15).fill(true));
+      eq('عروض الأسعار: بتتسجل من غير ما أي رصيد يتغير، والـ PDF مكتوب عليه "عرض سعر"، و"اتنفذ" بيعمل فاتورة بنفس البنود، والاسم الجديد بيتعمله حساب، و"اتلغى"، وصفحة العروض و"اللي اتعمل"', r, Array(16).fill(true));
+    {   // شروط عرض السعر: الضريبة 14% والنقل بيتضافوا ويتحسبوا، والشروط مكتوبة تحت، والسادة من غير لوجو ولا اسم الشركة، و"اتنفذ" بينقلهم للفاتورة
+      const r = await A.evaluate(async () => {
+        closeModal(); const p = liveParties().find(x => x.sec !== 'sup'), r = [];
+        docModal(p, 'qt'); const li = $$('#dcLines .li')[0]; li.querySelector('[data-f=name]').value = 'صنف شروط تجربة'; li.querySelector('[data-f=qty]').value = '4'; li.querySelector('[data-f=price]').value = '250'; li.querySelector('[data-f=price]').dispatchEvent(new Event('input'));
+        $('#dcDays').value = '10'; $('#dcVat [data-v=v]').click(); $('#dcTr [data-v=in]').click(); r.push(!$('#dcShipF').hidden);
+        $('#dcShip').value = '100'; $('#dcShip').dispatchEvent(new Event('input')); $('#dcTerms').value = 'شرط تجربة أول\n\n شرط تجربة تاني ';
+        r.push($('#dcTot').textContent.includes(fmtP(Math.round(110000 * 1.14))));
+        $('#dcOk').click(); const q = db.qts[db.qts.length - 1], x = qtSums(q);
+        r.push(q.vat === 'v' && q.tr === 'in' && q.shipA === 10000 && q.terms === 'شرط تجربة أول\nشرط تجربة تاني' && x.vat === 15400 && qtTotal(q) === 125400 && docTotal(q) === 100000);
+        r.push($('#modal').textContent.includes(fmtP(125400)) && !!$('#qvKind'));
+        const t1 = buildStmtPages(p, qtStmt(q))[0].textContent; $('#render').innerHTML = '';
+        r.push(t1.includes('جَدة') && t1.includes('ضريبة القيمة المضافة 14%') && t1.includes('مصاريف النقل') && t1.includes(fmtP(125400)) && t1.includes('الشروط والأحكام') && t1.includes('ساري لمدة 10 أيام') && t1.includes('شرط تجربة تاني'));
+        const pg = buildStmtPages(p, qtStmt(q, true))[0], t2 = pg.textContent; $('#render').innerHTML = '';
+        r.push(pg.classList.contains('plain') && !pg.querySelector('img') && !t2.includes('جَدة') && t2.includes('عرض سعر') && t2.includes(fmtP(125400)) && t2.includes('الشروط والأحكام'));
+        docModal(p, 'qt'); r.push($('#dcVat .on').dataset.v === 'v' && $('#dcTr .on').dataset.v === 'in' && $('#dcTerms').value.includes('شرط تجربة أول')); closeModal();
+        docModal(p, 'inv', null, {qt: q}); const ns = $$('#dcLines [data-f=name]').map(x => x.value); r.push(ns.includes('مصاريف النقل') && ns.includes('ضريبة القيمة المضافة 14%') && $('#dcTot').textContent.includes(fmtP(125400)));
+        closeModal(); q.del = true; touch(q); saveDB();
+        return r; });
+      eq('شروط عرض السعر: الضريبة 14% والنقل بيتحسبوا ويتضافوا، والشروط مكتوبة تحت بصيغة رسمية، والسادة من غير لوجو، والعرض الجديد بنفس الشروط، و"اتنفذ" بينقلهم للفاتورة', r, Array(8).fill(true));
+    }
       await A.evaluate(() => { const now = nowS(), p = liveParties().find(x => x.sec !== 'sup'); [[12345600, 'qa'], [98700, 'qb'], [4500000, 'qc']].forEach(([price, id]) => { const q = {id: 'q_col' + id, kind: 'qt', party: p.id, name: '', no: 0, st: 'w', inv: '', date: todayISO(), till: '', lines: [{name: 'صنف', unit: 'كيلو', qty: 1, price}], disc: 0, note: '', at: now, upd: now, del: false, hist: []}; db.qts.push(q); IDX.qt.set(q.id, q); }); go('qt'); renderQts(); });
       await colOk('الحسابات — عروض الأسعار', A, '#qtL', '.pt .a b');
       await A.evaluate(() => { db.qts.filter(q => q.id.startsWith('q_col')).forEach(q => { q.del = true; touch(q); }); saveDB(); });

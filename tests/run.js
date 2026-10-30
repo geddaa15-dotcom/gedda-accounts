@@ -1303,6 +1303,37 @@ const T0 = Date.now();
         return r; });
       eq('الاتنين على نفس الحسابات: اسم الجهاز على الحركة، وتحذير التكرار بيقول مين سجّلها، واللي جاي من الجهاز التاني باسمه، و"اللي اتعمل" فيه الاتنين، ومقارنة الشركاء، وزرار قفل الشهر', r, [true, true, true, true, true, true, true, true, true, true, true]);
       eq('خزنة واحدة: اختيار الخزنة مخفي في النافذة', await A.evaluate(() => { const keep = vaultsL().slice(1); keep.forEach(x => { x.shut = 1; }); txModal('exp'); const hid = getComputedStyle($('#txV').closest('.fld') || $('#txV').parentElement).display === 'none'; closeModal(); keep.forEach(x => { delete x.shut; }); return hid; }), true);
+      /* مين استلم ومين دفع: "مين اللي دفع؟" في المصروف والدفعة (الافتراضي اسم الجهاز)، والاسم على كل سطر في الخزنة، وكارت لكل واحد لوحده */
+      const hnR = await A.evaluate(() => {
+        closeModal(); const me = meName(), r = [], t0 = todayISO(), v = vaultsL()[0].id, now = nowS(), N = 'شريك تجربة الاستلام';
+        const pick = (id, n) => { const el = $('#' + id); if (el.tagName === 'SELECT') el.value = n; else [...el.querySelectorAll('button')].find(b => b.dataset.v === n).click(); };
+        /* حركة جاية من الجهاز التاني من غير hn: بتتحسب على اللي سجّلها */
+        const x0 = {id: 't_hn0', type: 'inc', amt: 70000, vault: v, cat: catsL('inc')[0].id, date: t0, note: '', at: now, upd: now, del: false, hist: [], by: N, cby: N, bu: now, sy: now};
+        db.txs.push(x0); IDX.tx.set(x0.id, x0);
+        txModal('exp'); r.push(!!$('#txH') && handVal('txH') === me && handNames().includes(N));
+        $('#txA').value = fmtP(432100); $('#txC').value = catsL('exp')[0].id; pick('txH', N); $('#txOk').click();
+        const t = db.txs[db.txs.length - 1]; r.push(t.amt === 432100 && t.hn === N && t.cby === me && handOf(t) === N);
+        txModal('exp', t); r.push(handVal('txH') === N); $('#txOk').click(); r.push(!(t.hist || []).length);
+        const cu = liveParties().find(p => p.sec !== 'sup'), n0 = db.entries.length;
+        payModal(cu, 'pay'); r.push(handVal('pyH') === me); $('#pyAmt').value = fmtP(135700); $('#pyV').value = v; $('#pyOk').click();
+        const e = db.entries[n0]; r.push(!!e && e.kind === 'pay' && e.amt === 135700 && e.hn === me);
+        const sp = liveParties().find(p => p.sec === 'sup'); payModal(sp, 'ppay'); const via = $('#pyM [data-v=via]'); if (via) via.click(); r.push(!via || $('#pyHW').style.display === 'none'); closeModal();
+        /* بالنوع: كارت "مين استلم ومين دفع" = نفس إجمالي اتحصّل/اتدفع، والدوس على اسم بيفتح حركاته بس */
+        cashView = 'type'; cashMode = 'day'; cashDay = ''; go('cash'); renderCash();
+        const R = fbMoves(t0, t0).R, H = fbHandRows(R), h = H.find(o => o.nm === N), cnt = s => Math.round(parseFloat($(s + ' .fbkh .n').textContent.replace(/,/g, '')) * 100);
+        r.push(!!h && h.in === 70000 && h.out === 432100, H.reduce((n, o) => n + o.in, 0) === cnt('#fbIn') && H.reduce((n, o) => n + o.out, 0) === cnt('#fbOut'));
+        r.push(!!$('#fbHd') && $('#fbHd').textContent.includes(N));
+        [...$$('#fbHd [data-h]')].find(el => el.textContent.includes(N)).click(); r.push($$('#modal .kit').length === 2 && !!$('#modal .kshd') && $('#modal .kshd').textContent.includes(fmtP(432100))); closeModal();
+        /* بالتاريخ: الاسم على السطر، والعدسة بتلاقي بالاسم */
+        cashView = 'date'; renderCash(); r.push([...$$('#fbL .fbhn')].some(el => el.textContent === N));
+        $('#cSrch').click(); $('#csQ').value = N; $('#csQ').dispatchEvent(new Event('input')); r.push($$('#csR .ldr').length === 2); closeModal();
+        /* تغيير الاسم بس بيتحفظ وبيتكتب في سجل التعديلات */
+        txModal('exp', t); pick('txH', me); $('#txOk').click(); r.push(t.hn === me && t.hist.length === 1 && t.hist[0].desc.includes('دفعها ' + N));
+        cashView = 'type'; renderCash();
+        return r; });
+      eq('مين استلم ومين دفع: الاختيار في المصروف والدفعة (الافتراضي اسم الجهاز)، القديم باسم اللي سجّله، الكارت = الإجمالي، الاسم على السطر وفي البحث، وتغييره في سجل التعديلات', hnR, Array(14).fill(true));
+      await colOk('الحسابات — الخزنة (مين استلم)', A, '#fbHd', 'td.c:nth-child(2) .n'); await colOk('الحسابات — الخزنة (مين دفع)', A, '#fbHd', 'td.c:last-child .n');
+      await A.evaluate(() => { db.txs.filter(x => x.id === 't_hn0' || x.amt === 432100).concat(db.entries.filter(x => x.amt === 135700)).forEach(x => { x.del = true; touch(x); }); saveDB(); go('home'); });
     }
     {   // عروض الأسعار: مبتلمسش أي رصيد، والـ PDF، و"اتنفذ" بيعمل فاتورة بنفس البنود، واسم ملوش حساب بيتعمله حساب، و"اتلغى"
       const r = await A.evaluate(async () => {

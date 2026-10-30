@@ -268,6 +268,13 @@ table.fbt{width:100%;border-collapse:collapse}
 .fbg{font-style:normal;font-size:var(--f1);font-weight:700;color:var(--sub);background:var(--row);border-radius:999px;padding:0 9px}
 .fbp{font-style:normal;font-weight:800;border-radius:999px;padding:0 8px}
 .fbp.me{background:var(--green-l);color:var(--green)}.fbp.mk{background:var(--tr-l);color:var(--tr)}
+/* مين استلم ومين دفع: اسم كل واحد في كبسولة بلون ثابت (.h0 أزرق، .h1 بنفسجي)، وكارت "مين استلم ومين دفع" في "بالنوع" */
+.fbhn{display:inline-block;font-style:normal;font-size:var(--f1);font-weight:800;border-radius:999px;padding:0 9px;line-height:1.6;white-space:nowrap;vertical-align:middle}
+.fbhn.h0{background:var(--gold-l);color:var(--gold-d)}.fbhn.h1{background:var(--tr-l);color:var(--tr)}
+.fbhd .fbt td>b .fbhn{font-size:var(--f2);padding:1px 12px}
+.fbt tr.fbhr{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.fbt td>b.fbnn{color:var(--sub)}
+.kshd{display:grid;gap:2px;text-align:left}.ksheet .kshd small{font-size:var(--f2);font-weight:700}.kshd .n{font-size:var(--f3)}
 @media (min-width:1000px){#fbL{max-width:860px}.fbpdf{max-width:860px}}
 
 /* قايمة أدوات الخزنة (⋯ على الموبايل) */

@@ -1303,6 +1303,31 @@ const T0 = Date.now();
         return r; });
       eq('الاتنين على نفس الحسابات: اسم الجهاز على الحركة، وتحذير التكرار بيقول مين سجّلها، واللي جاي من الجهاز التاني باسمه، و"اللي اتعمل" فيه الاتنين، ومقارنة الشركاء، وزرار قفل الشهر', r, [true, true, true, true, true, true, true, true, true, true, true]);
       eq('خزنة واحدة: اختيار الخزنة مخفي في النافذة', await A.evaluate(() => { const keep = vaultsL().slice(1); keep.forEach(x => { x.shut = 1; }); txModal('exp'); const hid = getComputedStyle($('#txV').closest('.fld') || $('#txV').parentElement).display === 'none'; closeModal(); keep.forEach(x => { delete x.shut; }); return hid; }), true);
+      /* مين استلم ومين دفع: من غير اختيار، اللي سجّل الحركة من تليفونه (cby) هو اللي دفع أو استلم، واسمه على كل سطر وكارت لكل واحد لوحده */
+      const hnR = await A.evaluate(() => {
+        closeModal(); const me = meName(), r = [], t0 = todayISO(), v = vaultsL()[0].id, now = nowS(), N = 'شريك تجربة الاستلام';
+        /* حركتين جايين من تليفون الشريك التاني (متزامنين باسمه) */
+        const mk = (id, type, amt) => { const x = {id, type, amt, vault: v, cat: catsL(type)[0].id, date: t0, note: '', at: now, upd: now, del: false, hist: [], by: N, cby: N, bu: now, sy: now}; db.txs.push(x); IDX.tx.set(x.id, x); return x; };
+        const x0 = mk('t_hn0', 'inc', 70000), x1 = mk('t_hn1', 'exp', 432100);
+        txModal('exp'); r.push(!$('#txH') && !$('#modal').textContent.includes('مين اللي'));
+        $('#txA').value = fmtP(246800); $('#txC').value = catsL('exp')[0].id; $('#txOk').click();
+        const t = db.txs[db.txs.length - 1]; r.push(t.amt === 246800 && t.cby === me && handOf(t) === me && handOf(x0) === N);
+        const cu = liveParties().find(p => p.sec !== 'sup'); payModal(cu, 'pay'); r.push(!$('#pyH') && !$('#modal').textContent.includes('مين اللي')); closeModal();
+        /* بالنوع: كارت "مين استلم ومين دفع" = نفس إجمالي اتحصّل/اتدفع، والدوس على اسم بيفتح حركاته بس */
+        cashView = 'type'; cashMode = 'day'; cashDay = ''; go('cash'); renderCash();
+        const R = fbMoves(t0, t0).R, H = fbHandRows(R), h = H.find(o => o.nm === N), cnt = s => Math.round(parseFloat($(s + ' .fbkh .n').textContent.replace(/,/g, '')) * 100);
+        r.push(!!h && h.in === 70000 && h.out === 432100, H.reduce((n, o) => n + o.in, 0) === cnt('#fbIn') && H.reduce((n, o) => n + o.out, 0) === cnt('#fbOut'));
+        r.push(!!$('#fbHd') && $('#fbHd').textContent.includes(N) && $('#fbHd').textContent.includes(me));
+        [...$$('#fbHd [data-h]')].find(el => el.textContent.includes(N)).click(); r.push($$('#modal .kit').length === 2 && !!$('#modal .kshd') && $('#modal .kshd').textContent.includes(fmtP(432100))); closeModal();
+        /* بالتاريخ: اسم اللي سجّل تحت كل سطر بلون من اللونين، والعدسة بتلاقي بالاسم */
+        cashView = 'date'; renderCash(); const tags = [...$$('#fbL .fbhn')];
+        r.push(tags.some(el => el.textContent === N) && tags.some(el => el.textContent === me) && tags.every(el => /\bh[01]\b/.test(el.className)));
+        $('#cSrch').click(); $('#csQ').value = N; $('#csQ').dispatchEvent(new Event('input')); r.push($$('#csR .ldr').length === 2); closeModal();
+        cashView = 'type'; renderCash(); window.__hnT = t;
+        return r; });
+      eq('مين استلم ومين دفع: من غير اختيار (اللي سجّل من تليفونه)، الكارت = الإجمالي، والدوس على اسم بيفتح حركاته، والاسم بلون تحت كل سطر وفي البحث', hnR, Array(9).fill(true));
+      await colOk('الحسابات — الخزنة (مين استلم)', A, '#fbHd', 'td.c:nth-child(2) .n'); await colOk('الحسابات — الخزنة (مين دفع)', A, '#fbHd', 'td.c:last-child .n');
+      await A.evaluate(() => { [IDX.tx.get('t_hn0'), IDX.tx.get('t_hn1'), window.__hnT].forEach(x => { x.del = true; touch(x); }); saveDB(); go('home'); });
     }
     {   // عروض الأسعار: مبتلمسش أي رصيد، والـ PDF، و"اتنفذ" بيعمل فاتورة بنفس البنود، واسم ملوش حساب بيتعمله حساب، و"اتلغى"
       const r = await A.evaluate(async () => {

@@ -4110,17 +4110,13 @@ const PAGE_LM = Date.parse(document.lastModified), PAGE_AT = Date.now();
 const verText = (lm = PAGE_LM, at = PAGE_AT) => lm && at - lm > 3000 ? `آخر تحديث للبرنامج على الجهاز ده: ${dispDate(isoOf(lm))} ${dispTime(lm)}` : '';
 /* ====================== الإصدار و"عن البرنامج" ======================
    مع أي تعديل يترفع: زوّد APP_VER (تعديل صغير 1.1، 1.2… وحاجة كبيرة 2.0) وغيّر APP_DATE، واكتب أهم الجديد في APP_NEWS (3-5 سطور بالعامية البسيطة) */
-const APP_VER = '1.5', APP_DATE = '2026-10-28';
+const APP_VER = '1.6', APP_DATE = '2026-10-30';
 const APP_NEWS = [
+  'الخزنة بالتاريخ: تحت كل حركة اسم اللي سجّلها من تليفونه بخط صغير، وكل واحد بلون، من غير أي اختيار، والقديم كمان',
+  'كارت جديد في الخزنة "بالنوع": "مين استلم ومين دفع" في الفترة، كل واحد لوحده، والدوس على الاسم بيفتح حركاته بس',
+  'البحث في الخزنة بيلاقي بالاسم كمان',
   'عرض السعر بقى ليه نوعين زي إذن الاستلام: باللوجو وبيانات الشركة، أو سادة من غير لوجو',
-  'شروط العرض: "غير شامل الضريبة"، أو "+14% قيمة مضافة" بتتحسب وتتضاف على الإجمالي لوحدها',
-  'النقل: "شامل النقل" وتكتب مصاريفه لو فيه وبتتضاف على العرض، أو "غير شامل" ومبيتكتبش',
-  '"ساري لمدة" بالأيام، وخانة "شروط تانية" تكتب فيها أي شرط (زي طريقة الدفع)، وكلها بتتكتب تحت العرض بصيغة رسمية',
-  'لما العرض يتنفذ، النقل والضريبة بيتنقلوا للفاتورة كسطرين علشان إجماليها يطلع زي العرض',
-  'دفعة المورد بقى فيها "📲 حد حوّلها": لو حد حوّل للمورد بدالك (فودافون كاش مثلاً)، المورد بينزل واللي حوّل بيزيد اللي ليه، والخزنة متتحركش',
-  'كشف حساب المورد بيكتب "دفعة" بس من غير اسم اللي حوّل، والتفاصيل في كشف اللي حوّل',
-  'العمولة 10 جنيه على كل ألف بتتحسب لوحدها، وفوق في صفحة اللي بيحوّل إجمالي اللي حوّله وإجمالي العمولة',
-  'تقدر تشيل أي اسم (زي اسم تجربة) من قايمة الأسامي بزرار ✕ جنبه، والحركات اللي اتسجلت بيه بتفضل زي ما هي'];
+  'دفعة المورد بقى فيها "📲 حد حوّلها": لو حد حوّل للمورد بدالك (فودافون كاش مثلاً)، المورد بينزل واللي حوّل بيزيد اللي ليه، والخزنة متتحركش'];
 function aboutModal() {
   modal(`<div class="about">
     <div class="mkr" aria-hidden="true"><span class="mkr-m">MA</span><span class="mkr-k">DESIGNED &amp; DEVELOPED BY</span><span class="mkr-n">MOSTAFA ABD ELHADY</span></div>
@@ -4856,6 +4852,34 @@ function cashGroup(m) {
   if (r.type === 'exp' && (r.pt || r.cat === 'c_psal' || r.cat === 'c_pdraw')) return 'part';
   return r.type === 'inc' ? 'inc' : 'exp';
 }
+/* ============ مين استلم ومين دفع (بطلبه 30/10/2026) ============
+   من غير أي اختيار: اللي سجّل الحركة من تليفونه (cby من stampMine) هو اللي دفع أو استلم، والقديم كمان.
+   مسحوبات الشريك ملهاش (الشريك نفسه مكتوب في السطر) */
+const handOf = r => r.pt ? '' : r.cby || r.by || '';
+/* لون ثابت لكل اسم على كل الأجهزة (بترتيب الأسامي، من غير المشالين من قايمة الأسامي meHide) علشان كل واحد يبان لوحده */
+let hnC = null;
+function hnCls(n) {
+  if (!hnC || hnC.v !== dataVer) {
+    const hid = getSet('meHide', []), L = new Set();
+    for (const a of Object.values(STORE)) for (const r of db[a]) { const x = r.cby || r.by; if (x && !hid.includes(x)) L.add(x); }
+    hnC = {v: dataVer, L: [...L].sort((a, b) => a.localeCompare(b, 'ar'))};
+  }
+  return 'h' + Math.max(0, hnC.L.indexOf(n)) % 2;
+}
+const hnTag = n => n ? `<i class="fbhn ${hnCls(n)}">${esc(n)}</i>` : '';
+/* كارت "مين استلم ومين دفع" في "بالنوع": كل اسم سطر (استلم | دفع)، ومسحوبات الشركاء سطر لوحدها علشان المجموع يطلع زي الكارتين اللي فوق */
+function fbHandRows(R) {
+  const by = new Map(), add = (k, nm, x) => { const o = by.get(k) || by.set(k, {k, nm, in: 0, out: 0, L: []}).get(k); o[x.dir === 'in' ? 'in' : 'out'] += x.amt; o.L.push(x.m); };
+  R.forEach(x => { if (x.g === 'part') return add('~part', 'الشركاء', x); const n = handOf(x.m.r); add(n ? 'n:' + norm(n) : '~', n || 'من غير اسم', x); });
+  return [...by.values()].sort((a, b) => (a.k[0] === '~') - (b.k[0] === '~') || (b.in + b.out) - (a.in + a.out));
+}
+function fbHandHtml(H) {
+  if (!H.some(o => o.k[0] !== '~')) return '';
+  return `<section class="fbk fbhd" id="fbHd"><div class="fbkh"><b>مين استلم ومين دفع ${fbPer()}</b></div>
+    <table class="fbt"><thead><tr><th></th><th class="c">استلم</th><th class="c">دفع</th></tr></thead><tbody>
+    ${H.map((o, i) => `<tr class="fbhr" data-h="${i}" role="button" tabindex="0"><td>${o.k === '~part' ? `<b>${esc(o.nm)}</b>` : o.k === '~' ? `<b class="fbnn">${esc(o.nm)}</b>` : `<b>${hnTag(o.nm)}</b>`}</td><td class="c">${o.in ? `<span class="n in">${fmtP(o.in)}</span>` : ''}</td><td class="c">${o.out ? `<span class="n out">${fmtP(o.out)}</span>` : ''}</td></tr>`).join('')}
+    </tbody></table></section>`;
+}
 /* جدول نوع واحد (الشركاء): الاسم كبير والتفصيل صغير تحته، والوقت (في اليوم) أو التاريخ */
 function cashTable(title, arr, all, cls, day) {
   const tot = arr.reduce((n, m) => n + m.amt, 0);
@@ -4887,7 +4911,7 @@ function kitsDraw(arr, row, open, empty) {
 /* 🔍 البحث في الخزنة: كل الحركات في كل التواريخ، بالاسم أو الملاحظة أو البند أو الخزنة أو المبلغ. الأحدث فوق، والدوس بيفتح الحركة */
 function cashSearch(open) {
   const all = vaultMoves('', '', '').sort((a, b) => b.date.localeCompare(a.date) || b.at - a.at);
-  const txt = m => norm([m.who, m.what, m.title, m.sub, m.r.type === 'tr' ? '' : vName(m.r.vault), fmtP(m.amt), String(m.amt / 100), dispDate(m.date)].join(' '));
+  const txt = m => norm([m.who, m.what, m.title, m.sub, m.r.type === 'tr' ? '' : vName(m.r.vault), handOf(m.r), fmtP(m.amt), String(m.amt / 100), dispDate(m.date)].join(' '));
   modal(`<h3>🔍 دوّر في الخزنة</h3><input class="inp" id="csQ" type="search" placeholder="اسم، مصروف، ملاحظة، أو مبلغ" autocomplete="off"><div id="csR" class="csr"></div>`);
   let res = [];
   const draw = () => {
@@ -4896,7 +4920,7 @@ function cashSearch(open) {
     const ws = q.split(' ');
     res = all.filter(m => { const t = txt(m); return ws.every(w => t.includes(w)); });
     const sh = res.slice(0, 80), tot = res.reduce((n, m) => n + m.sign * m.amt, 0);
-    $('#csR').innerHTML = res.length ? `<div class="csn">${res.length === 1 ? 'حركة واحدة' : res.length === 2 ? 'حركتين' : res.length + (res.length <= 10 ? ' حركات' : ' حركة')}${res.length > 1 ? ` · الصافي <b class="n${tot < 0 ? ' neg' : ''}">${fmtP(tot)}</b>` : ''}</div>` + sh.map((m, i) => `<div class="ldr" data-i="${i}" role="button" tabindex="0"><div class="ldm"><b>${esc(m.who)}</b><small>${dispDate(m.date)} · ${esc([m.what, m.r.type === 'tr' ? '' : vName(m.r.vault)].filter(Boolean).join(' · '))}</small></div><b class="n ${m.sign > 0 ? 'in' : 'out'}">${m.sign > 0 ? '+' : '−'} ${fmtP(m.amt)}</b></div>`).join('') + (res.length > 80 ? '<div class="kno">فيه أكتر، زوّد كلمة</div>' : '')
+    $('#csR').innerHTML = res.length ? `<div class="csn">${res.length === 1 ? 'حركة واحدة' : res.length === 2 ? 'حركتين' : res.length + (res.length <= 10 ? ' حركات' : ' حركة')}${res.length > 1 ? ` · الصافي <b class="n${tot < 0 ? ' neg' : ''}">${fmtP(tot)}</b>` : ''}</div>` + sh.map((m, i) => `<div class="ldr" data-i="${i}" role="button" tabindex="0"><div class="ldm"><b>${esc(m.who)}</b><small>${dispDate(m.date)} · ${esc([m.what, m.r.type === 'tr' ? '' : vName(m.r.vault)].filter(Boolean).join(' · '))}${handOf(m.r) ? ' · ' + hnTag(handOf(m.r)) : ''}</small></div><b class="n ${m.sign > 0 ? 'in' : 'out'}">${m.sign > 0 ? '+' : '−'} ${fmtP(m.amt)}</b></div>`).join('') + (res.length > 80 ? '<div class="kno">فيه أكتر، زوّد كلمة</div>' : '')
       : '<div class="kno">مفيش حاجة بالكلمة دي</div>';
     $$('#csR .ldr').forEach(el => el.onclick = () => { const m = sh[+el.dataset.i]; closeModal(); open(m); });
   };
@@ -4967,8 +4991,10 @@ function fbKind(x) {
 }
 function fbSub(o) {
   const x = o.L[0];
-  return x.m.src === 'pay' && x.m.r.kind === 'pay' ? '' : esc(fbKind(x));
+  return [x.m.src === 'pay' && x.m.r.kind === 'pay' ? '' : esc(fbKind(x)), fbHn(o)].filter(Boolean).join(' · ');
 }
+/* مين استلم أو دفع السطر ده (لو السطر فيه أكتر من حركة بأكتر من اسم، الأسامي كلها) */
+const fbHn = o => o.g === 'part' ? '' : [...new Set(o.L.map(x => handOf(x.m.r)).filter(Boolean))].map(hnTag).join(' ');
 /* اليوم في الدفتر: الوارد فوق والمنصرف تحته، وكل دفعات الحساب في اليوم سطر واحد */
 function fbDayRows(R) {
   const G = fbGroup(R, x => x.party ? 'p:' + x.party + ':' + x.dir : 't:' + x.m.r.id);
@@ -5012,8 +5038,8 @@ function fbDateHtml(days) {
   return html.join('') || '<div class="fbe"><span>مفيش حركة في الفترة دي</span></div>';
 }
 /* بالنوع: كل عميل/مورد/بند سطر واحد بإجماليه في الفترة، الأكبر فوق */
-function fbTypeGroups(from, to) {
-  const {R} = fbMoves(from, to), key = x => x.party ? 'p:' + x.party + ':' + x.dir : x.g === 'part' ? x.g : 'c:' + x.dir + ':' + (x.m.r.cat || x.g);
+function fbTypeGroups(R) {
+  const key = x => x.party ? 'p:' + x.party + ':' + x.dir : x.g === 'part' ? x.g : 'c:' + x.dir + ':' + (x.m.r.cat || x.g);
   const G = fbGroup(R, key).sort((a, b) => b.amt - a.amt);
   return {inG: G.filter(o => o.dir === 'in'), outG: G.filter(o => o.dir !== 'in')};
 }
@@ -5022,20 +5048,21 @@ function fbTypeRow(o, i, dir) {
   return `<div class="fbr" data-g="${dir}:${i}" role="button" tabindex="0"><div class="fbm"><b>${esc(fbTypeName(o))}</b></div><b class="n ${dir}">${fmtP(o.amt)}</b></div>`;
 }
 const fbPer = () => cashMode === 'day' ? (!cashDay || cashDay === todayISO() ? 'النهارده' : cashDay === addDays(todayISO(), -1) ? 'امبارح' : 'يوم ' + fbSd(cashDay)) : cashMode === 'week' ? 'في الأسبوع' : cashMode === 'month' ? 'في الشهر' : 'في الفترة';
-function fbTypeHtml(T) {
+function fbTypeHtml(T, H) {
   const card = (id, title, L, dir) => `<section class="fbk" id="${id}"><div class="fbkh"><b>${title} ${fbPer()}</b><b class="n ${dir}">${fmtP(fbSum(L))}</b></div>
     ${L.length ? L.map((o, i) => fbTypeRow(o, i, dir)).join('') : '<div class="kno">مفيش حركة</div>'}</section>`;
-  return `<div class="kss two">${card('fbIn', 'اتحصّل', T.inG, 'in')}${card('fbOut', 'اتدفع', T.outG, 'out')}</div>`;
+  return `<div class="kss two">${card('fbIn', 'اتحصّل', T.inG, 'in')}${card('fbOut', 'اتدفع', T.outG, 'out')}${fbHandHtml(H)}</div>`;
 }
-/* نافذة سطر: كل الحركات اللي جواه، والدوس على حركة بيفتحها للتعديل */
-function fbSheet(title, sub, arr, open, dir) {
+/* نافذة سطر: كل الحركات اللي جواه، والدوس على حركة بيفتحها للتعديل.
+   hd = نافذة اسم واحد ("مين استلم ومين دفع"): فوق "استلم" و"دفع" كل واحد لوحده بدل الصافي */
+function fbSheet(title, sub, arr, open, dir, hd) {
   const tot = arr.reduce((n, m) => n + (dir ? m.amt : m.sign * m.amt), 0);
-  modal(`<div class="ksheet ksh-${dir || (tot < 0 ? 'out' : 'in')}"><div class="ksh2"><button class="kback" id="kshB" type="button" aria-label="رجوع">→</button><span>${esc(title)}<small>${esc(sub)} · ${arr.length} ${arr.length === 1 ? 'حركة' : arr.length === 2 ? 'حركتين' : 'حركات'}</small></span><b class="n">${fmtP(Math.abs(tot))}</b></div>
+  modal(`<div class="ksheet ksh-${hd ? 'hd' : dir || (tot < 0 ? 'out' : 'in')}"><div class="ksh2"><button class="kback" id="kshB" type="button" aria-label="رجوع">→</button><span>${esc(title)}<small>${esc(sub)} · ${arr.length} ${arr.length === 1 ? 'حركة' : arr.length === 2 ? 'حركتين' : 'حركات'}</small></span>${hd || `<b class="n">${fmtP(Math.abs(tot))}</b>`}</div>
     <div class="kits" id="kitsL"></div><button class="btn line" id="kshX" type="button">رجوع</button></div>`);
   $('#kshX').onclick = $('#kshB').onclick = closeModal;
   kitsDraw(arr, (m, i) => {
     const bits = [dispDate(m.date), m.r.type === 'tr' ? '' : vName(m.r.vault), (m.what || '').trim()].filter(Boolean);
-    return `<div class="kit" data-i="${i}" role="button" tabindex="0"><div><b>${esc(m.who)}</b><small>${esc(bits.join(' · '))}</small></div><b class="n">${dir ? '' : m.sign < 0 ? '− ' : '+ '}${fmtP(m.amt)}</b></div>`; }, open);
+    return `<div class="kit" data-i="${i}" role="button" tabindex="0"><div><b>${esc(m.who)}</b><small>${esc(bits.join(' · '))}${hd || !handOf(m.r) ? '' : ' · ' + hnTag(handOf(m.r))}</small></div><b class="n${hd ? (m.sign < 0 ? ' out' : ' in') : ''}">${dir ? '' : m.sign < 0 ? '− ' : '+ '}${fmtP(m.amt)}</b></div>`; }, open);
 }
 /* دفتر الخزنة بالتاريخ: لما الصفحة تترسم تاني لوحدها (مزامنة، حركة جت من جهاز تاني، رجوع من نافذة) السطر اللي قدامك
    بيفضل في مكانه بالظبط (بطلبه 17/10/2026: كانت بتنط ليوم قبله أو بعده أو لأول/آخر الصفحة). التنقل بإيدك (ldgScroll) مش بيتثبّت */
@@ -5063,7 +5090,7 @@ function renderCash() {
   cashVault = ''; ldgFilter = 'all';
   const vs = vaultsAll().filter(v => !v.shut || vaultBal(v.id)), total = vaultBal('');
   const [from, to] = cashRange(), t = todayISO(), nV = vs.length, dv = cashView === 'date';
-  const D = dv ? fbDays(from, to) : null, T = dv ? null : fbTypeGroups(from, to);
+  const D = dv ? fbDays(from, to) : null, R = dv ? null : fbMoves(from, to).R, T = dv ? null : fbTypeGroups(R), H = dv ? null : fbHandRows(R);
   const tiles = vs.map(v => { const b = vaultBal(v.id); return `<div class="kv${b < 0 ? ' neg' : ''}" data-v="${esc(v.id)}" role="button" tabindex="0"><span>${esc(v.name)}</span><b class="n" data-ck="c:v:${esc(v.id)}" data-cnt="${b}">${fmtP(b)}</b>${b < 0 ? '<a class="kfix">⚠ راجعها</a>' : v.shut ? '<a class="kshut">🔒 مقفولة، حوّل رصيدها</a>' : ''}</div>`; }).join('');
   const perW = {day: 'لليوم', week: 'للأسبوع', month: 'للشهر'}[cashMode] || 'للفترة';
   pg.innerHTML = `
@@ -5095,7 +5122,7 @@ function renderCash() {
         : cashMode === 'year' ? `<input class="inp num" id="cYear" inputmode="numeric" value="${cashYear || t.slice(0, 4)}">`
         : `<div class="g2"><input class="inp" type="date" id="cFrom" value="${from}"><input class="inp" type="date" id="cTo" value="${to}"></div><label class="cyr">أو سنة كاملة <input class="inp num" id="cYr" inputmode="numeric" placeholder="${t.slice(0, 4)}" value="${from.slice(5) === '01-01' && to === from.slice(0, 4) + '-12-31' ? from.slice(0, 4) : ''}"></label>`}</div>
     </div>
-    ${dv ? `<button type="button" class="btn gold fbpdf" id="ldgPdf">📄 ورقة الدفتر PDF ${perW}</button><div id="fbL">${fbDateHtml(D)}</div>` : fbTypeHtml(T)}
+    ${dv ? `<button type="button" class="btn gold fbpdf" id="ldgPdf">📄 ورقة الدفتر PDF ${perW}</button><div id="fbL">${fbDateHtml(D)}</div>` : fbTypeHtml(T, H)}
     `;
   const tap = (el, f) => { el.onclick = f; el.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); f(ev); } }; };
   const open = m => {
@@ -5140,7 +5167,10 @@ function renderCash() {
     ldgScroll = false;
     if (anc) ldgRestore(anc);
   } else {
-    $$('#p-cash .fbk .fbr').forEach(el => tap(el, () => { const [dir, i] = el.dataset.g.split(':'), o = (dir === 'in' ? T.inG : T.outG)[+i]; openG(o, fbTypeName(o)); }));
+    $$('#p-cash .fbk .fbr[data-g]').forEach(el => tap(el, () => { const [dir, i] = el.dataset.g.split(':'), o = (dir === 'in' ? T.inG : T.outG)[+i]; openG(o, fbTypeName(o)); }));
+    /* الدوس على اسم بيفتح كل اللي استلمه ودفعه في الفترة */
+    $$('#fbHd [data-h]').forEach(el => tap(el, () => { const o = H[+el.dataset.h];
+      fbSheet(o.nm, cashPerTxt(), o.L.slice().sort((a, b) => b.date.localeCompare(a.date) || b.at - a.at), open, '', `<span class="kshd">${o.in ? `<small>استلم <b class="n in">${fmtP(o.in)}</b></small>` : ''}${o.out ? `<small>دفع <b class="n out">${fmtP(o.out)}</b></small>` : ''}</span>`); }));
   }
   $('#cSet').onclick = vaultSettings;
   $('#cPart').onclick = () => go('part');

@@ -164,6 +164,7 @@ const SCREENS = [
   {name: 'acc-cash-rng-m', app: 'acc', vp: MOB, go: accEval("cashSide = 'me'; cashMode = 'range'; go('cash'); renderCash()")},
   {name: 'acc-cash-open-m', app: 'acc', vp: MOB, full: true, go: accEval(`cashOpenV = true; cashVault = ''; go('cash'); renderCash()`)},
   {name: 'acc-cash-open-l', app: 'acc', vp: LAP, go: accEval(`cashOpenV = true; cashVault = ''; go('cash'); renderCash()`)},
+  {name: 'acc-cash-hand-m', app: 'acc', vp: MOB, go: async A => { await accEval(`cashView = 'type'; cashMode = 'week'; cashOpenV = false; go('cash'); renderCash()`)(A); await A.waitForTimeout(300); await A.evaluate(() => $('#p-cash .fbhd [data-h]').click()); }},
   {name: 'acc-cash-sheet-m', app: 'acc', vp: MOB, go: async A => { await accEval(`cashView = 'type'; cashMode = 'week'; cashOpenV = false; go('cash'); renderCash()`)(A); await A.waitForTimeout(300); await A.evaluate(() => [...$$('#p-cash .fbk .fbr')].pop().click()); }},
   {name: 'acc-set-pass-m', app: 'acc', vp: MOB, full: true, go: accEval("go('set'); renderSettings(); $('#sBio').style.display='block'; $('#sBio').textContent='👆 بصمة الوجه'; $$('#p-set > .card').forEach(c => c.classList.toggle('shut', !/كلمة السر/.test(c.querySelector('h2').textContent)))")},
   {name: 'acc-party-scroll-m', app: 'acc', vp: MOB, go: async A => { await accEval(`tab = 'mkt'; go('p/' + ${party}.id)`)(A); await A.evaluate(() => { const b = $('#p-party'); b.scrollTo(0, b.scrollHeight / 2); }); await A.waitForTimeout(300); console.log('th top', await A.evaluate(() => Math.round($('#p-party .ldg th').getBoundingClientRect().top))); }},
@@ -208,7 +209,10 @@ function accExtra(iso0, now) {
   const v = defVault(), ce = catsL('exp'), ci = catsL('inc');
   const d = n => new Date(now - n * 86400000).toISOString().slice(0, 10);
   [['exp', 320000, 0, ce[0], 'نقل طلبية'], ['exp', 1800000, 0, ce[1] || ce[0], ''], ['inc', 475000, 0, ci[0], 'بيع نقدي'], ['exp', 95000, 1, ce[2] || ce[0], 'شاي وسكر'], ['inc', 1200000, 1, ci[0], ''], ['exp', 640000, 2, ce[3] || ce[0], 'يومية العمال']]
-    .forEach(([type, amt, n, c, note], i) => { const r = {id: 't_shot' + i, at: now, upd: now, del: false, hist: [], type, amt, date: d(n), note, vault: v, to: '', cat: c ? c.id : ''}; db.txs.push(r); IDX.tx.set(r.id, r); });
+    .forEach(([type, amt, n, c, note], i) => { const r = {id: 't_shot' + i, at: now, upd: now, del: false, hist: [], type, amt, date: d(n), note, vault: v, to: '', cat: c ? c.id : ''}; if (i % 2) Object.assign(r, {by: 'كريم', cby: 'كريم', bu: now}); db.txs.push(r); IDX.tx.set(r.id, r); });
+  /* تحصيلين في الخزنة: واحد سجّله الجهاز ده وواحد سجّله الشريك التاني من تليفونه (cby)، علشان يبان مين استلم ومين دفع */
+  const c1 = liveParties().find(p => p.name.startsWith('مؤسسة تجربة للمقاولات'));
+  [[0, 850000, ''], [1, 600000, 'كريم']].forEach(([n, amt, hn]) => { const e = addEntry({party: c1.id, kind: 'pay', date: d(n), amt, method: 'نقدي', note: '', vault: v}); applyAmounts(e); e.desc = docDesc(e); if (hn) Object.assign(e, {by: hn, cby: hn, bu: e.upd}); });
   /* شريكين ومسحوبات من أول الشهر (للمقارنة) */
   putSet('partners', {on: true, amt: 0, vault: v, start: '', list: [{id: 'pa', name: 'سامح', from: d(40), vault: ''}, {id: 'pb', name: 'كريم', from: d(40), vault: ''}]});
   ensurePartCats();

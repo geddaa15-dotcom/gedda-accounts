@@ -2765,7 +2765,7 @@ function cancelledModal(e) {
 /* حفظ التعديل: النسخة القديمة بتتحفظ في hist */
 /* "، اتسجلت بواسطة فلان الساعة كذا" لتحذير التكرار */
 const twinBy = x => x.cby || x.by ? `، اتسجلت بواسطة ${x.cby || x.by} الساعة ${dispTime(x.at || x.upd)}` : '';
-function snapshot(e) { const s = {t: nowS(), kind: e.kind, date: e.date, desc: e.desc, dr: e.dr || 0, cr: e.cr || 0}; if (e.by) s.by = e.by; ['no', 'lines', 'disc', 'amt', 'method', 'note', 'vault', 'chk', 'dir', 'via', 'fee', 'hn'].forEach(k => { if (e[k] !== undefined) s[k] = JSON.parse(JSON.stringify(e[k])); }); return s; }
+function snapshot(e) { const s = {t: nowS(), kind: e.kind, date: e.date, desc: e.desc, dr: e.dr || 0, cr: e.cr || 0}; if (e.by) s.by = e.by; ['no', 'lines', 'disc', 'amt', 'method', 'note', 'vault', 'chk', 'dir', 'via', 'fee'].forEach(k => { if (e[k] !== undefined) s[k] = JSON.parse(JSON.stringify(e[k])); }); return s; }
 async function cancelEntry(e) {
   if (isLocked(e.date)) return lockToast();
   /* الحساب الفرعي: مسح فاتورة اتنقلت عادي من غير أي تحذير (اللي في الأساسي بيفضل). التحذير مرة واحدة بس لو لسه متنقلتش */
@@ -3005,7 +3005,6 @@ function payModal(p, kind, e, opts = {}) {
       <div class="fld"><label>تاريخ الاستحقاق</label><input class="inp" id="pyCd" type="date" value="${esc(ck.due || '')}"></div>
       <p class="hint" style="margin:0">${ck.st === 'c' ? `✔ الشيك اتصرف يوم ${dispDate(ck.cdate)} في ${esc(vName(e.vault))}.` : ck.st === 'b' ? '✖ الشيك ده رجع.' : `الشيك ${rec ? 'بينزل من رصيد العميل' : 'بينزل من اللي ليه'} من دلوقتي، ومبيدخلش الخزنة غير لما يتصرف (من تبويب الشيكات).`}</p>
     </div>
-    ${handPick('pyH', rec ? 'مين اللي استلم؟' : 'مين اللي دفع؟', e ? handOf(e) : opts.hn || '')}
     <div class="g2"><div class="fld" id="pyVW"><label>${rec ? 'دخلت خزنة' : 'طلعت من خزنة'}</label><select class="inp" id="pyV">${vaultOpts(v0, 'مش داخل خزنة (حركة قديمة)')}</select></div>
       <div class="fld"><label>التاريخ</label><input class="inp" id="pyDate" type="date" value="${e ? e.date : opts.date || todayISO()}"></div></div>
     <div class="fld"><label>ملاحظة (اختياري)</label><input class="inp" id="pyNote" value="${esc(e ? e.note || '' : '')}" placeholder="مثلاً: رقم الشيك أو التحويل" autocomplete="off"></div>
@@ -3015,7 +3014,7 @@ function payModal(p, kind, e, opts = {}) {
       <div class="mrow"><button class="btn green" id="pyOk" type="button">${isNew ? 'حفظ الدفعة' : 'حفظ التعديل'}</button><button class="btn line" id="pyX" type="button">رجوع</button></div>
       ${isNew && opts.pick ? '<button class="btn line sm again" id="pyAgain" type="button">حفظ وسجّل تاني ↻</button>' : ''}</div>`);
   if ($('#pyAll')) $('#pyAll').onclick = () => { $('#pyAmt').value = fmtP(Math.abs(balance(p.id))); $('#pyAmt').dispatchEvent(new Event('input')); };
-  bindMoney($('#pyAmt')); handBind('pyH');
+  bindMoney($('#pyAmt'));
   $$('#pyM button').forEach(b => b.onclick = () => {
     useVia = b.dataset.v === 'via'; method = useVia ? 'تحويل' : b.dataset.v; $$('#pyM button').forEach(x => x.classList.toggle('on', x === b));
     if (method === 'شيك' || useVia) $('#pyV').value = ''; else if (isNew || !$('#pyV').value) $('#pyV').value = defVault(method);
@@ -3031,7 +3030,6 @@ function payModal(p, kind, e, opts = {}) {
   const showChk = () => {
     $('#pyChk').style.display = method === 'شيك' && !useVia ? '' : 'none'; $('#pyVW').style.display = method === 'شيك' || useVia ? 'none' : '';
     if ($('#pyVia')) $('#pyVia').style.display = useVia ? '' : 'none';
-    if ($('#pyHW')) $('#pyHW').style.display = useVia ? 'none' : '';   // "حد حوّلها" مبتعديش على حد مننا
     viaHint();
   };
   showChk();
@@ -3049,8 +3047,7 @@ function payModal(p, kind, e, opts = {}) {
     if (useVia && !vp) return toast('اعمل حساب مورد للي بيحوّل الأول');
     if (!useVia && !vault && method !== 'شيك' && (isNew || e.vault || e.chk || e.via)) return toast('اختار الخزنة');
     if (isLocked(date)) return lockToast();
-    const o = {kind, date, amt, method, note, vault: useVia ? '' : vault}, hn = useVia ? '' : handVal('pyH');
-    if (hn) o.hn = hn;
+    const o = {kind, date, amt, method, note, vault: useVia ? '' : vault};
     if (useVia) { o.via = vp; o.fee = viaFee(amt); } else if (e && e.via) { o.via = undefined; o.fee = undefined; }
     if (method === 'شيك') {
       const due = $('#pyCd').value;
@@ -3073,12 +3070,12 @@ function payModal(p, kind, e, opts = {}) {
     if (cnSt.a) cntFix(hits, `${KIND[kind]} ${p.name} ${fmtP(amt)} بتاريخ ${dispDate(date)}`);
     if (isNew) { if (!o.chk) delete o.chk; const ne = addEntry(Object.assign({party: p.id}, o)); applyAmounts(ne); viaSync(ne); toast(o.chk ? 'اتسجل الشيك ✔' : useVia ? `اتسجلت الدفعة ✔ واتزوّدت لـ ${pName0(vp)}` : 'اتسجلت الدفعة ✔'); }
     else {
-      if (e.amt === amt && e.date === date && e.method === method && (e.note || '') === note && (e.vault || '') === o.vault && JSON.stringify(e.chk || null) === JSON.stringify(o.chk || null) && (e.via || '') === (o.via || '') && (e.fee || 0) === (o.fee || 0) && (!hn || handOf(e) === hn)) return closeModal();
+      if (e.amt === amt && e.date === date && e.method === method && (e.note || '') === note && (e.vault || '') === o.vault && JSON.stringify(e.chk || null) === JSON.stringify(o.chk || null) && (e.via || '') === (o.via || '') && (e.fee || 0) === (o.fee || 0)) return closeModal();
       (e.hist = e.hist || []).push(snapshot(e));
       Object.assign(e, o); if (!o.chk) delete e.chk; if (!o.via) { delete e.via; delete e.fee; } applyAmounts(e); touch(e); viaSync(e); toast('اتعدّلت الدفعة ✔');
     }
     saveDB(); closeModal(); route();
-    if (again && isNew) pickParty(kind, Object.assign({}, opts, {date, vault: o.vault || opts.vault, method, hn}));
+    if (again && isNew) pickParty(kind, Object.assign({}, opts, {date, vault: o.vault || opts.vault, method}));
   };
   if (!isNew) $('#pyDel').onclick = () => cancelEntry(e);
 }
@@ -4115,10 +4112,9 @@ const verText = (lm = PAGE_LM, at = PAGE_AT) => lm && at - lm > 3000 ? `آخر �
    مع أي تعديل يترفع: زوّد APP_VER (تعديل صغير 1.1، 1.2… وحاجة كبيرة 2.0) وغيّر APP_DATE، واكتب أهم الجديد في APP_NEWS (3-5 سطور بالعامية البسيطة) */
 const APP_VER = '1.6', APP_DATE = '2026-10-30';
 const APP_NEWS = [
-  'المصروف والإيراد والدفعة بقى فيهم "مين اللي دفع؟" أو "مين اللي استلم؟": اسمك متعلّم لوحده، ولو شريكك هو اللي دفع أو استلم دوسة على اسمه',
-  'اسم اللي دفع أو استلم بيبان على كل سطر في الخزنة (كل واحد بلون)، وفي النافذة لما تدوس على أي نوع',
+  'الخزنة بالتاريخ: تحت كل حركة اسم اللي سجّلها من تليفونه بخط صغير، وكل واحد بلون، من غير أي اختيار، والقديم كمان',
   'كارت جديد في الخزنة "بالنوع": "مين استلم ومين دفع" في الفترة، كل واحد لوحده، والدوس على الاسم بيفتح حركاته بس',
-  'الحركات القديمة بتتحسب على اللي سجّلها، والبحث في الخزنة بيلاقي بالاسم كمان',
+  'البحث في الخزنة بيلاقي بالاسم كمان',
   'عرض السعر بقى ليه نوعين زي إذن الاستلام: باللوجو وبيانات الشركة، أو سادة من غير لوجو',
   'دفعة المورد بقى فيها "📲 حد حوّلها": لو حد حوّل للمورد بدالك (فودافون كاش مثلاً)، المورد بينزل واللي حوّل بيزيد اللي ليه، والخزنة متتحركش'];
 function aboutModal() {
@@ -4857,31 +4853,20 @@ function cashGroup(m) {
   return r.type === 'inc' ? 'inc' : 'exp';
 }
 /* ============ مين استلم ومين دفع (بطلبه 30/10/2026) ============
-   hn على المصروف والإيراد والدفعة = اللي استلم أو دفع الفلوس بإيده، بيتختار من النافذة والافتراضي اسم الجهاز.
-   الحركة اللي ملهاش hn (القديمة، أو اتسجلت من حتة تانية) = اللي سجّلها (cby). مسحوبات الشريك ملهاش (الشريك نفسه) */
-const handOf = r => r.pt ? '' : r.hn || r.cby || r.by || '';
-/* الأسامي: اسم الجهاز ده الأول، وبعده أي اسم سجّل أو استلم قبل كده، من غير المشالين من قايمة الأسامي (meHide) */
-function handNames(cur) {
-  const hid = getSet('meHide', []), out = [], seen = new Set();
-  const add = n => { n = (n || '').trim(); const k = norm(n); if (n && !seen.has(k) && (n === cur || !hid.includes(n))) { seen.add(k); out.push(n); } };
-  add(meName()); add(cur);
-  for (const a of Object.values(STORE)) for (const r of db[a]) { add(r.by); add(r.cby); add(r.hn); }
-  return out;
-}
-/* لون ثابت لكل اسم على كل الأجهزة (بترتيب الأسامي) علشان كل واحد يبان لوحده */
+   من غير أي اختيار: اللي سجّل الحركة من تليفونه (cby من stampMine) هو اللي دفع أو استلم، والقديم كمان.
+   مسحوبات الشريك ملهاش (الشريك نفسه مكتوب في السطر) */
+const handOf = r => r.pt ? '' : r.cby || r.by || '';
+/* لون ثابت لكل اسم على كل الأجهزة (بترتيب الأسامي، من غير المشالين من قايمة الأسامي meHide) علشان كل واحد يبان لوحده */
 let hnC = null;
-const hnCls = n => { if (!hnC || hnC.v !== dataVer) hnC = {v: dataVer, L: handNames().sort((a, b) => a.localeCompare(b, 'ar'))}; return 'h' + Math.max(0, hnC.L.indexOf(n)) % 2; };
-const hnTag = n => n ? `<i class="fbhn ${hnCls(n)}">${esc(n)}</i>` : '';
-/* "مين اللي دفع؟" في النافذة: زرار لكل اسم (أكتر من 3 = قايمة). بيظهر بس لو فيه اسمين أو أكتر */
-function handPick(id, label, cur) {
-  const L = handNames(cur); if (L.length < 2) return '';
-  const sel = cur && L.includes(cur) ? cur : L[0];
-  return `<div class="fld" id="${id}W"><label>${label}</label>${L.length <= 3
-    ? `<div class="seg s${L.length}" id="${id}">${L.map(n => `<button type="button" data-v="${esc(n)}" class="${n === sel ? 'on' : ''}">${esc(n)}</button>`).join('')}</div>`
-    : `<select class="inp" id="${id}">${L.map(n => `<option value="${esc(n)}" ${n === sel ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>`}</div>`;
+function hnCls(n) {
+  if (!hnC || hnC.v !== dataVer) {
+    const hid = getSet('meHide', []), L = new Set();
+    for (const a of Object.values(STORE)) for (const r of db[a]) { const x = r.cby || r.by; if (x && !hid.includes(x)) L.add(x); }
+    hnC = {v: dataVer, L: [...L].sort((a, b) => a.localeCompare(b, 'ar'))};
+  }
+  return 'h' + Math.max(0, hnC.L.indexOf(n)) % 2;
 }
-const handBind = id => $$(`#${id} button`).forEach(b => b.onclick = () => $$(`#${id} button`).forEach(x => x.classList.toggle('on', x === b)));
-const handVal = id => { const el = $('#' + id); return !el ? '' : el.tagName === 'SELECT' ? el.value : ((el.querySelector('button.on') || {}).dataset || {}).v || ''; };
+const hnTag = n => n ? `<i class="fbhn ${hnCls(n)}">${esc(n)}</i>` : '';
 /* كارت "مين استلم ومين دفع" في "بالنوع": كل اسم سطر (استلم | دفع)، ومسحوبات الشركاء سطر لوحدها علشان المجموع يطلع زي الكارتين اللي فوق */
 function fbHandRows(R) {
   const by = new Map(), add = (k, nm, x) => { const o = by.get(k) || by.set(k, {k, nm, in: 0, out: 0, L: []}).get(k); o[x.dir === 'in' ? 'in' : 'out'] += x.amt; o.L.push(x.m); };
@@ -4935,7 +4920,7 @@ function cashSearch(open) {
     const ws = q.split(' ');
     res = all.filter(m => { const t = txt(m); return ws.every(w => t.includes(w)); });
     const sh = res.slice(0, 80), tot = res.reduce((n, m) => n + m.sign * m.amt, 0);
-    $('#csR').innerHTML = res.length ? `<div class="csn">${res.length === 1 ? 'حركة واحدة' : res.length === 2 ? 'حركتين' : res.length + (res.length <= 10 ? ' حركات' : ' حركة')}${res.length > 1 ? ` · الصافي <b class="n${tot < 0 ? ' neg' : ''}">${fmtP(tot)}</b>` : ''}</div>` + sh.map((m, i) => `<div class="ldr" data-i="${i}" role="button" tabindex="0"><div class="ldm"><b>${esc(m.who)}</b><small>${dispDate(m.date)} · ${esc([m.what, m.r.type === 'tr' ? '' : vName(m.r.vault)].filter(Boolean).join(' · '))} ${hnTag(handOf(m.r))}</small></div><b class="n ${m.sign > 0 ? 'in' : 'out'}">${m.sign > 0 ? '+' : '−'} ${fmtP(m.amt)}</b></div>`).join('') + (res.length > 80 ? '<div class="kno">فيه أكتر، زوّد كلمة</div>' : '')
+    $('#csR').innerHTML = res.length ? `<div class="csn">${res.length === 1 ? 'حركة واحدة' : res.length === 2 ? 'حركتين' : res.length + (res.length <= 10 ? ' حركات' : ' حركة')}${res.length > 1 ? ` · الصافي <b class="n${tot < 0 ? ' neg' : ''}">${fmtP(tot)}</b>` : ''}</div>` + sh.map((m, i) => `<div class="ldr" data-i="${i}" role="button" tabindex="0"><div class="ldm"><b>${esc(m.who)}</b><small>${dispDate(m.date)} · ${esc([m.what, m.r.type === 'tr' ? '' : vName(m.r.vault)].filter(Boolean).join(' · '))}${handOf(m.r) ? ' · ' + hnTag(handOf(m.r)) : ''}</small></div><b class="n ${m.sign > 0 ? 'in' : 'out'}">${m.sign > 0 ? '+' : '−'} ${fmtP(m.amt)}</b></div>`).join('') + (res.length > 80 ? '<div class="kno">فيه أكتر، زوّد كلمة</div>' : '')
       : '<div class="kno">مفيش حاجة بالكلمة دي</div>';
     $$('#csR .ldr').forEach(el => el.onclick = () => { const m = sh[+el.dataset.i]; closeModal(); open(m); });
   };
@@ -5006,7 +4991,7 @@ function fbKind(x) {
 }
 function fbSub(o) {
   const x = o.L[0];
-  return [x.m.src === 'pay' && x.m.r.kind === 'pay' ? '' : esc(fbKind(x)), fbHn(o)].filter(Boolean).join(' ');
+  return [x.m.src === 'pay' && x.m.r.kind === 'pay' ? '' : esc(fbKind(x)), fbHn(o)].filter(Boolean).join(' · ');
 }
 /* مين استلم أو دفع السطر ده (لو السطر فيه أكتر من حركة بأكتر من اسم، الأسامي كلها) */
 const fbHn = o => o.g === 'part' ? '' : [...new Set(o.L.map(x => handOf(x.m.r)).filter(Boolean))].map(hnTag).join(' ');
@@ -5077,7 +5062,7 @@ function fbSheet(title, sub, arr, open, dir, hd) {
   $('#kshX').onclick = $('#kshB').onclick = closeModal;
   kitsDraw(arr, (m, i) => {
     const bits = [dispDate(m.date), m.r.type === 'tr' ? '' : vName(m.r.vault), (m.what || '').trim()].filter(Boolean);
-    return `<div class="kit" data-i="${i}" role="button" tabindex="0"><div><b>${esc(m.who)}</b><small>${esc(bits.join(' · '))} ${hd ? '' : hnTag(handOf(m.r))}</small></div><b class="n${hd ? (m.sign < 0 ? ' out' : ' in') : ''}">${dir ? '' : m.sign < 0 ? '− ' : '+ '}${fmtP(m.amt)}</b></div>`; }, open);
+    return `<div class="kit" data-i="${i}" role="button" tabindex="0"><div><b>${esc(m.who)}</b><small>${esc(bits.join(' · '))}${hd || !handOf(m.r) ? '' : ' · ' + hnTag(handOf(m.r))}</small></div><b class="n${hd ? (m.sign < 0 ? ' out' : ' in') : ''}">${dir ? '' : m.sign < 0 ? '− ' : '+ '}${fmtP(m.amt)}</b></div>`; }, open);
 }
 /* دفتر الخزنة بالتاريخ: لما الصفحة تترسم تاني لوحدها (مزامنة، حركة جت من جهاز تاني، رجوع من نافذة) السطر اللي قدامك
    بيفضل في مكانه بالظبط (بطلبه 17/10/2026: كانت بتنط ليوم قبله أو بعده أو لأول/آخر الصفحة). التنقل بإيدك (ldgScroll) مش بيتثبّت */
@@ -5304,7 +5289,6 @@ function txModal(type, t, opts = {}) {
     <div class="fld"><label>المبلغ</label><input class="inp num amt" id="txA" placeholder="0" value="${t ? fmtP(t.amt) : ''}"></div>
     ${type === 'tr' ? `<div class="g2 fld"><div><label>من خزنة</label><select class="inp" id="txV">${vaultOpts(v0)}</select></div><div><label>إلى خزنة</label><select class="inp" id="txTo">${vaultOpts(t ? t.to : (vs.find(v => v.id !== v0) || {}).id)}</select></div></div>`
       : `<div class="fld"><label>البند</label><select class="inp" id="txC">${cats.map(c => `<option value="${esc(c.id)}" ${t && t.cat === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}${t && t.cat && !cats.some(c => c.id === t.cat) ? `<option value="${esc(t.cat)}" selected>${esc(cName(t.cat))}</option>` : ''}</select></div>
-         ${handPick('txH', type === 'exp' ? 'مين اللي دفع؟' : 'مين اللي استلم؟', t ? handOf(t) : opts.hn || '')}
          <div class="fld"><label>الخزنة</label><select class="inp" id="txV">${vaultOpts(v0)}</select></div>`}
     <div class="fld"><label>التاريخ</label><input class="inp" id="txD" type="date" value="${t ? t.date : opts.date || todayISO()}"></div>
     <div class="fld"><label>ملاحظة (اختياري)</label><input class="inp" id="txN" value="${esc(t ? t.note || '' : '')}" autocomplete="off"></div>
@@ -5313,7 +5297,7 @@ function txModal(type, t, opts = {}) {
     ${isNew && type !== 'tr' ? '<button class="btn line sm again" id="txAgain" type="button">حفظ وسجّل تاني ↻</button>' : ''}
     ${isNew ? '' : '<button class="btn red sm" id="txDel" type="button">إلغاء الحركة</button>'}
     <button class="btn line" id="txX" type="button">رجوع</button></div>`);
-  bindMoney($('#txA')); handBind('txH');
+  bindMoney($('#txA'));
   $('#txX').onclick = closeModal;
   if (isNew) setTimeout(() => $('#txA') && $('#txA').focus(), 50);
   const cnSt = {a: null};
@@ -5323,8 +5307,7 @@ function txModal(type, t, opts = {}) {
     const amt = toP($('#txA').value), date = $('#txD').value, note = $('#txN').value.trim(), vault = $('#txV').value;
     if (amt <= 0) return toast('اكتب المبلغ');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return toast('اختار التاريخ');
-    const o = {type, amt, date, note, vault, to: type === 'tr' ? $('#txTo').value : '', cat: type === 'tr' ? '' : $('#txC').value}, hn = handVal('txH');
-    if (hn) o.hn = hn;
+    const o = {type, amt, date, note, vault, to: type === 'tr' ? $('#txTo').value : '', cat: type === 'tr' ? '' : $('#txC').value};
     if (type === 'tr' && o.to === vault) return toast('اختار خزنتين مختلفتين');
     if (type !== 'tr' && !o.cat) return toast('اختار البند');
     if (isLocked(date)) return lockToast();
@@ -5337,13 +5320,12 @@ function txModal(type, t, opts = {}) {
     if (cnSt.a) cntFix(hits, `${TXT[type]} ${fmtP(amt)} بتاريخ ${dispDate(date)}`);
     if (isNew) { const now = nowS(); const r = Object.assign({id: newId('t_'), at: now, upd: now, del: false, hist: []}, o); db.txs.push(r); IDX.tx.set(r.id, r); toast('اتسجلت ✔'); }
     else {
-      const hn0 = handOf(t);
-      if (['amt', 'date', 'note', 'vault', 'to', 'cat'].every(k => (t[k] || '') === (o[k] || '')) && (!hn || hn0 === hn)) return closeModal();
-      (t.hist = t.hist || []).push({t: nowS(), date: t.date, desc: `${TXT[t.type]} ${t.type === 'tr' ? vName(t.vault) + ' ← ' + vName(t.to) : cName(t.cat) + ' — ' + vName(t.vault)}${hn && hn0 && hn0 !== hn ? ` (${t.type === 'exp' ? 'دفعها' : 'استلمها'} ${hn0})` : ''}`, dr: t.amt, cr: 0});
+      if (['amt', 'date', 'note', 'vault', 'to', 'cat'].every(k => (t[k] || '') === (o[k] || ''))) return closeModal();
+      (t.hist = t.hist || []).push({t: nowS(), date: t.date, desc: `${TXT[t.type]} ${t.type === 'tr' ? vName(t.vault) + ' ← ' + vName(t.to) : cName(t.cat) + ' — ' + vName(t.vault)}`, dr: t.amt, cr: 0});
       Object.assign(t, o); touch(t); toast('اتعدّلت ✔');
     }
     if (type !== 'tr') rememberVault('نقدي', vault); saveDB(); closeModal(); route();
-    if (again && isNew) txModal(type, null, {date, vault, hn});
+    if (again && isNew) txModal(type, null, {date, vault});
   };
   if (!isNew) $('#txDel').onclick = async () => {
     if (!(await confirmBox(`تلغي ${TXT[t.type]} ${fmtP(t.amt)}؟ هتفضل محفوظة كـ "ملغية".`, 'ألغيها', true))) return;

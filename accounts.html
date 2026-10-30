@@ -1515,6 +1515,18 @@ body{font-size:var(--f3);line-height:1.6}
   table.ldg.rp.wide.pft{min-width:0}
   .ldg.pft th:nth-child(5),.ldg.pft td:nth-child(5),.ldg.pft th:nth-child(6),.ldg.pft td:nth-child(6){display:none}
   .ldg.pft td.l{min-width:0}
+  /* تقرير الخزنة (بطلبه 30/10/2026): كل حركة كارت جوه الشاشة من غير سحب بالعرض.
+     فوق: الحركة والمبلغ (الداخل أخضر والخارج أحمر). تحت: التاريخ والتفاصيل والرصيد بعدها */
+  table.ldg.rp.wide.csh{min-width:0}
+  .ldg.csh thead{display:none}
+  .ldg.csh tbody tr{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:10px;row-gap:2px;align-items:baseline;padding:9px 12px;border-bottom:1px solid var(--rowl)}
+  .ldg.csh tbody td{display:block;border:0;padding:0;min-width:0;white-space:normal;background:none!important;color:var(--ink);font-weight:600}
+  .ldg.csh td:nth-child(2){grid-area:1/1/2/3;font-weight:800}
+  .ldg.csh td:nth-child(4),.ldg.csh td:nth-child(5){grid-area:1/3;text-align:left;font-size:var(--f3);font-weight:800}
+  .ldg.csh tbody td:nth-child(4){color:var(--green)}.ldg.csh tbody td:nth-child(5){color:var(--red)}
+  .ldg.csh td:nth-child(1),.ldg.csh td:nth-child(3),.ldg.csh td:nth-child(6){font-size:var(--f1);color:var(--sub)}
+  .ldg.csh td:nth-child(1){grid-area:2/1}.ldg.csh td:nth-child(3){grid-area:2/2}.ldg.csh td:nth-child(6){grid-area:2/3;text-align:left}
+  .ldg.csh td:nth-child(6)::after{content:' الرصيد'}
 }
 /* شريط العملاء على الموبايل (بطلب صاحب المشروع): من غير خانة بحث كبيرة. زراير كبيرة ومتباعدة بالأيقونة والكلمة:
    بحث | التقارير | الجرد | حساب جديد. العدسة بتفتح خانة الاسم، والترتيب زرار صغير فوق القايمة */
@@ -1571,6 +1583,10 @@ body{font-size:var(--f3);line-height:1.6}
 }
 /* اللاب: القايمة الجانبية من غير تكرار العملاء/الموردين (موجودين فوق القايمة)، وآخر زرار مش مستخبي ورا القفل */
 @media (min-width:1000px){nav .qk{display:none}nav{overflow-y:auto;padding-bottom:64px;scrollbar-width:none}}
+/* اللاب (بطلبه 30/10/2026): كل زراير القايمة الجانبية تبان لحد "احفظ نسخة" من غير ما تستخبى ورا "قفل"، فالشاشة الواطية الزراير بتصغر شوية */
+@media (min-width:1000px) and (max-height:1000px){nav{gap:3px}nav .ngrp{padding:8px 12px 2px}nav button,html[data-theme=dark] nav button{min-height:38px}nav button.tool{min-height:32px}}
+@media (min-width:1000px) and (max-height:820px){nav{padding-top:66px}nav .ngrp{padding:4px 12px 1px}nav button,html[data-theme=dark] nav button{min-height:33px;padding-block:3px}nav button.tool{min-height:29px}}
+@media (min-width:1000px) and (max-height:720px){nav{padding-top:62px}nav .ngrp{height:6px;padding:0;overflow:hidden;visibility:hidden}nav button,html[data-theme=dark] nav button{min-height:31px;padding-block:2px}nav button.tool{min-height:28px}}
 </style>
 <style id="appfeel">html{-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}input,textarea,[contenteditable],[contenteditable] *{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}.sync.nlb{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;padding:4px 10px;min-height:0;margin-bottom:6px;font-size:var(--f2);line-height:1.3}.sync.nlb a{margin-inline-start:auto}
 </style>
@@ -2305,7 +2321,7 @@ function renderHome() {
   if (au && !au.ok) probs.unshift(au.msg);
   $('#nlRem').innerHTML = '';   // تنبيه الفواتير اللي بنودها لسه: في الوارد بس (بطلب صاحب المشروع)
   const mrn = mrnHtml();
-  $('#chk').innerHTML = instHtml() + afAlertHtml() + bkAlertHtml() + (mrn || chkAlertHtml()) + (probs.length ? `<div class="sync warn">⚠️ المراجعة لقت ${probs.length} مشكلة: ${esc(probs.slice(0, 3).join(' — '))}</div>` : '') + docAlertHtml();
+  $('#chk').innerHTML = instHtml() + afAlertHtml() + bkAlertHtml() + negCashHtml() + (mrn || chkAlertHtml()) + (probs.length ? `<div class="sync warn">⚠️ المراجعة لقت ${probs.length} مشكلة: ${esc(probs.slice(0, 3).join(' — '))}</div>` : '') + docAlertHtml();
   if ($('#hDoc')) $('#hDoc').onclick = docOpen;
   if (mrn) mrnBind();
   if ($('#hAf')) $('#hAf').onclick = async () => { if (await afWrite(true)) toast('✔ الحفظ الأوتوماتيك رجع شغال', 3000); };
@@ -3036,7 +3052,7 @@ function payModal(p, kind, e, opts = {}) {
   $('#pyX').onclick = closeModal;
   let warned = false;
   if (isNew) setTimeout(() => $('#pyAmt') && $('#pyAmt').focus(), 50);
-  const cnSt = {a: null};
+  const cnSt = {a: null}, ngSt = {ok: false};
   let again = false;   // "حفظ وسجّل تاني" (بطلبه 17/10/2026): بعد الحفظ بيرجع لاختيار العميل بنفس التاريخ والخزنة
   if ($('#pyAgain')) $('#pyAgain').onclick = () => { again = true; $('#pyOk').onclick(); };
   $('#pyOk').onclick = () => {
@@ -3065,6 +3081,7 @@ function payModal(p, kind, e, opts = {}) {
     const effOf = (x, v) => x.chk && !v ? [] : [{v, d: kind === 'ppay' ? -x.amt : x.amt}];
     const hits = isNew || !cntHits(effOf(e, e.vault), e.date, e.at || 0).length ? cntHits(effOf(o, o.vault), date, isNew ? nowS() : e.at || 0) : [];
     if (cntGate($('#pyOk'), hits, cnSt)) return;
+    if (!cnSt.a && negGate($('#pyOk'), effD(effOf(o, o.vault)) - (isNew ? 0 : effD(effOf(e, e.vault))), ngSt)) return;
     if (useVia) db.cfg.lvia = vp; else rememberVault(method, vault);
     o.desc = docDesc(o);
     if (cnSt.a) cntFix(hits, `${KIND[kind]} ${p.name} ${fmtP(amt)} بتاريخ ${dispDate(date)}`);
@@ -4110,13 +4127,12 @@ const PAGE_LM = Date.parse(document.lastModified), PAGE_AT = Date.now();
 const verText = (lm = PAGE_LM, at = PAGE_AT) => lm && at - lm > 3000 ? `آخر تحديث للبرنامج على الجهاز ده: ${dispDate(isoOf(lm))} ${dispTime(lm)}` : '';
 /* ====================== الإصدار و"عن البرنامج" ======================
    مع أي تعديل يترفع: زوّد APP_VER (تعديل صغير 1.1، 1.2… وحاجة كبيرة 2.0) وغيّر APP_DATE، واكتب أهم الجديد في APP_NEWS (3-5 سطور بالعامية البسيطة) */
-const APP_VER = '1.7', APP_DATE = '2026-10-30';
+const APP_VER = '1.8', APP_DATE = '2026-10-30';
 const APP_NEWS = [
-  'بند مصروف جديد اسمه "البيت" جنب نقل وخامات وباقي البنود',
-  'البند بيتختار لوحده: أول ما تكتب المصروف (زي "بنزين")، لو كتبته قبل كده على نفس البند مرتين أو أكتر البرنامج بيختاره لوحده ويكتب تحته "✓ البند اتختار لوحده". ولو مش متأكد بيسيبه زي ما هو، ولو غيّرته بإيدك مبيلمسوش',
-  'خانة الملاحظة في المصروف والإيراد بقت تحت المبلغ على طول علشان تكتبها الأول',
-  'الخزنة بالتاريخ: تحت كل حركة اسم اللي سجّلها من تليفونه بخط صغير، وكل واحد بلون، من غير أي اختيار، والقديم كمان',
-  'كارت جديد في الخزنة "بالنوع": "مين استلم ومين دفع" في الفترة، كل واحد لوحده، والدوس على الاسم بيفتح حركاته بس'];
+  'الجرد بقى بيحسب الشيكات اللي لسه متصرفتش: اللي معاك من العملا بيتحسب مع اللي ليك، واللي كتبته للموردين بيتخصم',
+  'لو مصروف أو دفعة هتنزّل الخزنة تحت الصفر البرنامج بيسألك قبل الحفظ، وطول ما الخزنة بالسالب فيه تنبيه فوق في الرئيسية',
+  'تقرير الخزنة على الموبايل بقى كروت جوه الشاشة من غير سحب بالعرض',
+  'على اللاب كل زراير القايمة الجانبية باينة لحد "احفظ نسخة"، من غير ما حاجة تستخبى ورا زرار "قفل"'];
 function aboutModal() {
   modal(`<div class="about">
     <div class="mkr" aria-hidden="true"><span class="mkr-m">MA</span><span class="mkr-k">DESIGNED &amp; DEVELOPED BY</span><span class="mkr-n">MOSTAFA ABD ELHADY</span></div>
@@ -5228,6 +5244,20 @@ function cntGate(btn, hits, st) {
   $('#cnBox').scrollIntoView({block: 'nearest'});
   return true;
 }
+/* الخزنة بالسالب (بطلبه 30/10/2026): الدرج في الحقيقة عمره ما يبقى فيه سالب، فلو الحركة دي هتنزّل الرصيد تحت الصفر بنسأل قبل الحفظ.
+   بيسأل مرة لما الرصيد يعدّي الصفر بس، ولو هو بالسالب أصلاً التنبيه اللي فوق في الرئيسية فاضل لحد ما يتظبط (negCashHtml).
+   d = اللي الحركة هتغيّره في الرصيد (سالب = فلوس طالعة). بيرجع true لو لسه مستني الإجابة */
+const effD = L => L.reduce((s, x) => s + (x.v ? x.d : 0), 0);
+function negGate(btn, d, st) {
+  if (st.ok || !(d < 0) || !db.vaults.length) return false;
+  const b0 = vaultBal(''), b1 = b0 + d;
+  if (b0 < 0 || b1 >= 0) return false;
+  if (!$('#ngBox')) btn.parentNode.insertAdjacentHTML('beforebegin', '<div id="ngBox"></div>');
+  $('#ngBox').innerHTML = `<div class="sync warn"><span>كده رصيد الخزنة هيبقى <b class="money">${fmtP(b1)}</b> بالسالب. الدرج مبيبقاش فيه سالب، فغالباً في فلوس دخلت ومتسجلتش. متأكد؟</span></div>`;
+  btn.textContent = 'متأكد، احفظ برضه'; st.ok = true;
+  $('#ngBox').scrollIntoView({block: 'nearest'});
+  return true;
+}
 function openingModal() {
   const vs = vaultsL();
   const moved = v => db.txs.some(t => !t.del && (t.vault === v.id || t.to === v.id)) || db.entries.some(e => !e.del && e.vault === v.id);
@@ -5315,7 +5345,7 @@ function txModal(type, t, opts = {}) {
       else if (auto) { $('#txC').value = c0; auto = false; $('#txCH').hidden = true; }
     });
   }
-  const cnSt = {a: null};
+  const cnSt = {a: null}, ngSt = {ok: false};
   let again = false, txWarned = false;   // "حفظ وسجّل تاني" (بطلبه 17/10/2026): النافذة بتتفتح تاني فاضية بنفس التاريخ والخزنة
   if ($('#txAgain')) $('#txAgain').onclick = () => { again = true; $('#txOk').onclick(); };
   $('#txOk').onclick = () => {
@@ -5332,6 +5362,7 @@ function txModal(type, t, opts = {}) {
     const effOf = x => x.type === 'tr' ? [{v: x.vault, d: -x.amt}, {v: x.to, d: x.amt}] : [{v: x.vault, d: x.type === 'inc' ? x.amt : -x.amt}];
     const hits = isNew || !cntHits(effOf(t), t.date, t.at || 0).length ? cntHits(effOf(o), date, isNew ? nowS() : t.at || 0) : [];
     if (cntGate($('#txOk'), hits, cnSt)) return;
+    if (!cnSt.a && negGate($('#txOk'), effD(effOf(o)) - (isNew ? 0 : effD(effOf(t))), ngSt)) return;
     if (cnSt.a) cntFix(hits, `${TXT[type]} ${fmtP(amt)} بتاريخ ${dispDate(date)}`);
     if (isNew) { const now = nowS(); const r = Object.assign({id: newId('t_'), at: now, upd: now, del: false, hist: []}, o); db.txs.push(r); IDX.tx.set(r.id, r); toast('اتسجلت ✔'); }
     else {
@@ -5551,6 +5582,7 @@ function partnerTxModal(t, kind = 'draw', ptId = '') {
   $('#ptX').onclick = closeModal;
   if (isNew) $('#ptP').onchange = () => { const v = pDef($('#ptP').value); if ([...$('#ptV').options].some(o => o.value === v)) $('#ptV').value = v; };
   if (isNew) setTimeout(() => $('#ptA') && $('#ptA').focus(), 50);
+  const ngSt = {ok: false};
   $('#ptOk').onclick = () => {
     const amt = toP($('#ptA').value), date = $('#ptD').value, pnote = $('#ptN').value.trim(), pt = $('#ptP').value, vault = $('#ptV').value;
     if (!pt) return toast('اختار الشريك');
@@ -5558,6 +5590,7 @@ function partnerTxModal(t, kind = 'draw', ptId = '') {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return toast('اختار التاريخ');
     if (isLocked(date)) return lockToast();
     const o = {type: 'exp', amt, date, vault, nv: vault ? 0 : 1, to: '', cat: PART_CATS[kind][0], pt, pnote, note: `${PK[kind]} ${partName(pt)}${pnote ? ' — ' + pnote : ''}`};
+    if (negGate($('#ptOk'), (vault ? -amt : 0) + (t && !t.nv && t.vault ? t.amt : 0), ngSt)) return;
     if (isNew) { const now = nowS(); const r = Object.assign({id: newId('t_'), at: now, upd: now, del: false, hist: []}, o); db.txs.push(r); IDX.tx.set(r.id, r); toast('اتسجلت ✔'); }
     else {
       if (['amt', 'date', 'vault', 'cat', 'pt', 'pnote', 'nv'].every(k => (t[k] || '') === (o[k] || ''))) return closeModal();
@@ -5719,6 +5752,11 @@ const dayStartISO = iso => { const [y, m, d] = iso.split('-').map(Number); retur
 const chkDays = () => db.cfg.chkDays ?? 3;
 /* الشيكات اللي محتاجة انتباه: لسه متصرفتش وميعادها فات أو قرّب */
 function chkDue() { const n = chkDays(); return chkList().filter(e => e.chk.st === 'p' && daysTo(e.chk.due) <= n).sort((a, b) => a.chk.due.localeCompare(b.chk.due)); }
+/* تنبيه فوق في الرئيسية طول ما الخزنة بالسالب (بطلبه 30/10/2026): غالباً فلوس دخلت ومتسجلتش أو حركة متسجلة غلط */
+function negCashHtml() {
+  const b = db.vaults.length ? vaultBal('') : 0;
+  return b < 0 ? `<a class="sync warn" id="negCash" href="#cash" style="text-decoration:none"><span>⚠️ رصيد الخزنة <b class="money">${fmtP(b)}</b> بالسالب. غالباً في فلوس دخلت ومتسجلتش، دوس وراجع الخزنة</span></a>` : '';
+}
 function chkAlertHtml() {
   if (!CHECKS_ON) return '';
   const d = chkDue(); if (!d.length) return '';
@@ -5804,10 +5842,12 @@ function cashCheck(e) {
     <div class="fld"><label>يوم الصرف</label><input class="inp" id="ccD" type="date" value="${todayISO()}"></div>
     <div class="stack"><button class="btn green" id="ccOk" type="button">حفظ</button><button class="btn line" id="ccX" type="button">رجوع</button></div>`);
   $('#ccX').onclick = closeModal;
+  const ngSt = {ok: false};
   $('#ccOk').onclick = () => {
     const v = $('#ccV').value, d = $('#ccD').value;
     if (!v) return toast('اختار الخزنة'); if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return toast('اختار اليوم');
     if (isLocked(d)) return lockToast();
+    if (!inc && negGate($('#ccOk'), -e.amt, ngSt)) return;
     (e.hist = e.hist || []).push(snapshot(e));
     e.chk = Object.assign({}, e.chk, {st: 'c', cdate: d}); e.vault = v; rememberVault('تحويل', v); touch(e);
     saveDB(); closeModal(); route(); toast(`اتسجل صرف الشيك ✔ ${inc ? 'ودخل' : 'وطلع من'} ${vName(v)}`);
@@ -6213,7 +6253,7 @@ function renderReports() {
     </div>
     <h2 class="rph">${esc(R.title)}<small>${esc(R.period)}</small></h2>
     ${repKind === 'profit' ? profitChart(R.rows) : ''}
-    ${R.rows.some(r => !r.empty) ? `<div class="ldgw"><table class="ldg rp ${R.cols.length > 5 ? 'wide' : ''} ${repKind === 'profit' ? 'pft' : ''}"><thead><tr>${R.cols.map(c => `<th>${esc(c.h)}</th>`).join('')}</tr></thead><tbody>
+    ${R.rows.some(r => !r.empty) ? `<div class="ldgw"><table class="ldg rp ${R.cols.length > 5 ? 'wide' : ''} ${repKind === 'profit' ? 'pft' : ''} ${repKind === 'cash' ? 'csh' : ''}"><thead><tr>${R.cols.map(c => `<th>${esc(c.h)}</th>`).join('')}</tr></thead><tbody>
       ${R.rows.filter(r => !r.empty).map(r => `<tr class="${r.cls || ''}" ${r.id ? `data-p="${esc(r.id)}"` : ''}>${r.cells.map((x, i) => `<td class="${R.cols[i].c}">${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '<div class="empty">مفيش حاجة في التقرير ده</div>'}
     ${R.warn ? `<a class="ldpend" href="#mkt">${esc(R.warn)}</a>` : ''}
     <div class="card" style="margin-top:10px">${R.sum.map(([a, b, st]) => `<div class="bl ${st || ''}"><span>${esc(a)}</span><b>${esc(b)}</b></div>`).join('')}</div>
@@ -6386,11 +6426,20 @@ function jrdCalc(d) {
   for (const e of db.entries) if (!e.del && (e.date < before || e.kind === 'open')) bal.set(e.party, (bal.get(e.party) || 0) + (e.dr || 0) - (e.cr || 0));
   const n = {mkt: 0, sup: 0, cnt: {mkt: 0, sup: 0}, vault: db.vaults.length ? vaultBal('', before) : 0};
   liveParties().forEach(p => { if (p.noTot) return; const b = bal.get(p.id) || 0; if (!b || n.cnt[p.sec] === undefined) return; if (p.sec === 'sup') n.sup -= b; else n[p.sec] += b; n.cnt[p.sec]++; });   // الحساب الفرعي ميدخلش زي الرئيسية
+  /* الشيكات اللي لسه متصرفتش يوم الجرد (بطلبه 30/10/2026): الوارد اتخصم من العميل ومدخلش الخزنة لسه فبيتحسب مع اللي ليك،
+     والصادر اتخصم من المورد ولسه مطلعش من الخزنة فبيتخصم. اللي اتصرف أو رجع بعد يوم الجرد كان لسه في الدرج يومها */
+  n.chkIn = 0; n.chkOut = 0; n.cnt.chkIn = 0; n.cnt.chkOut = 0;
+  for (const e of db.entries) {
+    if (e.del || !e.chk || !isPay(e) || e.date >= before) continue;
+    const c = e.chk, b = c.st === 'b' ? E.get(c.bnc) : null;
+    if (!(c.st === 'p' || (c.st === 'c' && vdate(e) >= before) || (c.st === 'b' && (!b || b.del || b.date >= before)))) continue;
+    const k = e.kind === 'pay' ? 'chkIn' : 'chkOut'; n[k] += e.amt || 0; n.cnt[k]++;
+  }
   return n;
 }
 function jrdTot(n, stock) {
-  const own = n.mkt + (n.site || 0) + n.vault + stock + (n.rest || 0);
-  return {own, owe: n.sup, net: own - n.sup};
+  const own = n.mkt + (n.site || 0) + n.vault + (n.chkIn || 0) + stock + (n.rest || 0), owe = n.sup + (n.chkOut || 0);
+  return {own, owe, net: own - owe};
 }
 const jrdSaved = () => db.stks.filter(s => !s.del).sort((a, b) => b.date.localeCompare(a.date) || (b.at || 0) - (a.at || 0));
 const jrdBefore = d => jrdSaved().find(s => s.date < d) || null;
@@ -6399,10 +6448,12 @@ let jrDate = '', jrStock = null;
 function jrdLines(n, stock) {
   if (n.old) return [...(n.mkt ? [{t: 'r', n: 'أرصدة العملاء', s: 'من ورقة الجرد', a: n.mkt}] : []), ...(n.noStock ? [] : [{t: 'r', n: 'قيمة المخزون', s: 'من ورقة الجرد', a: stock}]),
     ...(n.rest ? [{t: 'r', n: 'باقي البنود', s: 'خزن وموردين وغيره', a: n.rest}] : []), {t: 'f', n: '= صافي الجرد', a: jrdTot(n, stock).net}];
-  const T = jrdTot(n, stock), cnt = k => n.cnt[k] ? `${n.cnt[k]} حساب` : '', L = [
+  const T = jrdTot(n, stock), cnt = k => n.cnt[k] ? `${n.cnt[k]} حساب` : '', chk = k => `${n.cnt[k]} ${n.cnt[k] > 2 && n.cnt[k] < 11 ? 'شيكات' : 'شيك'}`, L = [
     {t: 'r', n: 'أرصدة العملاء', s: cnt('mkt'), a: n.mkt + (n.site || 0)},
-    {t: 'r', n: 'النقدية بالخزن', s: '', a: n.vault}, {t: 'r', n: 'قيمة المخزون', s: 'بالمصنع', a: stock, id: 'jrStockV'},
-    {t: 's', n: '= إجمالي الأصول', a: T.own}, {t: 'r', n: '− مستحقات الموردين', s: cnt('sup'), a: n.sup, neg: 1}];
+    {t: 'r', n: 'النقدية بالخزن', s: '', a: n.vault}, ...(n.chkIn ? [{t: 'r', n: 'شيكات معانا لسه متصرفتش', s: chk('chkIn'), a: n.chkIn}] : []),
+    {t: 'r', n: 'قيمة المخزون', s: 'بالمصنع', a: stock, id: 'jrStockV'},
+    {t: 's', n: '= إجمالي الأصول', a: T.own}, {t: 'r', n: '− مستحقات الموردين', s: cnt('sup'), a: n.sup, neg: 1},
+    ...(n.chkOut ? [{t: 'r', n: '− شيكات كتبناها لسه متصرفتش', s: chk('chkOut'), a: n.chkOut, neg: 1}] : [])];
   L.push({t: 'f', n: '= صافي الجرد', a: T.net});
   return L;
 }

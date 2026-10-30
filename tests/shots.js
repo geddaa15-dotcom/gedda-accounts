@@ -148,7 +148,7 @@ const ACC = (sfx, vp, extra = {}) => [
 const SCREENS = [
   ...ACC('m', MOB),
   {name: 'acc-rep-ah-m', app: 'acc', vp: MOB, full: true, go: accEval(`go('rep'); repKind = 'ah'; repMode = 'week'; repDay = addDays(todayISO(), -3); renderReports()`)},
-  {name: 'acc-lock-m', app: 'acc', vp: MOB, go: accEval("$('#bLock').click()")},
+  {name: 'acc-lock-m', app: 'acc', vp: MOB, drop: true, go: accEval("$('#bLock').click()")},   // drop: البرنامج اتقفل، فاللي بعدها بيفتح صفحة جديدة
   {name: 'acc-act-m', app: 'acc', vp: MOB, full: true, go: accEval("actDay = ''; go('act')")},
   {name: 'acc-who-m', app: 'acc', vp: MOB, go: accEval(`const e = [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'pay').pop(); e.by = 'كريم'; e.cby = 'سامح'; openEntry(${party}, e)`)},
   {name: 'acc-me-m', app: 'acc', vp: MOB, go: accEval('askMe(true)')},
@@ -161,6 +161,8 @@ const SCREENS = [
   {name: 'acc-via-man-m', app: 'acc', vp: MOB, full: true, go: accEval(VIASHOT + `go('p/p_shot_via')`)},
   ...ACC('l', LAP),
   {name: 'acc-party-l1100', app: 'acc', vp: LAP2, go: accEval(`go('p/' + ${party}.id)`)},
+  /* لاب 1366×768 (المتصفح بياخد حوالي 657 من الطول): القايمة الجانبية كلها باينة لحد "احفظ نسخة" */
+  {name: 'acc-list-l768', app: 'acc', vp: {width: 1366, height: 657}, go: accEval("tab = 'mkt'; go('home'); renderHome()")},
   {name: 'acc-cash-wk-m', app: 'acc', vp: MOB, go: accEval("cashSide = 'me'; cashMode = 'week'; go('cash'); renderCash()")},
   {name: 'acc-cash-rng-m', app: 'acc', vp: MOB, go: accEval("cashSide = 'me'; cashMode = 'range'; go('cash'); renderCash()")},
   {name: 'acc-cash-open-m', app: 'acc', vp: MOB, full: true, go: accEval(`cashOpenV = true; cashVault = ''; go('cash'); renderCash()`)},
@@ -192,6 +194,9 @@ const SCREENS = [
   {name: 'pdf-stmt-sup', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`const sp = liveParties().find(p => p.sec === 'sup'); go('p/' + sp.id); const s = stmtData(sp.id, todayISO().slice(0, 8) + '01', todayISO()); buildStmtPages(sp, s); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
   {name: 'pdf-via-sup', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(VIASHOT + `go('p/' + ${SUP}.id); buildStmtPages(${SUP}, stmtData(${SUP}.id, '', '')); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
   {name: 'pdf-ldg', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`cashView = 'date'; cashMode = 'range'; cashFrom = addDays(todayISO(), -20); cashTo = todayISO(); cashOpenV = false; go('cash'); renderCash(); buildReportPages(ldgReport(ldgItems(cashRange()[0], cashRange()[1]), cashRange()[0], cashRange()[1])); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
+  {name: 'pdf-inv', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`const e = [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'inv' && !e.del && (e.lines || []).length > 1).pop(); buildStmtPages(${party}, invOnlyData(${party}, e)); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
+  /* الخزنة هتنزل تحت الصفر: التنبيه قبل الحفظ (drop: البيانات اتغيرت، فاللي بعدها بيفتح صفحة جديدة) */
+  {name: 'acc-exp-neg-m', app: 'acc', vp: MOB, drop: true, go: async A => { await accEval(`const b = vaultBal(''), u = nowS(), r = {id: 't_shot_neg', type: 'inc', amt: 500000 - b, date: todayISO(), note: '', vault: defVault(), to: '', cat: catsL('inc')[0].id, at: u, upd: u, del: false, hist: []}; db.txs.push(r); IDX.tx.set(r.id, r); txModal('exp')`)(A); await A.fill('#txA', '8000'); await A.dispatchEvent('#txA', 'input'); await A.fill('#txN', 'نقل'); await A.click('#txOk'); await A.waitForSelector('#ngBox'); }},
   {name: 'pdf-qt', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`const q = IDX.qt.get('q_shot0'); buildStmtPages(qtParty(q), qtStmt(q)); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
   {name: 'pdf-qt-plain', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`const q = IDX.qt.get('q_shot0'); buildStmtPages(qtParty(q), qtStmt(q, true)); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
   {name: 'pdf-rcv', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`buildRcvPages(${party}, [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'inv' && !e.del && (e.lines || []).length > 1).pop(), false); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
@@ -217,6 +222,10 @@ function accExtra(iso0, now) {
   /* تحصيلين في الخزنة: واحد سجّله الجهاز ده وواحد سجّله الشريك التاني من تليفونه (cby)، علشان يبان مين استلم ومين دفع */
   const c1 = liveParties().find(p => p.name.startsWith('مؤسسة تجربة للمقاولات'));
   [[0, 850000, ''], [1, 600000, 'كريم']].forEach(([n, amt, hn]) => { const e = addEntry({party: c1.id, kind: 'pay', date: d(n), amt, method: 'نقدي', note: '', vault: v}); applyAmounts(e); e.desc = docDesc(e); if (hn) Object.assign(e, {by: hn, cby: hn, bu: e.upd}); });
+  /* شيكين لسه متصرفوش: واحد وارد من عميل وواحد صادر لمورد (صفحة الشيكات والجرد) */
+  const c2 = liveParties().find(p => p.name === 'معرض تجربة الأمل'), s1 = liveParties().find(p => p.name === 'مورد تجربة الخامات');
+  [[c2, 'pay', 4, 2500000, '100234', 10], [s1, 'ppay', 3, 1800000, '200871', 5]].forEach(([p, kind, n, amt, no, due]) => {
+    const e = addEntry({party: p.id, kind, date: d(n), amt, method: 'شيك', note: '', vault: '', chk: {st: 'p', cdate: '', bnc: '', no, bank: 'بنك تجربة', due: d(-due)}}); applyAmounts(e); e.desc = docDesc(e); });
   /* شريكين ومسحوبات من أول الشهر (للمقارنة) */
   putSet('partners', {on: true, amt: 0, vault: v, start: '', list: [{id: 'pa', name: 'سامح', from: d(40), vault: ''}, {id: 'pb', name: 'كريم', from: d(40), vault: ''}]});
   ensurePartCats();
@@ -275,6 +284,7 @@ async function accPage(browser, base, vp, dark) {
         if (s.full) { const h = await X.evaluate(() => Math.max(document.documentElement.scrollHeight, innerHeight)); await X.setViewportSize({width: s.vp.width, height: Math.min(h, 6000)}); await X.waitForTimeout(300); }
         if (s.el) await X.locator(s.el).first().screenshot({path: f}); else await X.screenshot({path: f});
         if (s.full) await X.setViewportSize(s.vp);
+        if (s.drop) { await X.context().close(); delete pages[key]; }
         console.log('✔', s.name);
       } catch (e) { console.log('✖', s.name, e.message.split('\n')[0]); }
     }

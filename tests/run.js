@@ -552,6 +552,24 @@ const T0 = Date.now();
         db.txs.slice(n0).forEach(x => { x.del = true; touch(x); }); saveDB(); closeModal(); r.push(vaultBal(v) === b0); return r; });
       eq('جرد الخزنة: ملاحظة العجز بتتسجل، والحركة بتاريخ قبل الجرد بتسأل "كانت معاك؟": أيوه = الرصيد بعد الجرد مبيتغيرش، لأ = بيزيد، وحركة النهارده مبتسألش، والأرباح مش متأثرة بالتصحيح', r, [true, true, true, true, true, true, true, true, true]);
     }
+    {   // الخزنة بالسالب (بطلبه 30/10/2026): بيسأل مرة لما الرصيد يعدّي الصفر، وتنبيه فوق في الرئيسية لحد ما يتظبط
+      const r = await A.evaluate(() => {
+        const v = vaultsL()[0].id, b0 = vaultBal(''), n0 = db.txs.length, ne0 = db.entries.length, r = [b0 > 0];
+        const exp = amt => { txModal('exp'); $('#txA').value = fmtP(amt); $('#txN').value = 'سالب تجربة'; $('#txC').value = catsL('exp')[0].id; $('#txV').value = v; $('#txOk').click(); };
+        exp(b0 + 5000);
+        r.push(!!$('#ngBox') && $('#ngBox').textContent.includes('هيبقى ' + fmtP(-5000) + ' بالسالب'), $('#txOk').textContent.includes('متأكد'), db.txs.length === n0);
+        $('#txOk').click(); r.push(db.txs.length === n0 + 1, vaultBal('') === -5000, !$('#mask').classList.contains('on'));
+        go('home'); renderHome(); r.push(!!$('#negCash') && $('#negCash').textContent.includes(fmtP(-5000)));
+        exp(1000); r.push(!$('#ngBox') && db.txs.length === n0 + 2);   // بالسالب أصلاً: مبيسألش تاني، والتنبيه اللي فوق فاضل
+        db.txs.slice(n0).forEach(x => { x.del = true; touch(x); }); saveDB(); renderHome(); r.push(vaultBal('') === b0, !$('#negCash'));
+        /* دفعة لمورد ومسحوبات شريك بنفس السؤال، ولو رجعت مبيتسجلوش */
+        const sp = liveParties().find(p => p.sec === 'sup' && !p.noTot);
+        payModal(sp, 'ppay'); $('#pyAmt').value = fmtP(b0 + 100); $('#pyV').value = v; $('#pyOk').click();
+        r.push(!!$('#ngBox') && db.entries.length === ne0); $('#pyX').click();
+        partnerTxModal(null, 'draw'); r.push(!$('#ptP') || !$('#ptP').value || (($('#ptA').value = fmtP(b0 + 100)), ($('#ptV').value = v), $('#ptOk').click(), !!$('#ngBox') && db.txs.length === n0 + 2)); closeModal();
+        return r; });
+      eq('الخزنة بالسالب: بيسأل قبل الحفظ لما الرصيد يعدّي الصفر، وتنبيه في الرئيسية لحد ما يتظبط، ودفعة المورد ومسحوبات الشريك بنفس السؤال', r, [true, true, true, true, true, true, true, true, true, true, true, true, true]);
+    }
     sec('٦) دفعة عميل بتدخل الخزنة');
     await openParty(A, 'عميل تجربة اتنين'); await A.click('#fbPay'); await A.fill('#pyAmt', '70'); await A.click('#pyOk'); await closed(A);
     eq('الدفعة نزلت على العميل', await bal(A, 'عميل تجربة اتنين'), -7000);
@@ -994,6 +1012,19 @@ const T0 = Date.now();
     await A.fill('#jrS', '1000'); await A.settle(100);
     const J1 = await A.evaluate(() => { const n = jrdCalc(todayISO()), T = jrdTot(n, 100000); return [$('#jrStockV').textContent, $('#jrNet').textContent.trim().startsWith(fmtP(T.net)), T.net === n.mkt + n.vault + 100000 - n.sup]; });
     eq('المخزون بيتكتب مبلغ والصافي بيتحسب على طول', J1, ['1,000', true, true]);
+    /* الشيكات اللي لسه متصرفتش (بطلبه 30/10/2026): الشيك ميغيّرش صافي الجرد لا وقت ما يتسجل ولا وقت ما يتصرف أو يرجع */
+    eq('الجرد: الشيك اللي لسه متصرفش (الوارد مع اللي ليك والصادر بيتخصم)، ولو اتصرف أو رجع بعد يوم الجرد كان لسه في الدرج يومها، والصافي مبيتغيرش', await A.evaluate(() => {
+      const t = todayISO(), y = addDays(t, -1), c = liveParties().find(p => p.sec !== 'sup' && !p.noTot), s = liveParties().find(p => p.sec === 'sup' && !p.noTot);
+      const net = d => jrdTot(jrdCalc(d), 0).net, n0 = jrdCalc(t), nY0 = jrdCalc(y), net0 = net(t), netY0 = net(y);
+      const mk = (p, kind, amt) => { const e = addEntry({party: p.id, kind, date: y, amt, method: 'شيك', note: '', vault: '', chk: {st: 'p', cdate: '', bnc: '', no: '9' + amt, bank: '', due: t}}); applyAmounts(e); return e; };
+      const a = mk(c, 'pay', 70000), b = mk(s, 'ppay', 30000), n1 = jrdCalc(t), L = jrdLines(n1, 0).map(x => x.n);
+      const r = [n1.chkIn - n0.chkIn, n1.chkOut - n0.chkOut, net(t) === net0, net(y) === netY0, L.includes('شيكات معانا لسه متصرفتش'), L.includes('− شيكات كتبناها لسه متصرفتش')];
+      a.chk = Object.assign({}, a.chk, {st: 'c', cdate: t}); a.vault = defVault();
+      const bn = addEntry({party: s.id, kind: 'bnc', of: 'ppay', ref: b.id, chkno: '', amt: 30000, date: t, note: ''}); applyAmounts(bn); b.chk = Object.assign({}, b.chk, {st: 'b', bnc: bn.id});
+      const nT = jrdCalc(t), nY = jrdCalc(y);
+      r.push(nT.chkIn - n0.chkIn, nY.chkIn - nY0.chkIn, nT.chkOut - n0.chkOut, nY.chkOut - nY0.chkOut, net(t) === net0, net(y) === netY0);
+      [a, b, bn].forEach(x => { x.del = true; x.delAt = nowS(); touch(x); }); saveDB();
+      return r; }), [70000, 30000, true, true, true, true, 0, 70000, 0, 30000, true, true]);
     await A.click('#jrSave'); await A.settle(200);
     eq('الجرد اتحفظ بأرقامه', await A.evaluate(() => { const s = jrdSaved(); return [s.length, s[0].stock, s[0].date === todayISO(), !!$('#p-jrd tr[data-s]')]; }), [1, 100000, true, true]);
     await A.click('#jrSave'); await A.settle(200);
@@ -1073,7 +1104,9 @@ const T0 = Date.now();
     eq('إلغاء الدفعة بيلغي اللي عند اللي حوّل', [await bal(A, 'مورد تحويل تجربة'), await bal(A, 'شخص بيحوّل تجربة')], [0, 0]);
     await A.evaluate(id => { closeModal(); openEntry(P.get('p_vt1'), E.get('e_vp_' + id)); }, vid); await A.settle(150); await A.click('#emBack'); await closed(A);
     eq('رجوع الدفعة الملغية بيرجّع الاتنين', [await bal(A, 'مورد تحويل تجربة'), await bal(A, 'شخص بيحوّل تجربة')], [600000, -606000]);
-    await A.evaluate(id => openEntry(P.get('p_vt0'), E.get(id)), vid); await A.settle(150); await A.click('#pyM button:first-child'); await A.click('#pyOk'); await closed(A);
+    await A.evaluate(id => openEntry(P.get('p_vt0'), E.get(id)), vid); await A.settle(150); await A.click('#pyM button:first-child'); await A.click('#pyOk');
+    if (await A.$('#ngBox')) await A.click('#pyOk');   // الخزنة هتنزل تحت الصفر: بيسأل الأول (negGate)
+    await closed(A);
     eq('لو بقت من الخزنة: اللي حوّل بيرجع صفر والفلوس طلعت من الخزنة', [await bal(A, 'شخص بيحوّل تجربة'), await vbal(A, '') - VB0], [0, -600000]);
 
     sec('١٤د) رقم التليفون بالزيرو، واختيار الرقم من أسماء الموبايل');
@@ -1107,6 +1140,21 @@ const T0 = Date.now();
       const t = $('#toast').getBoundingClientRect(), hit = [...$$('.top button')].filter(b => b.offsetParent && b.id !== 'bSyncM').some(b => { const r = b.getBoundingClientRect(); return r.right > t.left && r.left < t.right && r.bottom > t.top && r.top < t.bottom; });
       return [t.top < 20, t.height < 50, hit]; }), [true, true, false]);
     eq('رسالة التراجع اختفت لوحدها في أقل من 5 ثواني', await A.waitForFunction(() => getComputedStyle($('#toast')).display === 'none', null, {timeout: 5000}).then(() => true, () => false), true);
+    /* تقرير الخزنة على الموبايل (بطلبه 30/10/2026): كروت جوه الشاشة من غير سحب بالعرض، والمبالغ تحت بعض */
+    eq('الموبايل: تقرير الخزنة كروت جوه الشاشة من غير سحب بالعرض', await A.evaluate(() => {
+      go('rep'); repKind = 'cash'; repMode = 'year'; repYear = todayISO().slice(0, 4); renderReports();
+      const w = $('#p-rep .ldgw'), t = $('#p-rep table.csh');
+      return [$$('#p-rep .ldg.csh tbody tr').length > 1, w.scrollWidth <= w.clientWidth + 1, t.getBoundingClientRect().right <= innerWidth + 1, getComputedStyle($('#p-rep .ldg.csh thead')).display]; }), [true, true, true, 'none']);
+    await colOk('الموبايل — تقرير الخزنة (المبالغ)', A, '#p-rep', '.ldg.csh tbody td:nth-child(4),.ldg.csh tbody td:nth-child(5)');
+    await colOk('الموبايل — تقرير الخزنة (الرصيد)', A, '#p-rep', '.ldg.csh tbody td:nth-child(6)');
+    /* اللاب 1366×768 (المتصفح بياخد حوالي 657 من الطول): كل زراير القايمة الجانبية باينة لحد "احفظ نسخة"، مفيش حاجة ورا "قفل" */
+    for (const [w, h] of [[1366, 657], [1440, 789], [1920, 960]]) {
+      await A.setViewportSize({width: w, height: h});
+      eq(`اللاب ${w}×${h}: آخر زرار في القايمة الجانبية باين فوق "قفل"`, await A.evaluate(() => {
+        const bs = [...$$('nav button')].filter(b => b.offsetParent), last = bs[bs.length - 1];
+        return [last.id, Math.round(last.getBoundingClientRect().bottom) <= Math.round($('#bLock').getBoundingClientRect().top)]; }), ['bBk', true]);
+    }
+    await A.setViewportSize({width: 400, height: 860}); await A.settle(200);
     await A.evaluate(() => { tab = 'mkt'; go('home'); }); await A.settle(200);
     eq('الموبايل: مفيش زرار الليلي فوق، وزرار الحساب الجديد مش نفس ＋ بتاع التسجيل السريع، وسطر "آخر دفعة" تحت الاسم', await A.evaluate(() => [!!$('#bTheme').offsetParent, $('#bNewParty').textContent.includes('＋'), !!$('#bNewParty svg'),
       [...$$('#hList .lpy')].some(x => x.offsetParent && x.textContent.startsWith('آخر دفعة'))]), [false, false, true, true]);
@@ -1289,7 +1337,7 @@ const T0 = Date.now();
     {   // الاتنين على نفس الحسابات: الاسم على كل حركة، واللي اتعمل، وتحذير التكرار بالاسم، ومقارنة الشركاء، وقفل الشهر
       const r = await A.evaluate(async () => {
         closeModal(); const me = meName(), r = [me === 'جهاز تجربة'], n0 = db.txs.length, v = vaultsL()[0].id, c = catsL('exp')[0].id;
-        const mk = () => { txModal('exp'); $('#txA').value = fmtP(1234); $('#txD').value = todayISO(); $('#txC').value = c; $('#txV').value = v; $('#txOk').click(); };
+        const mk = () => { txModal('exp'); $('#txA').value = fmtP(1234); $('#txD').value = todayISO(); $('#txC').value = c; $('#txV').value = v; $('#txOk').click(); if ($('#ngBox')) $('#txOk').click(); };   // الخزنة هتنزل تحت الصفر: بيسأل الأول (negGate)
         mk(); const t = db.txs[n0]; r.push(db.txs.length === n0 + 1 && t.by === me && t.cby === me);
         mk(); r.push(db.txs.length === n0 + 1 && $('#toast').textContent.includes('بواسطة ' + me) && $('#txOk').textContent.includes('متأكد'));
         $('#txOk').click(); r.push(db.txs.length === n0 + 2);
@@ -1310,7 +1358,7 @@ const T0 = Date.now();
         const mk = (id, type, amt) => { const x = {id, type, amt, vault: v, cat: catsL(type)[0].id, date: t0, note: '', at: now, upd: now, del: false, hist: [], by: N, cby: N, bu: now, sy: now}; db.txs.push(x); IDX.tx.set(x.id, x); return x; };
         const x0 = mk('t_hn0', 'inc', 70000), x1 = mk('t_hn1', 'exp', 432100);
         txModal('exp'); r.push(!$('#txH') && !$('#modal').textContent.includes('مين اللي'));
-        $('#txA').value = fmtP(246800); $('#txC').value = catsL('exp')[0].id; $('#txOk').click();
+        $('#txA').value = fmtP(246800); $('#txC').value = catsL('exp')[0].id; $('#txOk').click(); if ($('#ngBox')) $('#txOk').click();   // الخزنة هتنزل تحت الصفر: بيسأل الأول (negGate)
         const t = db.txs[db.txs.length - 1]; r.push(t.amt === 246800 && t.cby === me && handOf(t) === me && handOf(x0) === N);
         const cu = liveParties().find(p => p.sec !== 'sup'); payModal(cu, 'pay'); r.push(!$('#pyH') && !$('#modal').textContent.includes('مين اللي')); closeModal();
         /* بالنوع: كارت "مين استلم ومين دفع" = نفس إجمالي اتحصّل/اتدفع، والدوس على اسم بيفتح حركاته بس */

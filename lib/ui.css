@@ -275,6 +275,8 @@ table.fbt{width:100%;border-collapse:collapse}
 .fbt tr.fbhr{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .fbt td>b.fbnn{color:var(--sub)}
 .kshd{display:grid;gap:2px;text-align:left}.ksheet .kshd small{font-size:var(--f2);font-weight:700}.kshd .n{font-size:var(--f3)}
+/* نافذة المصروف: سطر "البند اتختار لوحده" تحت البند */
+.txch{margin:6px 0 0;font-size:var(--f1);font-weight:700;color:var(--green)}
 @media (min-width:1000px){#fbL{max-width:860px}.fbpdf{max-width:860px}}
 
 /* قايمة أدوات الخزنة (⋯ على الموبايل) */

@@ -4110,13 +4110,13 @@ const PAGE_LM = Date.parse(document.lastModified), PAGE_AT = Date.now();
 const verText = (lm = PAGE_LM, at = PAGE_AT) => lm && at - lm > 3000 ? `آخر تحديث للبرنامج على الجهاز ده: ${dispDate(isoOf(lm))} ${dispTime(lm)}` : '';
 /* ====================== الإصدار و"عن البرنامج" ======================
    مع أي تعديل يترفع: زوّد APP_VER (تعديل صغير 1.1، 1.2… وحاجة كبيرة 2.0) وغيّر APP_DATE، واكتب أهم الجديد في APP_NEWS (3-5 سطور بالعامية البسيطة) */
-const APP_VER = '1.6', APP_DATE = '2026-10-30';
+const APP_VER = '1.7', APP_DATE = '2026-10-30';
 const APP_NEWS = [
+  'بند مصروف جديد اسمه "البيت" جنب نقل وخامات وباقي البنود',
+  'البند بيتختار لوحده: أول ما تكتب المصروف (زي "بنزين")، لو كتبته قبل كده على نفس البند مرتين أو أكتر البرنامج بيختاره لوحده ويكتب تحته "✓ البند اتختار لوحده". ولو مش متأكد بيسيبه زي ما هو، ولو غيّرته بإيدك مبيلمسوش',
+  'خانة الملاحظة في المصروف والإيراد بقت تحت المبلغ على طول علشان تكتبها الأول',
   'الخزنة بالتاريخ: تحت كل حركة اسم اللي سجّلها من تليفونه بخط صغير، وكل واحد بلون، من غير أي اختيار، والقديم كمان',
-  'كارت جديد في الخزنة "بالنوع": "مين استلم ومين دفع" في الفترة، كل واحد لوحده، والدوس على الاسم بيفتح حركاته بس',
-  'البحث في الخزنة بيلاقي بالاسم كمان',
-  'عرض السعر بقى ليه نوعين زي إذن الاستلام: باللوجو وبيانات الشركة، أو سادة من غير لوجو',
-  'دفعة المورد بقى فيها "📲 حد حوّلها": لو حد حوّل للمورد بدالك (فودافون كاش مثلاً)، المورد بينزل واللي حوّل بيزيد اللي ليه، والخزنة متتحركش'];
+  'كارت جديد في الخزنة "بالنوع": "مين استلم ومين دفع" في الفترة، كل واحد لوحده، والدوس على الاسم بيفتح حركاته بس'];
 function aboutModal() {
   modal(`<div class="about">
     <div class="mkr" aria-hidden="true"><span class="mkr-m">MA</span><span class="mkr-k">DESIGNED &amp; DEVELOPED BY</span><span class="mkr-n">MOSTAFA ABD ELHADY</span></div>
@@ -5285,13 +5285,16 @@ function txModal(type, t, opts = {}) {
   const isNew = !t, vs = vaultsL(), v0 = t ? t.vault : (opts.vault || cashVault || defVault());
   if (type === 'tr' && vaultsFor(v0).length < 2) return toast('محتاج خزنتين على الأقل. زوّد خزنة من "الخزن والبنود".');
   const cats = catsL(type);
+  /* الملاحظة في المصروف والإيراد تحت المبلغ على طول: أول ما تكتبها البند بيتختار لوحده (catLearn) */
+  const noteF = `<div class="fld"><label>ملاحظة (اختياري)</label><input class="inp" id="txN" value="${esc(t ? t.note || '' : '')}" placeholder="${type === 'exp' ? 'اكتب المصروف، زي: بنزين، شاي' : type === 'inc' ? 'اكتب الإيراد' : ''}" autocomplete="off"></div>`;
   modal(`<h3 class="${type}">${isNew ? (type === 'tr' ? 'تحويل بين الخزن ⇄' : TXT[type] + (type === 'exp' ? ' −' : ' +')) : 'تعديل ' + TXT[type]}</h3>
     <div class="fld"><label>المبلغ</label><input class="inp num amt" id="txA" placeholder="0" value="${t ? fmtP(t.amt) : ''}"></div>
+    ${type === 'tr' ? '' : noteF}
     ${type === 'tr' ? `<div class="g2 fld"><div><label>من خزنة</label><select class="inp" id="txV">${vaultOpts(v0)}</select></div><div><label>إلى خزنة</label><select class="inp" id="txTo">${vaultOpts(t ? t.to : (vs.find(v => v.id !== v0) || {}).id)}</select></div></div>`
-      : `<div class="fld"><label>البند</label><select class="inp" id="txC">${cats.map(c => `<option value="${esc(c.id)}" ${t && t.cat === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}${t && t.cat && !cats.some(c => c.id === t.cat) ? `<option value="${esc(t.cat)}" selected>${esc(cName(t.cat))}</option>` : ''}</select></div>
+      : `<div class="fld"><label>البند</label><select class="inp" id="txC">${cats.map(c => `<option value="${esc(c.id)}" ${t && t.cat === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}${t && t.cat && !cats.some(c => c.id === t.cat) ? `<option value="${esc(t.cat)}" selected>${esc(cName(t.cat))}</option>` : ''}</select><p class="txch" id="txCH" hidden>✓ البند اتختار لوحده من المرات اللي فاتت</p></div>
          <div class="fld"><label>الخزنة</label><select class="inp" id="txV">${vaultOpts(v0)}</select></div>`}
     <div class="fld"><label>التاريخ</label><input class="inp" id="txD" type="date" value="${t ? t.date : opts.date || todayISO()}"></div>
-    <div class="fld"><label>ملاحظة (اختياري)</label><input class="inp" id="txN" value="${esc(t ? t.note || '' : '')}" autocomplete="off"></div>
+    ${type === 'tr' ? noteF : ''}
     ${t ? histHtml(t) : ''}
     <div class="stack" style="margin-top:8px"><button class="btn ${type === 'exp' ? 'redf' : type === 'inc' ? 'green' : 'gold'}" id="txOk" type="button">${isNew ? 'حفظ' : 'حفظ التعديل'}</button>
     ${isNew && type !== 'tr' ? '<button class="btn line sm again" id="txAgain" type="button">حفظ وسجّل تاني ↻</button>' : ''}
@@ -5300,6 +5303,18 @@ function txModal(type, t, opts = {}) {
   bindMoney($('#txA'));
   $('#txX').onclick = closeModal;
   if (isNew) setTimeout(() => $('#txA') && $('#txA').focus(), 50);
+  /* البند لوحده (حركة جديدة بس): لو الملاحظة اتعلمها قبل كده بيختار بندها، ولو اتمسحت بيرجع زي ما كان. لو اخترت البند بإيدك مبيلمسوش تاني */
+  if (isNew && type !== 'tr') {
+    const guess = catLearn(type), c0 = $('#txC').value;
+    let auto = false, manual = false;
+    $('#txC').addEventListener('change', () => { manual = true; $('#txCH').hidden = true; });
+    $('#txN').addEventListener('input', () => {
+      if (manual) return;
+      const g = guess($('#txN').value);
+      if (g) { $('#txC').value = g; auto = true; $('#txCH').hidden = false; }
+      else if (auto) { $('#txC').value = c0; auto = false; $('#txCH').hidden = true; }
+    });
+  }
   const cnSt = {a: null};
   let again = false, txWarned = false;   // "حفظ وسجّل تاني" (بطلبه 17/10/2026): النافذة بتتفتح تاني فاضية بنفس التاريخ والخزنة
   if ($('#txAgain')) $('#txAgain').onclick = () => { again = true; $('#txOk').onclick(); };
@@ -5402,7 +5417,27 @@ function ensurePayCats() {
   [['c_inc0', 'inc', 'تحصيل من عميل'], ['c_payout', 'exp', 'دفعات للموردين']].forEach(([id, type, name]) => {
     if (!IDX.cat.get(id)) { const r = {id, type, name, ord: 99, upd: 1, del: false}; db.cats.push(r); IDX.cat.set(id, r); n++; }
   });
+  /* بند مصروف "البيت" (بطلبه 30/10/2026): رقم ثابت علشان الجهازين ميعملوش اتنين. مبيتعملش لو فيه بند بنفس الاسم، ولو اتلغى مبيرجعش */
+  if (!IDX.cat.get('c_home') && !db.cats.some(c => !c.del && c.type === 'exp' && norm(c.name) === norm('البيت'))) {
+    const r = {id: 'c_home', type: 'exp', name: 'البيت', ord: 6.5, upd: 1, del: false}; db.cats.push(r); IDX.cat.set(r.id, r); n++;
+  }
   return n;
+}
+/* البند لوحده من الملاحظة (بطلبه 30/10/2026): البرنامج بيتعلم من المصروفات والإيرادات اللي فاتت.
+   الملاحظة كلها لو اتكتبت قبل كده مرتين على الأقل، أو كلمة منها (3 حروف أو أكتر) 3 مرات، وكانت على نفس البند في 80% من المرات أو أكتر = البند ده.
+   أقل من كده، أو كلمتين كل واحدة على بند = مبيختارش حاجة. مسحوبات الشركاء والبنود الثابتة مش داخلين */
+function catLearn(type) {
+  const live = new Set(catsL(type).map(c => c.id)), by = new Map();
+  const add = (k, c) => { const m = by.get(k) || by.set(k, new Map()).get(k); m.set(c, (m.get(c) || 0) + 1); };
+  const words = n => [...new Set(n.split(' ').filter(w => w.length > 2))];
+  for (const t of db.txs) if (!t.del && !t.pt && t.type === type && t.note && live.has(t.cat)) { const n = norm(t.note); add('=' + n, t.cat); words(n).forEach(w => add(w, t.cat)); }
+  const best = (k, min) => { const m = by.get(k); if (!m) return ''; let tot = 0, top = '', tv = 0; m.forEach((v, c) => { tot += v; if (v > tv) { top = c; tv = v; } }); return tv >= min && tv >= tot * 0.8 ? top : ''; };
+  return txt => {
+    const n = norm(txt); if (n.length < 2) return '';
+    const g = best('=' + n, 2); if (g) return g;
+    const ws = words(n).map(w => best(w, 3)).filter(Boolean);
+    return ws.length && ws.every(c => c === ws[0]) ? ws[0] : '';
+  };
 }
 /* ---------- الشركاء: مرتب أسبوعي كل خميس + مسحوبات ----------
    الإعدادات سجل مشترك (set) اسمه partners: {on, amt بالقرش, vault, start, list: [{id, name, from, to}]}.

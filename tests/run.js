@@ -1328,6 +1328,21 @@ const T0 = Date.now();
       eq('مين استلم ومين دفع: من غير اختيار (اللي سجّل من تليفونه)، الكارت = الإجمالي، والدوس على اسم بيفتح حركاته، والاسم بلون تحت كل سطر وفي البحث', hnR, Array(9).fill(true));
       await colOk('الحسابات — الخزنة (مين استلم)', A, '#fbHd', 'td.c:nth-child(2) .n'); await colOk('الحسابات — الخزنة (مين دفع)', A, '#fbHd', 'td.c:last-child .n');
       await A.evaluate(() => { [IDX.tx.get('t_hn0'), IDX.tx.get('t_hn1'), window.__hnT].forEach(x => { x.del = true; touch(x); }); saveDB(); go('home'); });
+      /* بند "البيت"، والبند بيتختار لوحده من الملاحظة لو اتكرر قبل كده (catLearn) */
+      eq('بند البيت موجود، والبند بيتختار لوحده من الملاحظة اللي اتكررت (ومش بيختار لو مش متأكد، ولا بيلمس اللي اخترته بإيدك أو التعديل)', await A.evaluate(() => {
+        closeModal(); const r = [], v = vaultsL()[0].id, now = nowS(), cs = catsL('exp'), c0 = cs[0].id, cA = cs[1].id, cB = cs[2].id, ids = [];
+        r.push(cName('c_home') === 'البيت' && cs.some(c => c.id === 'c_home'));
+        const mk = (note, cat) => { const x = {id: 't_cl' + ids.length, type: 'exp', amt: 1000, vault: v, cat, date: '2001-05-01', note, at: now, upd: now, del: false, hist: []}; db.txs.push(x); IDX.tx.set(x.id, x); ids.push(x.id); };
+        mk('زيت ماكينة', cA); mk('زيت ماكينة', cA); mk('فطار العمال', cB); mk('سولار', cA); mk('سولار', cB); mk('مية غسيل', cB); mk('غسيل عربية', cB); mk('غسيل فرش', cB);
+        const g = catLearn('exp'); r.push(g('زيت ماكينة') === cA, g('فطار العمال') === '', g('سولار') === '', g('غسيل الماكينة') === cB);
+        const type = s => { $('#txN').value = s; $('#txN').dispatchEvent(new Event('input')); };
+        txModal('exp'); r.push(!!($('#txN').compareDocumentPosition($('#txC')) & Node.DOCUMENT_POSITION_FOLLOWING) && $('#txC').value === c0);
+        type('زيت ماكينة'); r.push($('#txC').value === cA && !$('#txCH').hidden);
+        type('حاجة جديدة خالص'); r.push($('#txC').value === c0 && $('#txCH').hidden);
+        $('#txC').value = cB; $('#txC').dispatchEvent(new Event('change')); type('زيت ماكينة'); r.push($('#txC').value === cB); closeModal();
+        txModal('exp', IDX.tx.get(ids[2])); type('زيت ماكينة'); r.push($('#txC').value === cB); closeModal();
+        ids.forEach(id => { const x = IDX.tx.get(id); x.del = true; touch(x); }); saveDB();
+        return r; }), Array(10).fill(true));
     }
     {   // عروض الأسعار: مبتلمسش أي رصيد، والـ PDF، و"اتنفذ" بيعمل فاتورة بنفس البنود، واسم ملوش حساب بيتعمله حساب، و"اتلغى"
       const r = await A.evaluate(async () => {

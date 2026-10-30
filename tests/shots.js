@@ -117,6 +117,7 @@ const ACC = (sfx, vp, extra = {}) => [
   {name: 'acc-inv-edit-' + sfx, go: async A => { await accEval(`docModal(${party}, 'inv', [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'inv' && !e.del && (e.lines || []).length > 1).pop())`)(A); await A.focus('#dcLines .li:nth-child(2) [data-f=qty]'); }},
   {name: 'acc-inv-sug-' + sfx, go: async A => { await accEval(`docModal(${party}, 'inv')`)(A); await A.focus('#dcLines [data-f=name]'); }},
   {name: 'acc-pay-' + sfx, go: accEval(`payModal(${party}, 'pay')`)},
+  {name: 'acc-exp-' + sfx, go: accEval("txModal('exp')")},
   {name: 'acc-chk-' + sfx, go: accGo('chk'), full: true},
   {name: 'acc-chkn-' + sfx, go: async A => { await accEval(`payModal(${party}, 'pay', null, {method: 'شيك'})`)(A); }},
   {name: 'acc-quick-' + sfx, go: accEval('quickModal()')},
@@ -164,6 +165,9 @@ const SCREENS = [
   {name: 'acc-cash-rng-m', app: 'acc', vp: MOB, go: accEval("cashSide = 'me'; cashMode = 'range'; go('cash'); renderCash()")},
   {name: 'acc-cash-open-m', app: 'acc', vp: MOB, full: true, go: accEval(`cashOpenV = true; cashVault = ''; go('cash'); renderCash()`)},
   {name: 'acc-cash-open-l', app: 'acc', vp: LAP, go: accEval(`cashOpenV = true; cashVault = ''; go('cash'); renderCash()`)},
+  /* البند لوحده: "بنزين" متسجل مرتين على "نقل" (بتاريخ قديم علشان ميظهرش في باقي الصور)، والصورة بعد ما تتكتب */
+  {name: 'acc-cats-m', app: 'acc', vp: MOB, go: accEval('vaultSettings()')},
+  {name: 'acc-exp-auto-m', app: 'acc', vp: MOB, go: async A => { await accEval(`if (!IDX.tx.get('t_shotcl0')) { const v = vaultsL()[0].id, c = catsL('exp').find(c => c.name === 'نقل'); ['t_shotcl0', 't_shotcl1'].forEach(id => { const r = {id, type: 'exp', amt: 20000, vault: v, cat: c.id, date: '2001-01-01', note: 'بنزين', at: Date.now(), upd: Date.now(), del: false, hist: []}; db.txs.push(r); IDX.tx.set(id, r); }); } txModal('exp')`)(A); await A.fill('#txN', 'بنزين'); }},
   {name: 'acc-cash-hand-m', app: 'acc', vp: MOB, go: async A => { await accEval(`cashView = 'type'; cashMode = 'week'; cashOpenV = false; go('cash'); renderCash()`)(A); await A.waitForTimeout(300); await A.evaluate(() => $('#p-cash .fbhd [data-h]').click()); }},
   {name: 'acc-cash-sheet-m', app: 'acc', vp: MOB, go: async A => { await accEval(`cashView = 'type'; cashMode = 'week'; cashOpenV = false; go('cash'); renderCash()`)(A); await A.waitForTimeout(300); await A.evaluate(() => [...$$('#p-cash .fbk .fbr')].pop().click()); }},
   {name: 'acc-set-pass-m', app: 'acc', vp: MOB, full: true, go: accEval("go('set'); renderSettings(); $('#sBio').style.display='block'; $('#sBio').textContent='👆 بصمة الوجه'; $$('#p-set > .card').forEach(c => c.classList.toggle('shut', !/كلمة السر/.test(c.querySelector('h2').textContent)))")},

@@ -893,6 +893,7 @@ const T0 = Date.now();
     eq('التشغيل تاني مبيكررش', await A.evaluate(() => autoPartners(true)), 0);
     await bg(A, 'syncNow()'); await bg(B, 'syncNow()'); await B.settle(1500);
     eq('الجهاز التاني مسجلش تاني', [await B.evaluate(() => autoPartners(true)), await autoN(B)], [0, 6]);
+    await A.evaluate(() => { partMonth = db.txs.filter(t => t.id.startsWith('t_ps_') && !t.del).map(t => t.date).sort().pop().slice(0, 7); renderPartners(); });   // أول الشهر: آخر مرتب ممكن يبقى في الشهر اللي فات
     await A.click('#p-part tr[data-i]'); await A.click('#ptDel'); await A.click('#cOk'); await A.settle(150);
     eq('المرتب الملغي مبيرجعش يتسجل', [await A.evaluate(() => autoPartners(true)), await autoN(A)], [0, 5]);
     await A.click('#ptNew'); await A.fill('#ptA', '50'); await A.fill('#ptN', 'سلفة'); await A.click('#ptOk'); await closed(A);
@@ -1371,9 +1372,14 @@ const T0 = Date.now();
         cashView = 'date'; renderCash(); const tags = [...$$('#fbL .fbhn')];
         r.push(tags.some(el => el.textContent === N) && tags.some(el => el.textContent === me) && tags.every(el => /\bh[01]\b/.test(el.className)));
         $('#cSrch').click(); $('#csQ').value = N; $('#csQ').dispatchEvent(new Event('input')); r.push($$('#csR .ldr').length === 2); closeModal();
+        /* تبويب باسم كل واحد: مصروفاته هو بس (بالبند وبالتفصيل)، والتبويبات سطر واحد */
+        const HN = cashHands(); r.push(HN.length >= 1 && HN.length <= 2 && $$('#cView button').length === 2 + HN.length && HN.every(n => !!$(`#cView [data-v="h:${n}"]`)));
+        const P0 = fbHandView(N, R); r.push(P0.L.length === 1 && P0.L[0].amt === 432100 && fbSum(P0.L) === 432100 && P0.C.length === 1);
+        if (HN.includes(me)) { $(`#cView [data-v="h:${me}"]`).click(); r.push(!!$('#fbPc') && $('#fbPc .fbkh .n').textContent === fmtP(fbHandView(me, fbMoves(t0, t0).R).L.reduce((n, x) => n + x.amt, 0)) && !$('#fbIn'));
+          $('#fbPl .fbr').click(); r.push(!!$('#txA')); closeModal(); } else r.push(true, true);
         cashView = 'type'; renderCash(); window.__hnT = t;
         return r; });
-      eq('مين استلم ومين دفع: من غير اختيار (اللي سجّل من تليفونه)، الكارت = الإجمالي، والدوس على اسم بيفتح حركاته، والاسم بلون تحت كل سطر وفي البحث', hnR, Array(9).fill(true));
+      eq('مين استلم ومين دفع: من غير اختيار (اللي سجّل من تليفونه)، الكارت = الإجمالي، والدوس على اسم بيفتح حركاته، والاسم بلون تحت كل سطر وفي البحث، وتبويب مصروفات كل واحد', hnR, Array(13).fill(true));
       await colOk('الحسابات — الخزنة (مين استلم)', A, '#fbHd', 'td.c:nth-child(2) .n'); await colOk('الحسابات — الخزنة (مين دفع)', A, '#fbHd', 'td.c:last-child .n');
       await A.evaluate(() => { [IDX.tx.get('t_hn0'), IDX.tx.get('t_hn1'), window.__hnT].forEach(x => { x.del = true; touch(x); }); saveDB(); go('home'); });
       /* بند "البيت"، والبند بيتختار لوحده من الملاحظة لو اتكرر قبل كده (catLearn) */

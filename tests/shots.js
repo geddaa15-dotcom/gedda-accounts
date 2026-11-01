@@ -130,6 +130,7 @@ const ACC = (sfx, vp, extra = {}) => [
   {name: 'acc-col-' + sfx, go: async A => { await accGo('rep')(A); await A.evaluate(() => { repKind = 'col'; repColMode = 'month'; renderReports(); }); }, full: true},
   {name: 'acc-ldg-' + sfx, go: accEval(`cashView = 'date'; cashMode = 'week'; cashDay = ''; cashOpenV = false; go('cash'); renderCash()`), full: true},
   {name: 'acc-cash-srch-' + sfx, go: async A => { await accEval(`cashView = 'date'; cashMode = 'week'; cashDay = ''; go('cash'); renderCash(); $('#cSrch').click()`)(A); await A.fill('#csQ', 'عميل'); await A.waitForTimeout(150); }},
+  {name: 'acc-cash-pp-' + sfx, go: accEval(`cashView = 'h:' + cashHands()[1]; cashMode = 'week'; cashDay = ''; cashOpenV = false; go('cash'); renderCash()`), full: true},
   {name: 'acc-ldg-mon-' + sfx, go: accEval(`cashView = 'date'; cashMode = 'month'; cashMonth = ''; cashOpenV = false; go('cash'); renderCash()`), full: true},
   {name: 'acc-set-' + sfx, go: accGo('set'), full: true},
   {name: 'acc-qt-' + sfx, go: accGo('qt'), full: true},

@@ -614,6 +614,9 @@ const T0 = Date.now();
     await A.click('#fbStmt'); await A.settle(150); await A.click('#smInv'); await A.settle(150); await A.click('#ivRcv'); await A.settle(150); await A.click('#rcvKind [data-v="1"]');
     await A.evaluate(() => { window.__sh = null; }); await A.click('#rcShare'); await A.waitForFunction(() => window.__sh, null, {timeout: 90000});
     eq('واتساب إذن الاستلام: الملف اسمه "إذن استلام" + اسم الشخص', await A.evaluate(() => __sh.files[0].name), 'إذن استلام عميل تجربة واحد.pdf');
+    /* الدوسة على سطر الفاتورة في الكشف بتفتح "تعديل بند"، والزرار لازم يبقى فيها هي كمان */
+    eq('إذن الاستلام ظاهر في نافذة البند اللي بتفتح من الكشف وبيفتح نافذة الإذن', await A.evaluate(() => { const p = liveParties().find(x => x.name === 'عميل تجربة واحد'), l = partyEntries(p.id).filter(e => e.kind === 'inv').pop();
+      closeModal(); lineModal(p, l, 0); const b = $('#lnRcv'); if (!b) return false; b.click(); const ok = !!$('#rcvKind'); closeModal(); return ok; }), true);
 
     sec('٧ب) نقل فواتير الحساب الفرعي لحسابه الأساسي ');
     await A.evaluate(() => closeModal());

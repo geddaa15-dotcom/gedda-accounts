@@ -203,6 +203,7 @@ const SCREENS = [
   {name: 'pdf-rcv', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`buildRcvPages(${party}, [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'inv' && !e.del && (e.lines || []).length > 1).pop(), false); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
   {name: 'pdf-rcv-plain', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`buildRcvPages(${party}, [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'inv' && !e.del && (e.lines || []).length > 1).pop(), true); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
   {name: 'acc-rcv-m', app: 'acc', vp: MOB, go: accEval(`rcvModal(${party}, [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'inv' && !e.del && (e.lines || []).length > 1).pop())`)},
+  {name: 'acc-line-m', app: 'acc', vp: MOB, go: async A => { await accEval(`go('p/' + ${party}.id)`)(A); await A.waitForSelector('#modal', {state: 'hidden'}).catch(() => {}); await accEval(`lineModal(${party}, [...E.values()].filter(e => e.party === ${party}.id && e.kind === 'inv' && !e.del && (e.lines || []).length > 1).pop(), 0)`)(A); await A.waitForSelector('#lnName'); }},
   {name: 'pdf-rep', app: 'acc', vp: LAP, el: '#render .pg', go: accEval(`go('rep'); buildReportPages(buildReport()); Object.assign($('#render').style, {left: '0', zIndex: 9999})`)},
 ];
 

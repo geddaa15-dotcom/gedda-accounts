@@ -2735,7 +2735,7 @@ function lineModal(p, e, i) {
       <div><label>السعر</label><input class="inp num" id="lnPrice" value="${esc(fmtP(l.price))}"></div>
       <div><label>الإجمالي</label><div class="lt2" id="lnTot">—</div></div></div>
     <div class="mfoot"><div class="dtot"><span>${ret ? 'إجمالي المرتجع' : 'إجمالي الفاتورة'}</span><b id="lnAll">0</b></div>
-      <div class="msec"><button class="btn line sm" id="lnFull" type="button">📄 افتح الفاتورة كاملة</button>${many ? '<button class="btn red sm" id="lnDel" type="button">امسح البند ده</button>' : ''}</div>
+      <div class="msec"><button class="btn line sm" id="lnFull" type="button">📄 افتح الفاتورة كاملة</button>${e.kind === 'inv' ? '<button class="btn line sm" id="lnRcv" type="button">📦 إذن استلام</button>' : ''}${many ? '<button class="btn red sm" id="lnDel" type="button">امسح البند ده</button>' : ''}</div>
       <div class="mrow"><button class="btn gold" id="lnOk" type="button">حفظ البند</button><button class="btn line" id="lnX" type="button">رجوع</button></div></div>`, true);
   bindMoney($('#lnPrice'));
   $('#lnQty').addEventListener('input', () => { $('#lnQty').value = normDigits($('#lnQty').value).replace(/[^\d.]/g, ''); });
@@ -2752,6 +2752,7 @@ function lineModal(p, e, i) {
   };
   $('#lnX').onclick = closeModal;
   $('#lnFull').onclick = () => { closeModal(); setTimeout(() => docModal(p, e.kind, e), 80); };
+  if ($('#lnRcv')) $('#lnRcv').onclick = () => rcvModal(p, e, () => lineModal(p, e, i));   // إذن الاستلام من أول نافذة بتفتح من الكشف
   if ($('#lnDel')) $('#lnDel').onclick = () => apply(e.lines.filter((x, k) => k !== i), 'اتمسح البند ✔ (والنسخة القديمة محفوظة)');
   $('#lnOk').onclick = () => {
     const c = cur();
@@ -4127,8 +4128,9 @@ const PAGE_LM = Date.parse(document.lastModified), PAGE_AT = Date.now();
 const verText = (lm = PAGE_LM, at = PAGE_AT) => lm && at - lm > 3000 ? `آخر تحديث للبرنامج على الجهاز ده: ${dispDate(isoOf(lm))} ${dispTime(lm)}` : '';
 /* ====================== الإصدار و"عن البرنامج" ======================
    مع أي تعديل يترفع: زوّد APP_VER (تعديل صغير 1.1، 1.2… وحاجة كبيرة 2.0) وغيّر APP_DATE، واكتب أهم الجديد في APP_NEWS (3-5 سطور بالعامية البسيطة) */
-const APP_VER = '1.9', APP_DATE = '2026-11-01';
+const APP_VER = '2.0', APP_DATE = '2026-11-07';
 const APP_NEWS = [
+  'زرار "📦 إذن استلام" بقى بيظهر أول ما تدوس على سطر الفاتورة في كشف الحساب، ومن غير ما تفتح الفاتورة كاملة، وكمان في فواتير الشهر المقفول',
   'الخزنة: جنب "بالنوع" و"بالتاريخ" تبويب باسم كل واحد فيه مصروفاته هو بس في الفترة، بالبند وبالتفصيل',
   'الجرد بقى بيحسب الشيكات اللي لسه متصرفتش: اللي معاك من العملا بيتحسب مع اللي ليك، واللي كتبته للموردين بيتخصم',
   'لو مصروف أو دفعة هتنزّل الخزنة تحت الصفر البرنامج بيسألك قبل الحفظ، وطول ما الخزنة بالسالب فيه تنبيه فوق في الرئيسية',
@@ -5728,8 +5730,9 @@ const lockToast = () => toast(`الفترة لحد ${dispDate(lockDate())} مق�
 function lockedView(p, e) {
   modal(`<h3>🔒 ${esc(docTitle(e))}</h3><p style="font-size:var(--f3)">${dispDate(e.date)} — ${fmtP(e.dr || e.cr)} ${CUR}</p>
     <div class="sync">الحركة دي في فترة مقفولة (لحد ${dispDate(lockDate())})، فمينفعش تتعدل أو تتلغي. لو محتاج، افتح الفترة من الإعدادات.</div>
-    ${histHtml(e)}<button class="btn line" id="lvX" type="button">رجوع</button>`);
+    ${histHtml(e)}${e.kind === 'inv' && e.lines && e.lines.length ? '<button class="btn line" id="lvRcv" type="button" style="margin-bottom:8px">📦 إذن استلام</button>' : ''}<button class="btn line" id="lvX" type="button">رجوع</button>`);
   $('#lvX').onclick = closeModal;
+  if ($('#lvRcv')) $('#lvRcv').onclick = () => rcvModal(p, e, () => lockedView(p, e));   // الإذن مبيعدلش حاجة، فيطلع حتى في الشهر المقفول
 }
 /* ---------- حدود ألوان الرصيد (زي الإكسيل): أصفر لما يعدّي الحد الأول، أحمر لما يعدّي التاني ---------- */
 const limitsOf = p => { const g = getSet('limits', {y: 10000000, r: 30000000}); return {y: p && p.limY || g.y, r: p && p.limR || g.r}; };

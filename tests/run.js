@@ -617,6 +617,10 @@ const T0 = Date.now();
     /* الدوسة على سطر الفاتورة في الكشف بتفتح "تعديل بند"، والزرار لازم يبقى فيها هي كمان */
     eq('إذن الاستلام ظاهر في نافذة البند اللي بتفتح من الكشف وبيفتح نافذة الإذن', await A.evaluate(() => { const p = liveParties().find(x => x.name === 'عميل تجربة واحد'), l = partyEntries(p.id).filter(e => e.kind === 'inv').pop();
       closeModal(); lineModal(p, l, 0); const b = $('#lnRcv'); if (!b) return false; b.click(); const ok = !!$('#rcvKind'); closeModal(); return ok; }), true);
+    /* اسم تاني في الإذن بس: الملف والورقة بالاسم الجديد، والحساب نفسه زي ما هو */
+    await A.evaluate(() => { const p = liveParties().find(x => x.name === 'عميل تجربة واحد'), l = partyEntries(p.id).filter(e => e.kind === 'inv').pop(); rcvModal(p, l); $('#rcName').value = '  مستلم   تجربة '; window.__sh = null; });
+    await A.click('#rcShare'); await A.waitForFunction(() => window.__sh, null, {timeout: 90000});
+    eq('إذن الاستلام باسم تاني: الملف بالاسم الجديد واسم العميل في الحساب متغيرش', await A.evaluate(() => [__sh.files[0].name, liveParties().some(x => x.name === 'عميل تجربة واحد'), liveParties().some(x => x.name === 'مستلم تجربة')]), ['إذن استلام مستلم تجربة.pdf', true, false]);
 
     sec('٧ب) نقل فواتير الحساب الفرعي لحسابه الأساسي ');
     await A.evaluate(() => closeModal());

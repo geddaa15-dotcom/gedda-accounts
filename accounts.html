@@ -3280,12 +3280,13 @@ function rcvModal(p, e, back) {
   modal(`<h3>📦 إذن استلام<small class="mnm">${esc(p.name)}</small></h3>
     <div class="seg s2" id="rcvKind"><button type="button" data-v="0" class="${plain ? '' : 'on'}">باللوجو</button><button type="button" data-v="1" class="${plain ? 'on' : ''}">سادة من غير لوجو</button></div>
     <div class="qmeta"><span>تاريخ الفاتورة: <b>${dispDate(e.date)}</b></span><span>عدد البنود: <b>${(e.lines || []).length}</b></span></div>
-    <p class="hint">البنود وعددها بس من غير أسعار، وتحت مكان إمضاء المستلم.</p>
+    <div class="fld"><label>الاسم اللي يتكتب في الإذن (السادة /)</label><input class="inp" id="rcName" value="${esc(p.name)}" autocomplete="off"></div>
+    <p class="hint">البنود وعددها بس من غير أسعار، وتحت مكان إمضاء المستلم. الاسم بيتغير في الإذن بس، وحساب العميل زي ما هو.</p>
     <div class="mfoot"><div class="mrow3"><button class="btn green" id="rcShare" type="button">📲 واتساب</button>
       <button class="btn gold" id="rcPdf" type="button">📄 معاينة PDF</button><button class="btn line" id="rcBack" type="button">رجوع</button></div></div>`, true);
   $$('#rcvKind button').forEach(b => b.onclick = () => { plain = b.dataset.v === '1'; $$('#rcvKind button').forEach(x => x.classList.toggle('on', x === b)); try { localStorage.setItem('gd_rcvPlain', plain ? '1' : '0'); } catch (x) {} });
   $('#rcBack').onclick = back || closeModal;
-  const run = how => exportStmt(p, {rcv: e, plain}, how);
+  const run = how => { const nm = $('#rcName').value.trim().replace(/\s+/g, ' '); exportStmt(nm && nm !== p.name ? Object.assign({}, p, {name: nm}) : p, {rcv: e, plain}, how); };   // اسم تاني للإذن بس، من غير ما يلمس الحساب
   $('#rcShare').onclick = () => run('share');
   $('#rcPdf').onclick = () => run('preview');
 }
@@ -4128,8 +4129,9 @@ const PAGE_LM = Date.parse(document.lastModified), PAGE_AT = Date.now();
 const verText = (lm = PAGE_LM, at = PAGE_AT) => lm && at - lm > 3000 ? `آخر تحديث للبرنامج على الجهاز ده: ${dispDate(isoOf(lm))} ${dispTime(lm)}` : '';
 /* ====================== الإصدار و"عن البرنامج" ======================
    مع أي تعديل يترفع: زوّد APP_VER (تعديل صغير 1.1، 1.2… وحاجة كبيرة 2.0) وغيّر APP_DATE، واكتب أهم الجديد في APP_NEWS (3-5 سطور بالعامية البسيطة) */
-const APP_VER = '2.0', APP_DATE = '2026-11-07';
+const APP_VER = '2.1', APP_DATE = '2026-11-07';
 const APP_NEWS = [
+  'إذن الاستلام: تقدر تكتب فيه اسم تاني غير اسم العميل (الاسم بيتغير في الإذن بس، والحساب زي ما هو)',
   'زرار "📦 إذن استلام" بقى بيظهر أول ما تدوس على سطر الفاتورة في كشف الحساب، ومن غير ما تفتح الفاتورة كاملة، وكمان في فواتير الشهر المقفول',
   'الخزنة: جنب "بالنوع" و"بالتاريخ" تبويب باسم كل واحد فيه مصروفاته هو بس في الفترة، بالبند وبالتفصيل',
   'الجرد بقى بيحسب الشيكات اللي لسه متصرفتش: اللي معاك من العملا بيتحسب مع اللي ليك، واللي كتبته للموردين بيتخصم',
